@@ -20,7 +20,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <DashboardPage />,
+        element: <DashboardPage />, // hiển thị bên trong layout chính
       },
     ],
   },
