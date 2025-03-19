@@ -50,7 +50,10 @@ const DashboardSideBar = () => {
     const dispatch = useDispatch();
     const currentTab = useSelector((state) => state.chat.currentTab);
     const navigate = useNavigate();
+
   return (
+
+    // Container chứa các nút sidebar
     <Container
       fluid
       className="d-flex flex-column align-items-center bg-primary text-white p-0"
@@ -90,7 +93,7 @@ const DashboardSideBar = () => {
               variant={currentTab === item.title ? "info" : "primary"}
               style={{ height: "64px" }}
               onClick={() => {
-                dispatch(setCurrentTab(item.title));
+                dispatch(setCurrentTab(item.title)); // Thay đổi tab hiện tại
               }}
             >
               {item.icon}
