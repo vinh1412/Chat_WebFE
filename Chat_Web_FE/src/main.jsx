@@ -4,7 +4,8 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
-
+import { Provider } from "react-redux";
+import store from "./redux/store.js";
 import App from "./App.jsx";
 
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage.jsx"));
@@ -27,8 +28,11 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App>
-      <RouterProvider router={router}></RouterProvider>
-    </App>
+    <Provider store={store}>
+      <App>
+        <RouterProvider router={router}></RouterProvider>
+      </App>
+    </Provider>
+   
   </StrictMode>
 );

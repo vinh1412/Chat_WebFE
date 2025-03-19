@@ -3,6 +3,8 @@ import { BsChatDotsFill, BsTrash, BsSearch } from "react-icons/bs";
 import { RiContactsBook3Line } from "react-icons/ri";
 import { IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { setCurrentTab } from "../../redux/slice/chatSlice";
 import { Container, Button, Image } from "react-bootstrap";
 
 const sidebarLinks = [
@@ -45,6 +47,9 @@ const bottomSidebarLinks = [
 ];
 
 const DashboardSideBar = () => {
+    const dispatch = useDispatch();
+    const currentTab = useSelector((state) => state.chat.currentTab);
+    const navigate = useNavigate();
   return (
     <Container
       fluid
@@ -82,9 +87,11 @@ const DashboardSideBar = () => {
             <Button
               key={item.title}
               className="w-100 d-flex align-items-center justify-content-center p-0"
-              variant="primary"
+              variant={currentTab === item.title ? "info" : "primary"}
               style={{ height: "64px" }}
-              onClick={() => console.log(item.title)}
+              onClick={() => {
+                dispatch(setCurrentTab(item.title));
+              }}
             >
               {item.icon}
             </Button>
