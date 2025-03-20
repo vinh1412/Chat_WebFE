@@ -47,3 +47,21 @@ code {
   background: #969fa0; /* Màu khi hover */
 }
 
+/* Overley */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 50; /* Đảm bảo modal nằm trên cùng */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+ /* .modal-content {
+  height: 80vh;
+} */
+

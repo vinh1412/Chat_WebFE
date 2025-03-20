@@ -5,7 +5,7 @@ import { Container, Col, Row, Button } from "react-bootstrap";
 import { BsSearch } from "react-icons/bs";
 import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { useDispatch, useSelector } from "react-redux";
-
+import { useDashboardContext } from "../../context/Dashboard_context";
 import ItemConservation from "../chat/conservation/ItemConservation";
 import ContactSideBar from "../contact/ContactSideBar";
 
@@ -108,6 +108,7 @@ const conservationData = [
 const DashboardOptionList = () => {
   const dispatch = useDispatch();
   const currentTab = useSelector((state) => state.chat.currentTab);
+  const { setShowAddFriendModal } = useDashboardContext();
   
   return (
     <Container
@@ -130,7 +131,14 @@ const DashboardOptionList = () => {
         </Row>
         <Row  className="d-flex align-items-center">
           <Col>
-            <AiOutlineUserAdd role="button" size={24} />
+            <AiOutlineUserAdd 
+              role="button" 
+              size={24} onClick={(e) => {
+                e.stopPropagation(); // Ngăn chặn sự kiện lan rộng
+                setShowAddFriendModal(true);
+             }}
+          />
+
           </Col>
           <Col className="">
             <AiOutlineUsergroupAdd role="button" size={24} />

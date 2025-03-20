@@ -1,5 +1,5 @@
 import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import ReactDOM, { createRoot } from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import "./index.css";
@@ -8,6 +8,7 @@ import { Provider } from "react-redux";
 import store from "./redux/store.js";
 import App from "./App.jsx";
 
+import DashboardProvider from "./context/provider/DashboardProvider.jsx";
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage.jsx"));
 const LayoutDashboard = React.lazy(() =>
   import("./components/layout/LayoutDashboard.jsx")
@@ -26,12 +27,14 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
-      <App>
-        <RouterProvider router={router}></RouterProvider>
-      </App>
+      <DashboardProvider>
+        <App>
+          <RouterProvider router={router}></RouterProvider>
+        </App>
+      </DashboardProvider>
     </Provider>
    
   </StrictMode>
