@@ -30,8 +30,46 @@ const searchData = [
     },
 ]
 
+const ItemSerch = ({item}) => {
+    const dispatch = useDispatch();
+
+    return (
+        <div key={item.id} className="overflow-hidden d-flex align-items-center gap-2 mb-2 mt-2"
+            onClick={() => {dispatch(setShowConversation(true))}}
+            style={{cursor: 'pointer'}}
+        >
+            <img src={item.avatar} alt="" className="rounded-circle img-fluid object-fit-cover" style={{ width: "48px", height: "48px" }} />
+            <span className="ms-2">{item.name}</span>
+        </div>
+    )
+}
+
 const SearchSide = () => {
     const dispatch = useDispatch();
+
+    const searchInputFocusRef = React.useRef(null);
+
+    const [keyword, setKeyword] = React.useState("");
+    const [searchResults, setSearchResults] = React.useState([]);
+    
+    // tự động focus vào ô tìm kiếm khi mở search
+    React.useEffect(() => {
+        searchInputFocusRef.current?.focus();
+    },[])
+
+    // Hàm xử lý tìm kiếm
+    const handleSearch = (keyword) => {
+        const results = searchData.filter((item) => item.name.includes(keyword));
+        setSearchResults(results);
+    }
+
+    React.useEffect(() => 
+    {
+        if(keyword) {
+            handleSearch(keyword);
+        }
+    
+    }, [keyword]);
   return (
     <>
         <Container
@@ -47,6 +85,9 @@ const SearchSide = () => {
                     type="text"
                     className="form-control bg-transparent border-0 rounded-1"
                     placeholder="Tìm kiếm"
+                    ref={searchInputFocusRef}
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
                 />
                 </Col>
             </Row>
@@ -59,21 +100,31 @@ const SearchSide = () => {
         </Container>
 
         <Container fluid className="w-100 overflow-auto " style={{maxHeight: 'calc(100vh - 56px)'}}>
-            <h6 className="mt-1">Tìm kiếm gần đây</h6>
-
-            {/* List tìm kiếm gần đây */}
-            <div className="d-flex flex-column gap-2 mt-2">
-                {searchData.map((item) => (
-                    <div key={item.id} className="overflow-hidden d-flex align-items-center gap-2 mb-2 mt-2"
-                     onClick={() => {dispatch(setShowConversation(true))}} 
-                     style={{cursor: 'pointer'}}
-                    >
-                        <img src={item.avatar} alt="" className="rounded-circle img-fluid object-fit-cover" style={{ width: "48px", height: "48px" }} />
-                        <span className="ms-2">{item.name}</span>
+            {!keyword && (
+                <>
+                    <h6 className="mt-1">Tìm kiếm gần đây</h6>
+                    {/* List tìm kiếm gần đây */}
+                    <div className="d-flex flex-column gap-2 mt-2">
+                        {searchData.map((item) => (
+                            <ItemSerch key={item.id} item={item} />
+                        ))}
+                    
                     </div>
-                ))}
-              
-            </div>
+                </>
+            )}
+
+            {keyword && (
+                <>
+                    <h6 className="mt-1">Kết quả tìm kiếm cho "{keyword}"</h6>
+                    {/* List tìm kiếm gần đây */}
+                    <div className="d-flex flex-column gap-2 mt-2">
+                        {searchResults.map((item) => (
+                            <ItemSerch key={item.id} item={item} />
+                        ))}
+                    
+                    </div>
+                </>
+            )}
 
         </Container>
     </>
