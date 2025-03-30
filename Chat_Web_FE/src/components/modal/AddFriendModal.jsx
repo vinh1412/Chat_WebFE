@@ -91,7 +91,9 @@ const AddFriendModal = () => {
         {/* button */}
         <div className="d-flex align-items-center py-3 px-4 border-top">
           <div className="d-flex align-items-center ms-auto gap-3">
-              <button className="btn btn-light px-4 py-2">Hủy</button>
+              <button className="btn btn-light px-4 py-2"
+                onClick={() => setShowAddFriendModal(false)}
+              >Hủy</button>
               <button
                   className="btn btn-primary px-3 py-2 text-white"
                   onClick={() => {

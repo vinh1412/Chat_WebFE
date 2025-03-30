@@ -1,9 +1,21 @@
 import React from "react";
 import {Row, Col, Button} from "react-bootstrap";
+import {setShowConversation} from "../../../redux/slice/commonSlice";
+import {useDispatch} from "react-redux";
 
 const ItemConservation = ({item}) => {
+    const dispatch = useDispatch();
+
+
+    // Hàm xử lý khi click vào item
+    const handleClick = () => {
+        console.log(item);
+        // Gọi action để cập nhật state showConversation thành true để hiển thị conversation
+        dispatch(setShowConversation(true));
+    }
+
     return (
-        <Row key={item.id} className="g-0 border-bottom pt-2" style={{cursor: 'pointer'}}>
+        <Row key={item.id} className="g-0 border-bottom pt-2" style={{cursor: 'pointer'}} onClick={handleClick}>
             <Col xs="auto" className="d-flex align-items-center p-2">
                 <div
                     className="overflow-hidden"
