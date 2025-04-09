@@ -6,12 +6,43 @@ const DashboardProvider = ({ children }) => {
   const [showAddFriendModal, setShowAddFriendModal] = useState(false);
   const addFriendModalRef = useRef(null);
 
+  // Modal: Thông tin tài khoản
+  const [showAccountInfoModal, setShowAccountInfoModal] = useState(false);
+  const accountInfoModalRef = useRef(null);
+
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const profileModalRef = useRef(null);
+
+  // Modal: Chỉnh sửa thông tin cá nhân
+  const [showEditInfoModal, setShowEditInfoModal] = useState(false);
+  const editInfoModalRef = useRef(null);
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const settingsModalRef = useRef(null);
+
   console.log("DashboardProvider", showAddFriendModal);
 
   const contextValue = {
     showAddFriendModal,
     setShowAddFriendModal,
     addFriendModalRef,
+
+    showAccountInfoModal,
+    setShowAccountInfoModal,
+    accountInfoModalRef,
+
+    showProfileModal,
+    setShowProfileModal,
+    profileModalRef,
+
+    showEditInfoModal,
+    setShowEditInfoModal,
+    editInfoModalRef,
+
+    showSettingsModal,
+    setShowSettingsModal,
+    settingsModalRef,
+
   };
 
   return (
