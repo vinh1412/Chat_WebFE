@@ -4,11 +4,16 @@ import { useDashboardContext } from "../../context/Dashboard_context";
 
 const AccountInfoModal = ({ isOpen, onClose }) => {
   const { setShowProfileModal } = useDashboardContext();
+  const {setShowSettingsModal} = useDashboardContext();
 
   const handleViewProfile = () => {
     onClose(); // Đóng AccountInfoModal
     setTimeout(() => setShowProfileModal(true), 200);
   };
+  const handleViewSettings = () => {
+    onClose();
+    setTimeout(() => setShowSettingsModal(true), 200);
+  }
 
   return (
     <Modal show={isOpen} onHide={onClose} centered>
@@ -17,7 +22,7 @@ const AccountInfoModal = ({ isOpen, onClose }) => {
         <div className="mb-2 cursor-pointer" onClick={handleViewProfile}>
           Hồ sơ của bạn
         </div>
-        <div className="mb-2 cursor-pointer" onClick={handleViewProfile}>
+        <div className="mb-2 cursor-pointer" onClick={handleViewSettings}>
           Cài đặt
         </div>
       </div>
