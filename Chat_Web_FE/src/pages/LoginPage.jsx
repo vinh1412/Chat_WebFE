@@ -1,20 +1,35 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("+84862058920");
+  const [password, setPassword] = useState("newpassword123");
   const navigate = useNavigate();
-
+  const { login } = useAuth();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Gửi dữ liệu đăng nhập
-    console.log("Đăng nhập:", username, password);
+
+    const formLogin = {
+      phone,
+      password,
+    };
+
+    login(formLogin, {
+      onSuccess: () => {
+        console.log("Đăng nhập thành công");
+        navigate("/");
+      },
+      onError: (error) => {
+        console.error("Lỗi đăng nhập:", error);
+        alert("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+      },
+    });
   };
 
   const handleForgotPassword = () => {
-    alert("Chức năng quên mật khẩu đang được phát triển...");
+    navigate("/forgot-password");
   };
 
   const handleRegister = () => {
@@ -34,8 +49,8 @@ const LoginPage = () => {
           <input
             type="text"
             placeholder="Số điện thoại hoặc email"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             style={styles.input}
           />
           <input
@@ -100,6 +115,7 @@ const styles = {
     border: "1px solid #ccc",
     fontSize: "1rem",
     backgroundColor: "#f9f9f9",
+    color: "#333",
   },
   loginButton: {
     padding: "0.75rem",

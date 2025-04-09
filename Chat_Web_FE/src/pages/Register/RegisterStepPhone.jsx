@@ -1,13 +1,36 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 const RegisterStepPhone = () => {
   const [phone, setPhone] = useState("");
   const navigate = useNavigate();
 
+  const { sendOtp } = useAuth({
+    setVerificationId: (verificationId) => {
+      // Sau khi gửi OTP thành công, chuyển sang bước nhập OTP
+      navigate("/register/otp", { state: { phone, verificationId } });
+    },
+    setStep: () => {}, // Không cần trong bước này
+  });
+
+  const formatPhoneNumber = (phone) => {
+    // Chuyển đổi số điện thoại thành định dạng quốc tế
+    if (phone.startsWith("0")) {
+      return "+84" + phone.slice(1);
+    } else if (phone.startsWith("+84")) {
+      if (phone[3] === "0") {
+        return "+84" + phone.slice(4);
+      }
+      return phone;
+    } else {
+      return "+84" + phone;
+    }
+  };
+
   const handleSendOTP = () => {
-    console.log("Gửi OTP tới:", phone);
-    navigate("/register/otp", { state: { phone } });
+    if (!phone) return alert("Vui lòng nhập số điện thoại");
+    sendOtp({ phone: formatPhoneNumber(phone) });
   };
 
   return (
@@ -24,6 +47,8 @@ const RegisterStepPhone = () => {
         <button className="btn btn-primary w-100" onClick={handleSendOTP}>
           Gửi mã OTP
         </button>
+        {/* Nơi hiển thị reCAPTCHA (invisible) */}
+        <div id="recaptcha-container" />
       </div>
     </div>
   );

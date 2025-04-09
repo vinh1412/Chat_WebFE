@@ -1,16 +1,24 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 const RegisterStepOTP = () => {
   const [otp, setOtp] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
 
-  const phone = location.state?.phone || "";
+  const { phone, verificationId } = location.state || {};
+
+  const { verifyOtp } = useAuth({
+    setVerificationId: () => {},
+    setStep: () => {
+      navigate("/register/info", { state: { phone } });
+    },
+  });
 
   const handleVerifyOTP = () => {
-    console.log("Xác minh OTP:", otp);
-    navigate("/register/info", { state: { phone } });
+    if (!otp) return alert("Vui lòng nhập mã OTP");
+    verifyOtp({ verificationId, otp });
   };
 
   return (
