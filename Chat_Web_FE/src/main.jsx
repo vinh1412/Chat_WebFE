@@ -1,5 +1,5 @@
 import React, { StrictMode } from "react";
-import ReactDOM, { createRoot } from "react-dom/client";
+import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import "./index.css";
@@ -13,6 +13,10 @@ const DashboardPage = React.lazy(() => import("./pages/DashboardPage.jsx"));
 const LayoutDashboard = React.lazy(() =>
   import("./components/layout/LayoutDashboard.jsx")
 );
+const LoginPage = React.lazy(() => import("./pages/LoginPage.jsx"));
+const RegisterStepPhone = React.lazy(() => import("./pages/Register/RegisterStepPhone.jsx"));
+const RegisterStepOTP = React.lazy(() => import("./pages/Register/RegisterStepOTP.jsx"));
+const RegisterStepInfo = React.lazy(() =>import("./pages/Register/RegisterStepInfo.jsx"))
 
 // router
 const router = createBrowserRouter([
@@ -21,10 +25,27 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <DashboardPage />, // hiển thị bên trong layout chính
+        element: <DashboardPage />, 
       },
     ],
   },
+  {
+    path: "/login",
+    element: <LoginPage />, 
+  },
+  {
+    path: "/register",
+    element: <RegisterStepPhone />,
+  },
+  {
+    path: "/register/otp",
+    element: <RegisterStepOTP />,
+  },
+  {
+    path: "/register/info",
+    element: <RegisterStepInfo />,
+  },
+
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
