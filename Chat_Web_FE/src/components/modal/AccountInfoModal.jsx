@@ -7,7 +7,7 @@ const AccountInfoModal = ({ isOpen, onClose }) => {
 
   const handleViewProfile = () => {
     onClose(); // Đóng AccountInfoModal
-    setTimeout(() => setShowProfileModal(true), 200); 
+    setTimeout(() => setShowProfileModal(true), 200);
   };
 
   return (
@@ -16,6 +16,9 @@ const AccountInfoModal = ({ isOpen, onClose }) => {
         <h6 className="fw-bold mb-3">Ngô Văn Toàn</h6>
         <div className="mb-2 cursor-pointer" onClick={handleViewProfile}>
           Hồ sơ của bạn
+        </div>
+        <div className="mb-2 cursor-pointer" onClick={handleViewProfile}>
+          Cài đặt
         </div>
       </div>
     </Modal>
