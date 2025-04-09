@@ -1,9 +1,14 @@
 import React from 'react';
 import { Overlay as BootstrapOverlay } from 'react-bootstrap';
+import { useDashboardContext } from "../../context/Dashboard_context";
+
 
 const Overlay = () => {
+    const { showAddFriendModal } = useDashboardContext();
+
     return (
         <BootstrapOverlay
+            className={`overlay ${showAddFriendModal ? "show" : ""}`}
             style={{
                 position: 'fixed',
                 top: 0,

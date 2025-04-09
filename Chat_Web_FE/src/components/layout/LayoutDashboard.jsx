@@ -16,8 +16,6 @@ const LayoutDashboard = () => {
         fluid
         className="vh-100 min-vh-100 overflow-hidden bg-light p-0"
       >
-        {/* Làm mờ phần nền khi mở modal*/}
-        <Overlay />
 
         <Row className="g-0">
           <Col xs="auto">
