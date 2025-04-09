@@ -4,6 +4,7 @@ import { useDashboardContext } from "../../context/Dashboard_context";
 import AddFriendModal from "./AddFriendModal";
 import AccountInfoModal from "./AccountInfoModal";
 import ProfileModal from "./ProfileModal";
+import SettingsModal from "./SettingsModal";
 
 const Modal = () => {
   const {
@@ -13,6 +14,8 @@ const Modal = () => {
     setShowAccountInfoModal,
     showProfileModal,
     setShowProfileModal,
+    showSettingsModal,
+    setShowSettingsModal,
   } = useDashboardContext();
 
   return (
@@ -45,6 +48,12 @@ const Modal = () => {
 
       {/* Modal: Thông tin cá nhân */}
       < ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
+
+      {/* Modal: Cài đặt */}
+        <SettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+        />
     </>
   );
 };

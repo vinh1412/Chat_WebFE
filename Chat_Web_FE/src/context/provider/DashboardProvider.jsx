@@ -10,9 +10,15 @@ const DashboardProvider = ({ children }) => {
   const [showAccountInfoModal, setShowAccountInfoModal] = useState(false);
   const accountInfoModalRef = useRef(null);
 
-  // Modal: Thông tin cá nhân
   const [showProfileModal, setShowProfileModal] = useState(false);
   const profileModalRef = useRef(null);
+
+  // Modal: Chỉnh sửa thông tin cá nhân
+  const [showEditInfoModal, setShowEditInfoModal] = useState(false);
+  const editInfoModalRef = useRef(null);
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const settingsModalRef = useRef(null);
 
   console.log("DashboardProvider", showAddFriendModal);
 
@@ -28,6 +34,14 @@ const DashboardProvider = ({ children }) => {
     showProfileModal,
     setShowProfileModal,
     profileModalRef,
+
+    showEditInfoModal,
+    setShowEditInfoModal,
+    editInfoModalRef,
+
+    showSettingsModal,
+    setShowSettingsModal,
+    settingsModalRef,
 
   };
 
