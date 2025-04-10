@@ -11,11 +11,18 @@ import SettingInfoModal from "../../components/modal/SettingInfoModal";
 const sidebarLinks = [
   { title: "Profile" },
   {
-    icon: <BsChatDotsFill style={{ height: "2em", width: "2em" }} color="white" />,
+    icon: (
+      <BsChatDotsFill style={{ height: "2em", width: "2em" }} color="white" />
+    ),
     title: "Chat",
   },
   {
-    icon: <RiContactsBook3Line style={{ height: "2em", width: "2em" }} color="white" />,
+    icon: (
+      <RiContactsBook3Line
+        style={{ height: "2em", width: "2em" }}
+        color="white"
+      />
+    ),
     title: "Contact",
   },
 ];
@@ -97,7 +104,10 @@ const DashboardSideBar = () => {
           style={{ height: "64px" }}
           onClick={() => handleBottomAction("Setting")}
         >
-          <IoSettingsOutline style={{ height: "2em", width: "2em" }} color="white" />
+          <IoSettingsOutline
+            style={{ height: "2em", width: "2em" }}
+            color="white"
+          />
         </Button>
         <Button
           className="w-100 d-flex align-items-center justify-content-center p-0"
@@ -105,7 +115,10 @@ const DashboardSideBar = () => {
           style={{ height: "64px" }}
           onClick={() => handleBottomAction("Logout")}
         >
-          <IoLogOutOutline style={{ height: "2em", width: "2em" }} color="white" />
+          <IoLogOutOutline
+            style={{ height: "2em", width: "2em" }}
+            color="white"
+          />
         </Button>
       </Container>
 
