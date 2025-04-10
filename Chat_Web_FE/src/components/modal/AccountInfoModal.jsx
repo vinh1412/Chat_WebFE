@@ -3,8 +3,8 @@ import { Modal } from "react-bootstrap";
 import { useDashboardContext } from "../../context/Dashboard_context";
 
 const AccountInfoModal = ({ isOpen, onClose }) => {
-  const { setShowProfileModal } = useDashboardContext();
-  const {setShowSettingsModal} = useDashboardContext();
+  const { setShowProfileModal, setShowSettingsModal, currentUser } =
+    useDashboardContext();
 
   const handleViewProfile = () => {
     onClose(); // Đóng AccountInfoModal
@@ -13,12 +13,14 @@ const AccountInfoModal = ({ isOpen, onClose }) => {
   const handleViewSettings = () => {
     onClose();
     setTimeout(() => setShowSettingsModal(true), 200);
-  }
+  };
 
   return (
     <Modal show={isOpen} onHide={onClose} centered>
       <div className="p-3">
-        <h6 className="fw-bold mb-3">Ngô Văn Toàn</h6>
+        <h6 className="fw-bold mb-3">
+          {currentUser?.display_name || "Người dùng"}
+        </h6>
         <div className="mb-2 cursor-pointer" onClick={handleViewProfile}>
           Hồ sơ của bạn
         </div>

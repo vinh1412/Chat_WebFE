@@ -11,6 +11,8 @@ import App from "./App.jsx";
 import DashboardProvider from "./context/provider/DashboardProvider.jsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage.jsx"));
+import ProtectedRoute from "./components/routing/ProtectedRoute";
+
 const queryClient = new QueryClient();
 const LayoutDashboard = React.lazy(() =>
   import("./components/layout/LayoutDashboard.jsx")
@@ -29,7 +31,11 @@ const RegisterStepInfo = React.lazy(() =>
 // router
 const router = createBrowserRouter([
   {
-    element: <LayoutDashboard />,
+    element: (
+      <ProtectedRoute>
+        <LayoutDashboard />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "/",
