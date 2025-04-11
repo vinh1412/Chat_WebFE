@@ -1,15 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactModal from "react-modal";
 import { FaSave, FaTimes } from "react-icons/fa";
+import { useDashboardContext } from "../../context/Dashboard_context";
+import useUser from "../../hooks/useUser";
 
-const EditInfoModal = ({ isOpen, onClose, currentInfo, onSave }) => {
-  const [name, setName] = useState(currentInfo.name);
-  const [gender, setGender] = useState(currentInfo.gender);
-  const [birthdate, setBirthdate] = useState(currentInfo.birthdate);
+const EditInfoModal = ({ isOpen, onClose }) => {
+  const { currentUser, fetchUser } = useDashboardContext();
+  const [name, setName] = useState("");
+  const [gender, setGender] = useState("MALE");
+  const [birthdate, setBirthdate] = useState("");
+  const [avatar, setAvatar] = useState(null);
+  const { updateUser } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      setName(currentUser.display_name || "");
+      setGender(currentUser.gender || "MALE");
+      setBirthdate(currentUser.dob || "");
+      setAvatar(null);
+    }
+  }, [isOpen, currentUser]);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > 1048576 * 5) {
+      alert("Ảnh đại diện quá lớn! Vui lòng chọn ảnh dưới 5MB.");
+      return;
+    }
+    setAvatar(file);
+  };
 
   const handleSubmit = () => {
-    onSave({ name, gender, birthdate });
-    onClose();
+    setIsLoading(true);
+    updateUser(
+      { name, gender, birthdate, avatar },
+      {
+        onSuccess: async () => {
+          await fetchUser();
+          setIsLoading(false);
+          onClose();
+        },
+        onError: (error) => {
+          setIsLoading(false);
+          alert(
+            "Lỗi cập nhật: " + (error.response?.data?.message || error.message)
+          );
+        },
+      }
+    );
   };
 
   return (
@@ -24,21 +63,52 @@ const EditInfoModal = ({ isOpen, onClose, currentInfo, onSave }) => {
 
       <div className="mb-2">
         <label className="form-label">Tên</label>
-        <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} />
+        <input
+          type="text"
+          className="form-control"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
       </div>
 
       <div className="mb-2">
         <label className="form-label">Giới tính</label>
-        <select className="form-select" value={gender} onChange={(e) => setGender(e.target.value)}>
-          <option value="Nam">Nam</option>
-          <option value="Nữ">Nữ</option>
+        <select
+          className="form-select"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="MALE">Nam</option>
+          <option value="FEMALE">Nữ</option>
         </select>
       </div>
 
       <div className="mb-4">
         <label className="form-label">Ngày sinh</label>
-        <input type="date" className="form-control" value={birthdate} onChange={(e) => setBirthdate(e.target.value)} />
+        <input
+          type="date"
+          className="form-control"
+          value={birthdate}
+          onChange={(e) => setBirthdate(e.target.value)}
+        />
       </div>
+
+      <div className="mb-3">
+        <label className="form-label">Ảnh đại diện</label>
+        <input
+          type="file"
+          className="form-control"
+          accept="image/*"
+          onChange={handleAvatarChange}
+        />
+      </div>
+      {isLoading && (
+        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-white bg-opacity-75">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Đang cập nhật...</span>
+          </div>
+        </div>
+      )}
 
       <div className="text-end">
         <button className="btn btn-secondary me-2" onClick={onClose}>

@@ -1,44 +1,54 @@
 import React, { useState, useRef } from "react";
 import ReactModal from "react-modal";
 import defaultCover from "../../assets/images/hinh-nen-buon-danbo.jpg";
-import defaultAvatar from "../../assets/images/hinh-nen-buon-danbo.jpg";
+// import defaultAvatar from "../../assets/images/hinh-nen-buon-danbo.jpg";
 import { FaCamera, FaSave, FaEdit, FaTimes } from "react-icons/fa";
 import EditInfoModal from "./EditInfoModal";
 import { useDashboardContext } from "../../context/Dashboard_context";
-import { current } from "@reduxjs/toolkit";
+import useUser from "../../hooks/useUser";
+// import { current } from "@reduxjs/toolkit";
 
 const ProfileModal = ({ isOpen, onClose }) => {
-  const { currentUser } = useDashboardContext();
+  const { currentUser, fetchUser } = useDashboardContext();
+  const { updateUser } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
 
   const fileInputRef = useRef(null);
-  //   const [avatar, setAvatar] = useState(currentUser?.avatar || defaultAvatar);
   console.log("currentUser", currentUser);
-  // const [isEditingName, setIsEditingName] = useState(false);
-  //   const [name, setName] = useState(currentUser?.display_name || "");
-  //   const [gender, setGender] = useState(currentUser?.gender || "");
-  //   const [birthdate, setBirthdate] = useState(currentUser?.dob || "");
   const [showEditModal, setShowEditModal] = useState(false);
 
   const handleChangeAvatar = () => {
     fileInputRef.current?.click();
   };
 
-  //   const handleFileChange = (e) => {
-  //     const file = e.target.files[0];
-  //     if (file) {
-  //       const reader = new FileReader();
-  //       reader.onloadend = () => {
-  //         setAvatar(reader.result);
-  //       };
-  //       reader.readAsDataURL(file);
-  //     }
-  //   };
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsLoading(true);
+      updateUser(
+        {
+          name: currentUser.display_name,
+          gender: currentUser.gender,
+          birthdate: currentUser.dob,
+          avatar: file,
+        },
+        {
+          onSuccess: () => {
+            fetchUser(); // Cập nhật lại dữ liệu từ DB
+            setIsLoading(false);
+          },
+          onError: (error) => {
+            setIsLoading(false);
+            alert(
+              "Lỗi cập nhật ảnh đại diện: " +
+                (error.response?.data?.message || error.message)
+            );
+          },
+        }
+      );
+    }
+  };
 
-  //   const handleSaveInfo = (newInfo) => {
-  //     setName(newInfo.name);
-  //     setGender(newInfo.gender);
-  //     setBirthdate(newInfo.birthdate);
-  //   };
   if (currentUser) {
     return (
       <ReactModal
@@ -104,7 +114,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 type="file"
                 accept="image/*"
                 ref={fileInputRef}
-                //   onChange={handleFileChange}
+                onChange={handleFileChange}
                 style={{ display: "none" }}
               />
             </div>
@@ -136,7 +146,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
             <h6 className="text-muted mb-3">Thông tin cá nhân</h6>
             <div>
               <strong>Giới tính:</strong>{" "}
-              {currentUser?.gender || "Chưa cập nhật"}
+              {currentUser?.gender === "MALE" ? "Nam" : "Nữ"}
             </div>
             <div>
               <strong>Ngày sinh:</strong>{" "}
@@ -172,8 +182,17 @@ const ProfileModal = ({ isOpen, onClose }) => {
             gender: currentUser.gender,
             birthdate: currentUser.dob,
           }}
-          // onSave={handleSaveInfo}
         />
+        {isLoading && (
+          <div
+            className="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center rounded-4"
+            style={{ zIndex: 10 }}
+          >
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
       </ReactModal>
     );
   }

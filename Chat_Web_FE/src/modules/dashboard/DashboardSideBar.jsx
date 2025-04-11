@@ -65,20 +65,17 @@ const DashboardSideBar = () => {
                 }}
                 onClick={() => setIsAccountModalOpen(true)}
               >
-                <div
+                <Image
+                  src={currentUser?.avatar || defaultCover}
+                  alt="avatar"
+                  className="img-fluid"
                   style={{
-                    width: "48px",
-                    height: "48px",
+                    width: "50px",
+                    height: "50px",
                     borderRadius: "50%",
-                    overflow: "hidden",
+                    objectFit: "cover",
                   }}
-                >
-                  <Image
-                    src={currentUser?.avatar || defaultCover}
-                    alt="avatar"
-                    className="img-fluid object-fit-cover"
-                  />
-                </div>
+                />
               </Button>
             );
           } else {
