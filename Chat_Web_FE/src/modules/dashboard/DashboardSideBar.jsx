@@ -7,7 +7,8 @@ import { setCurrentTab } from "../../redux/slice/chatSlice";
 import { Container, Button, Image } from "react-bootstrap";
 import AccountInfoModal from "../../components/modal/AccountInfoModal";
 import SettingInfoModal from "../../components/modal/SettingInfoModal";
-
+import defaultCover from "../../assets/images/hinh-nen-buon-danbo.jpg";
+import { useDashboardContext } from "../../context/Dashboard_context";
 const sidebarLinks = [
   { title: "Profile" },
   {
@@ -32,6 +33,7 @@ const DashboardSideBar = () => {
   const currentTab = useSelector((state) => state.chat.currentTab);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
+  const { currentUser } = useDashboardContext();
 
   // Bottom buttons handler
   const handleBottomAction = (title) => {
@@ -72,7 +74,7 @@ const DashboardSideBar = () => {
                   }}
                 >
                   <Image
-                    src="/images/avatar/avtdefault.jpg"
+                    src={currentUser?.avatar || defaultCover}
                     alt="avatar"
                     className="img-fluid object-fit-cover"
                   />
