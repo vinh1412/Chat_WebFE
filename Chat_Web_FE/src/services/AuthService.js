@@ -47,8 +47,32 @@ export const verifyOtpService = async (idToken) => {
   return response.data;
 };
 
-export const registerService = async (data) => {
-  const response = await axiosInstance.post("/auth/sign-up", data);
+export const registerService = async ({
+  phone,
+  display_name,
+  password,
+  avatar,
+}) => {
+  const formData = new FormData();
+
+  const signUpRequest = {
+    phone,
+    display_name,
+    password,
+  };
+
+  formData.append("signUpRequest", JSON.stringify(signUpRequest));
+
+  if (avatar) {
+    formData.append("avatar", avatar);
+  }
+
+  const response = await axiosInstance.post("/auth/sign-up", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
   return response.data;
 };
 

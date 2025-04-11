@@ -77,12 +77,27 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
 
   const register = useMutation({
     mutationFn: (formData) => registerService(formData),
+    onSuccess: (response) => {
+      if (response.status === "SUCCESS") {
+        alert("Đăng ký thành công!");
+        setStep("login");
+      } else {
+        alert("Đăng ký thất bại!");
+      }
+    },
+    onError: (error) => {
+      console.error("Lỗi đăng ký:", error);
+      alert(
+        "Đăng ký thất bại: " + (error.response?.data?.message || error.message)
+      );
+    },
   });
   const resetPassword = useMutation({
     mutationFn: (data) => resetPasswordService(data),
     onSuccess: (res) => {
       if (res.status === "SUCCESS") {
         alert("Đặt lại mật khẩu thành công!");
+
         setStep && setStep("login");
       } else {
         alert("Đặt lại mật khẩu thất bại!");
