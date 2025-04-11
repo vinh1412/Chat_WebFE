@@ -91,3 +91,8 @@ export const refreshTokenService = async (refreshToken) => {
   console.log("refreshTokenService", response.data);
   return response.data.response;
 };
+
+export const logoutService = async () => {
+  const response = await axiosInstance.post("/auth/logout");
+  return response.data;
+};

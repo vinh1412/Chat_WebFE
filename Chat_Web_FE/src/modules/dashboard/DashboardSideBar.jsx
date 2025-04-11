@@ -9,6 +9,8 @@ import AccountInfoModal from "../../components/modal/AccountInfoModal";
 import SettingInfoModal from "../../components/modal/SettingInfoModal";
 import defaultCover from "../../assets/images/hinh-nen-buon-danbo.jpg";
 import { useDashboardContext } from "../../context/Dashboard_context";
+import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 const sidebarLinks = [
   { title: "Profile" },
   {
@@ -34,13 +36,24 @@ const DashboardSideBar = () => {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const { currentUser } = useDashboardContext();
+  const navigate = useNavigate();
+  const { handleLogout } = useAuth();
 
   // Bottom buttons handler
   const handleBottomAction = (title) => {
     if (title === "Setting") setIsSettingModalOpen(true);
     if (title === "Logout") {
-      console.log("Logging out...");
-      // TODO: Thêm logic logout ở đây nếu cần
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear(); // Xóa captcha nếu còn
+          delete window.recaptchaVerifier;
+        } catch (error) {
+          console.warn("Không thể xóa recaptchaVerifier:", error);
+        }
+      }
+
+      handleLogout(); // Xóa token, gọi API logout nếu cần
+      navigate("/login"); // Điều hướng về trang đăng nhập
     }
   };
 
