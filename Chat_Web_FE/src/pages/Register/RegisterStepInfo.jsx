@@ -21,7 +21,7 @@ const RegisterStepInfo = () => {
     }
 
     register(
-      { phone, display_name: displayName, password },
+      { phone, display_name: displayName, password, avatar: null },
       {
         onSuccess: () => {
           alert("Đăng ký thành công!");

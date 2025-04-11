@@ -21,10 +21,18 @@ const AccountInfoModal = ({ isOpen, onClose }) => {
         <h6 className="fw-bold mb-3">
           {currentUser?.display_name || "Người dùng"}
         </h6>
-        <div className="mb-2 cursor-pointer" onClick={handleViewProfile}>
+        <div
+          className="mb-2 cursor-pointer"
+          style={{ cursor: "pointer" }}
+          onClick={handleViewProfile}
+        >
           Hồ sơ của bạn
         </div>
-        <div className="mb-2 cursor-pointer" onClick={handleViewSettings}>
+        <div
+          className="mb-2 cursor-pointer"
+          style={{ cursor: "pointer" }}
+          onClick={handleViewSettings}
+        >
           Cài đặt
         </div>
       </div>
