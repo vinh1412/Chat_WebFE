@@ -5,6 +5,7 @@ import {
   verifyOtpService,
   registerService,
   resetPasswordService,
+  logoutService,
 } from "../services/AuthService";
 import { auth } from "../config/firebaseConfig";
 
@@ -77,20 +78,6 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
 
   const register = useMutation({
     mutationFn: (formData) => registerService(formData),
-    onSuccess: (response) => {
-      if (response.status === "SUCCESS") {
-        alert("Đăng ký thành công!");
-        setStep("login");
-      } else {
-        alert("Đăng ký thất bại!");
-      }
-    },
-    onError: (error) => {
-      console.error("Lỗi đăng ký:", error);
-      alert(
-        "Đăng ký thất bại: " + (error.response?.data?.message || error.message)
-      );
-    },
   });
   const resetPassword = useMutation({
     mutationFn: (data) => resetPasswordService(data),
@@ -111,12 +98,26 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
       );
     },
   });
+
+  const handleLogout = () => {
+    logoutService()
+      .then(() => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        queryClient.invalidateQueries(["user"]);
+      })
+      .catch((error) => {
+        console.error("Lỗi đăng xuất:", error);
+      });
+  };
+
   return {
     login: login.mutate,
     sendOtp: sendOtp.mutate,
     verifyOtp: verifyOtp.mutate,
     register: register.mutate,
     resetPassword: resetPassword.mutate,
+    handleLogout,
   };
 };
 
