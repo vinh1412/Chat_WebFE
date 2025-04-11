@@ -7,15 +7,23 @@ import { setCurrentTab } from "../../redux/slice/chatSlice";
 import { Container, Button, Image } from "react-bootstrap";
 import AccountInfoModal from "../../components/modal/AccountInfoModal";
 import SettingInfoModal from "../../components/modal/SettingInfoModal";
-
+import defaultCover from "../../assets/images/hinh-nen-buon-danbo.jpg";
+import { useDashboardContext } from "../../context/Dashboard_context";
 const sidebarLinks = [
   { title: "Profile" },
   {
-    icon: <BsChatDotsFill style={{ height: "2em", width: "2em" }} color="white" />,
+    icon: (
+      <BsChatDotsFill style={{ height: "2em", width: "2em" }} color="white" />
+    ),
     title: "Chat",
   },
   {
-    icon: <RiContactsBook3Line style={{ height: "2em", width: "2em" }} color="white" />,
+    icon: (
+      <RiContactsBook3Line
+        style={{ height: "2em", width: "2em" }}
+        color="white"
+      />
+    ),
     title: "Contact",
   },
 ];
@@ -25,6 +33,7 @@ const DashboardSideBar = () => {
   const currentTab = useSelector((state) => state.chat.currentTab);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
+  const { currentUser } = useDashboardContext();
 
   // Bottom buttons handler
   const handleBottomAction = (title) => {
@@ -56,20 +65,17 @@ const DashboardSideBar = () => {
                 }}
                 onClick={() => setIsAccountModalOpen(true)}
               >
-                <div
+                <Image
+                  src={currentUser?.avatar || defaultCover}
+                  alt="avatar"
+                  className="img-fluid"
                   style={{
-                    width: "48px",
-                    height: "48px",
+                    width: "50px",
+                    height: "50px",
                     borderRadius: "50%",
-                    overflow: "hidden",
+                    objectFit: "cover",
                   }}
-                >
-                  <Image
-                    src="/images/avatar/avtdefault.jpg"
-                    alt="avatar"
-                    className="img-fluid object-fit-cover"
-                  />
-                </div>
+                />
               </Button>
             );
           } else {
@@ -97,7 +103,10 @@ const DashboardSideBar = () => {
           style={{ height: "64px" }}
           onClick={() => handleBottomAction("Setting")}
         >
-          <IoSettingsOutline style={{ height: "2em", width: "2em" }} color="white" />
+          <IoSettingsOutline
+            style={{ height: "2em", width: "2em" }}
+            color="white"
+          />
         </Button>
         <Button
           className="w-100 d-flex align-items-center justify-content-center p-0"
@@ -105,7 +114,10 @@ const DashboardSideBar = () => {
           style={{ height: "64px" }}
           onClick={() => handleBottomAction("Logout")}
         >
-          <IoLogOutOutline style={{ height: "2em", width: "2em" }} color="white" />
+          <IoLogOutOutline
+            style={{ height: "2em", width: "2em" }}
+            color="white"
+          />
         </Button>
       </Container>
 

@@ -12,6 +12,19 @@ export const removeAccessToken = () => {
   localStorage.removeItem("accessToken"); // Xóa token khỏi localStorage
 };
 
+export const saveRefreshToken = (refreshToken) => {
+  localStorage.setItem("refreshToken", refreshToken);
+};
+
+export const getRefreshToken = () => {
+  return localStorage.getItem("refreshToken");
+};
+
+export const removeTokens = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+};
+
 export const loginService = async (formLogin) => {
   const response = await axiosInstance.post("/auth/sign-in", formLogin);
   return response.data; // Trả về dữ liệu từ server
@@ -45,4 +58,12 @@ export const resetPasswordService = async ({ idToken, newPassword }) => {
     newPassword,
   });
   return response.data;
+};
+
+export const refreshTokenService = async (refreshToken) => {
+  const response = await axiosInstance.post("/auth/refresh-token", {
+    refreshToken,
+  });
+  console.log("refreshTokenService", response.data);
+  return response.data.response;
 };

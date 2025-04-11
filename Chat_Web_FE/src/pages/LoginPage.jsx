@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import { useDashboardContext } from "../context/Dashboard_context";
+import { getCurrentUserService } from "../services/UserService";
 
 const LoginPage = () => {
   const [phone, setPhone] = useState("+84862058920");
-  const [password, setPassword] = useState("newpassword123");
+  const [password, setPassword] = useState("12345678");
   const navigate = useNavigate();
+  const { setCurrentUser } = useDashboardContext();
+
   const { login } = useAuth();
 
   const handleLogin = (e) => {
@@ -17,8 +21,10 @@ const LoginPage = () => {
     };
 
     login(formLogin, {
-      onSuccess: () => {
+      onSuccess: async () => {
         console.log("Đăng nhập thành công");
+        const user = await getCurrentUserService();
+        setCurrentUser(user);
         navigate("/");
       },
       onError: (error) => {

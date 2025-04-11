@@ -16,6 +16,7 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
     onSuccess: (response) => {
       // Lưu token vào localStorage hoặc state
       localStorage.setItem("accessToken", response.response.token);
+      localStorage.setItem("refreshToken", response.response.refreshToken);
       // Cập nhật lại queryClient để làm mới dữ liệu
       queryClient.invalidateQueries(["user"]);
     },
