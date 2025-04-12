@@ -26,8 +26,15 @@ export const removeTokens = () => {
 };
 
 export const loginService = async (formLogin) => {
-  const response = await axiosInstance.post("/auth/sign-in", formLogin);
-  return response.data; // Trả về dữ liệu từ server
+  try {
+    const response = await axiosInstance.post("/auth/sign-in", formLogin);
+    return response.data;
+  } catch (error) {
+    console.error("Login error:", error.response?.data || error.message); // Giữ log để debug
+    throw new Error(
+      error.response?.data?.message || "Sai số điện thoại hoặc mật khẩu"
+    );
+  }
 };
 
 export const sendOtpService = async (phone, recaptchaVerifier) => {
@@ -53,27 +60,29 @@ export const registerService = async ({
   password,
   avatar,
 }) => {
-  const formData = new FormData();
-
-  const signUpRequest = {
-    phone,
-    display_name,
-    password,
-  };
-
-  formData.append("signUpRequest", JSON.stringify(signUpRequest));
-
-  if (avatar) {
-    formData.append("avatar", avatar);
+  try {
+    const formData = new FormData();
+    const signUpRequest = {
+      phone,
+      display_name,
+      password,
+    };
+    formData.append("signUpRequest", JSON.stringify(signUpRequest));
+    if (avatar) {
+      formData.append("avatar", avatar);
+    }
+    const response = await axiosInstance.post("/auth/sign-up", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Register error:", error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message || "Không thể đăng ký tài khoản"
+    );
   }
-
-  const response = await axiosInstance.post("/auth/sign-up", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-  return response.data;
 };
 
 export const resetPasswordService = async ({ idToken, newPassword }) => {

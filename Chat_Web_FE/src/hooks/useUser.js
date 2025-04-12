@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getCurrentUserService,
   updateUserService,
+  checkPhoneExistsService,
 } from "../services/UserService";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { toast } from "react-toastify";
 
 const useUser = () => {
   const navigate = useNavigate();
@@ -23,13 +25,13 @@ const useUser = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Redirect nếu token hết hạn
-  useEffect(() => {
-    if (isError && error?.response?.status === 401) {
-      localStorage.removeItem("accessToken");
-      navigate("/login");
-    }
-  }, [isError, error, navigate]);
+  // // Redirect nếu token hết hạn
+  // useEffect(() => {
+  //   if (isError && error?.response?.status === 401) {
+  //     localStorage.removeItem("accessToken");
+  //     navigate("/login");
+  //   }
+  // }, [isError, error, navigate]);
 
   // Mutation để cập nhật user
   const {
@@ -43,6 +45,21 @@ const useUser = () => {
       queryClient.invalidateQueries(["currentUser"]);
     },
   });
+
+  // Mutation để kiểm tra số điện thoại đã tồn tại hay chưa
+  const {
+    mutate: checkPhoneExists,
+    mutateAsync: checkPhoneExistsAsync,
+    isLoading: isCheckingPhone,
+    isError: isCheckPhoneError,
+    error: checkPhoneError,
+  } = useMutation({
+    mutationFn: checkPhoneExistsService,
+    onError: (error) => {
+      toast.error(error.message || "Lỗi khi kiểm tra số điện thoại");
+    },
+  });
+
   return {
     currentUser,
     isLoading,
@@ -52,6 +69,11 @@ const useUser = () => {
     isUpdating,
     isUpdateError,
     updateError,
+    checkPhoneExists,
+    checkPhoneExistsAsync,
+    isCheckingPhone,
+    isCheckPhoneError,
+    checkPhoneError,
   };
 };
 

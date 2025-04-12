@@ -8,6 +8,7 @@ import {
   logoutService,
 } from "../services/AuthService";
 import { auth } from "../config/firebaseConfig";
+import { toast } from "react-toastify";
 
 const useAuth = ({ setVerificationId, setStep } = {}) => {
   const queryClient = useQueryClient();
@@ -15,11 +16,22 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
   const login = useMutation({
     mutationFn: (formLogin) => loginService(formLogin),
     onSuccess: (response) => {
+      toast.success("Đăng nhập thành công!", {
+        position: "top-center",
+        autoClose: 500,
+      });
       // Lưu token vào localStorage hoặc state
       localStorage.setItem("accessToken", response.response.token);
       localStorage.setItem("refreshToken", response.response.refreshToken);
+
       // Cập nhật lại queryClient để làm mới dữ liệu
       queryClient.invalidateQueries(["user"]);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Đăng nhập thất bại", {
+        position: "top-center",
+        autoClose: 3000,
+      });
     },
   });
   const sendOtp = useMutation({
@@ -39,11 +51,17 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
     onSuccess: (verificationId) => {
       setVerificationId(verificationId);
       setStep("verifyOtp");
-      alert("OTP đã được gửi!");
+      toast.success("OTP đã được gửi!", {
+        position: "top-center",
+        autoClose: 1000,
+      });
     },
     onError: (error) => {
+      toast.error("Gửi OTP thất bại: " + error.message || "Gửi OTP thất bại", {
+        position: "top-center",
+        autoClose: 3000,
+      });
       console.error("Lỗi gửi OTP:", error);
-      alert("Gửi OTP thất bại: " + error.message);
     },
   });
 
@@ -61,41 +79,73 @@ const useAuth = ({ setVerificationId, setStep } = {}) => {
     },
     onSuccess: (response) => {
       if (response.status === "SUCCESS") {
-        alert("Xác thực thành công. Tiếp tục đăng ký.");
+        toast.success("Xác thực thành công. Tiếp tục đăng ký.", {
+          position: "top-center",
+          autoClose: 1000,
+        });
         setStep("registerAccount");
       } else {
-        alert("Số điện thoại chưa được đăng ký.");
+        toast.error("Số điện thoại chưa được đăng ký.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
       }
     },
     onError: (error) => {
       console.error("Lỗi xác thực OTP:", error);
-      alert(
+      toast.error(
         "Xác thực OTP thất bại: " +
-          (error.response?.data?.message || error.message)
+          (error.response?.data?.message || error.message),
+        {
+          position: "top-center",
+          autoClose: 3000,
+        }
       );
     },
   });
 
   const register = useMutation({
     mutationFn: (formData) => registerService(formData),
+    onSuccess: () => {
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.", {
+        position: "top-center",
+        autoClose: 2000,
+        icon: "🎉",
+      });
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2200);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Đăng ký thất bại", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    },
   });
   const resetPassword = useMutation({
     mutationFn: (data) => resetPasswordService(data),
     onSuccess: (res) => {
       if (res.status === "SUCCESS") {
-        alert("Đặt lại mật khẩu thành công!");
+        toast.success("Đặt lại mật khẩu thành công!", {
+          position: "top-center",
+          autoClose: 1000,
+        });
 
         setStep && setStep("login");
       } else {
-        alert("Đặt lại mật khẩu thất bại!");
+        toast.error("Đặt lại mật khẩu thất bại!", {
+          position: "top-center",
+          autoClose: 3000,
+        });
       }
     },
     onError: (error) => {
+      toast.error(error.message || "Đặt lại mật khẩu thất bại", {
+        position: "top-center",
+        autoClose: 3000,
+      });
       console.error("Lỗi đặt lại mật khẩu:", error);
-      alert(
-        "Đặt lại mật khẩu thất bại: " +
-          (error?.response?.data?.message || error.message)
-      );
     },
   });
 
