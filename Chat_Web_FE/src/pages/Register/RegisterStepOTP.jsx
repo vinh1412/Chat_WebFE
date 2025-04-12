@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import formatPhoneNumber from "../../utils/FormatPhoneNumber";
 
 const RegisterStepOTP = () => {
   const [otp, setOtp] = useState("");
@@ -9,10 +10,12 @@ const RegisterStepOTP = () => {
 
   const { phone, verificationId } = location.state || {};
 
+  const formattedPhone = formatPhoneNumber(phone);
+
   const { verifyOtp } = useAuth({
     setVerificationId: () => {},
     setStep: () => {
-      navigate("/register/info", { state: { phone } });
+      navigate("/register/info", { state: { phone: formattedPhone } });
     },
   });
 

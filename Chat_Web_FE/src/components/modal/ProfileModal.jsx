@@ -7,7 +7,11 @@ import EditInfoModal from "./EditInfoModal";
 import { useDashboardContext } from "../../context/Dashboard_context";
 import useUser from "../../hooks/useUser";
 // import { current } from "@reduxjs/toolkit";
-import {connectWebSocket, disconnectWebSocket} from "../../services/SocketService"
+import {
+  connectWebSocket,
+  disconnectWebSocket,
+} from "../../services/SocketService";
+import displayPhoneNumber from "../../utils/DisplayPhoneNumber";
 import { updateProfile } from "firebase/auth";
 
 const ProfileModal = ({ isOpen, onClose }) => {
@@ -19,11 +23,9 @@ const ProfileModal = ({ isOpen, onClose }) => {
   console.log("currentUser", currentUser);
   const [showEditModal, setShowEditModal] = useState(false);
 
-
   // connect websocket
   React.useEffect(() => {
     if (currentUser?.id) {
-      
       // function để xử lý khi nhận được tin nhắn từ WebSocket
       const handleMessageReceived = (updatedProfile) => {
         console.log("Received message:", updatedProfile);
@@ -32,21 +34,20 @@ const ProfileModal = ({ isOpen, onClose }) => {
           ...prevUser,
           ...updatedProfile,
         }));
-      }
+      };
       const client = connectWebSocket(currentUser?.id, handleMessageReceived); // Kết nối WebSocket với user.id
-            
+
       return () => {
-          disconnectWebSocket(client); // Ngắt kết nối khi component unmount
-      }
+        disconnectWebSocket(client); // Ngắt kết nối khi component unmount
+      };
     }
   }, [currentUser?.id, setCurrentUser]);
 
   const handleChangeAvatar = () => {
     fileInputRef.current?.click();
   };
-
-
-
+  console.log("Phone", currentUser?.phone);
+  console.log("FormatPhone", displayPhoneNumber(currentUser?.phone));
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -61,7 +62,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         {
           onSuccess: () => {
             fetchUser(); // Cập nhật lại dữ liệu từ DB
-           
+
             setIsLoading(false);
           },
           onError: (error) => {
@@ -138,7 +139,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 />
               </button>
               <input
-                type="file" 
+                type="file"
                 accept="image/*"
                 ref={fileInputRef}
                 onChange={handleFileChange}
@@ -183,7 +184,9 @@ const ProfileModal = ({ isOpen, onClose }) => {
             </div>
             <div>
               <strong>Điện thoại:</strong>{" "}
-              {currentUser?.phone || "Chưa cập nhật"}
+              {currentUser?.phone
+                ? displayPhoneNumber(currentUser.phone)
+                : "Chưa cập nhật"}
             </div>
             <p className="text-muted small mt-2">
               Chỉ bạn bè có lưu số của bạn trong danh bạ mới xem được số này.

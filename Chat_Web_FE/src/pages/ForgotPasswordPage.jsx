@@ -17,19 +17,43 @@ import {
   Paper,
   Stack,
 } from "@mui/material";
+import { toast } from "react-toastify";
+import formatPhoneNumber from "../utils/FormatPhoneNumber";
+import useUser from "../hooks/useUser";
 
 const ForgotPasswordPage = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [verificationId, setVerificationId] = useState("");
   const [step, setStep] = useState("sendOtp");
   const navigate = useNavigate();
 
   const { resetPassword } = useAuth({ setStep });
+  const { checkPhoneExistsAsync } = useUser();
 
   const handleSendOtp = async () => {
     try {
+      const formattedPhone = formatPhoneNumber(phone.trim());
+      const phoneRegex = /^(?:\+84|0)(\d{9})$/;
+
+      if (!phoneRegex.test(formattedPhone)) {
+        return toast.error(
+          "Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng và đủ 10 số.",
+          { position: "top-center", autoClose: 2000 }
+        );
+      }
+
+      // Kiểm tra số điện thoại tồn tại
+      const exists = await checkPhoneExistsAsync(formattedPhone);
+      if (!exists) {
+        return toast.error("Số điện thoại chưa được đăng ký.", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }
+
       if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new RecaptchaVerifier(
           auth,
@@ -40,20 +64,55 @@ const ForgotPasswordPage = () => {
 
       const confirmation = await signInWithPhoneNumber(
         auth,
-        phone,
+        formattedPhone,
         window.recaptchaVerifier
       );
+
       setVerificationId(confirmation.verificationId);
       setStep("verifyOtp");
-      alert("OTP đã được gửi!");
+      toast.success("OTP đã được gửi!", {
+        position: "top-center",
+        autoClose: 1000,
+      });
     } catch (error) {
       console.error("Gửi OTP lỗi:", error);
-      alert("Không thể gửi OTP: " + error.message);
+      toast.error("Gửi OTP thất bại: " + error.message, {
+        position: "top-center",
+        autoClose: 3000,
+      });
     }
   };
 
   const handleVerifyOtp = async () => {
     try {
+      if (!otp) {
+        return toast.error("Vui lòng nhập mã OTP", {
+          position: "top-center",
+          autoClose: 1000,
+        });
+      }
+
+      if (!newPassword) {
+        return toast.error("Vui lòng nhập mật khẩu mới", {
+          position: "top-center",
+          autoClose: 1000,
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return toast.error("Mật khẩu mới phải có ít nhất 8 ký tự", {
+          position: "top-center",
+          autoClose: 1000,
+        });
+      }
+
+      if (!confirmPassword) {
+        return toast.error("Vui lòng xác nhận mật khẩu mới", {
+          position: "top-center",
+          autoClose: 1000,
+        });
+      }
+
       const credential = PhoneAuthProvider.credential(verificationId, otp);
       const userCredential = await signInWithCredential(auth, credential);
       const idToken = await userCredential.user.getIdToken();
@@ -63,7 +122,10 @@ const ForgotPasswordPage = () => {
       navigate("/login");
     } catch (error) {
       console.error("Xác thực OTP lỗi:", error);
-      alert("Xác thực OTP thất bại: " + error.message);
+      toast.error("Xác thực OTP thất bại: " + error.message, {
+        position: "top-center",
+        autoClose: 2000,
+      });
     }
   };
 
@@ -105,10 +167,36 @@ const ForgotPasswordPage = () => {
                 label="Mật khẩu mới"
                 type="password"
                 variant="outlined"
+                className={`form-control ${
+                  newPassword && newPassword.length < 8 ? "is-invalid" : ""
+                }`}
                 fullWidth
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
+              {newPassword && newPassword.length < 8 && (
+                <div className="invalid-feedback d-block">
+                  Mật khẩu phải có ít nhất 8 ký tự.
+                </div>
+              )}
+              <TextField
+                label="Mật khẩu xác nhận"
+                type="password"
+                variant="outlined"
+                className={`form-control ${
+                  confirmPassword && confirmPassword !== newPassword
+                    ? "is-invalid"
+                    : ""
+                }`}
+                fullWidth
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {confirmPassword && confirmPassword !== newPassword && (
+                <div className="invalid-feedback d-block">
+                  Mật khẩu xác nhận không khớp.
+                </div>
+              )}
               <Button
                 variant="contained"
                 color="primary"

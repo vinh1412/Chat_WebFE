@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import formatPhoneNumber from "../../utils/FormatPhoneNumber";
+import { toast } from "react-toastify";
+import useUser from "../../hooks/useUser";
 
 const RegisterStepPhone = () => {
   const [phone, setPhone] = useState("");
@@ -13,24 +16,48 @@ const RegisterStepPhone = () => {
     },
     setStep: () => {}, // Không cần trong bước này
   });
+  const { checkPhoneExistsAsync } = useUser();
+  const handleSendOTP = async () => {
+    const rawPhone = phone.trim();
 
-  const formatPhoneNumber = (phone) => {
-    // Chuyển đổi số điện thoại thành định dạng quốc tế
-    if (phone.startsWith("0")) {
-      return "+84" + phone.slice(1);
-    } else if (phone.startsWith("+84")) {
-      if (phone[3] === "0") {
-        return "+84" + phone.slice(4);
-      }
-      return phone;
-    } else {
-      return "+84" + phone;
+    // Regex chỉ cho phép số, có thể bắt đầu bằng +84 hoặc 0
+    const phoneRegex = /^(?:\+84|0)(\d{9})$/;
+
+    if (!rawPhone) {
+      return toast.error("Vui lòng nhập số điện thoại", {
+        position: "top-center",
+        autoClose: 3000,
+      });
     }
-  };
 
-  const handleSendOTP = () => {
-    if (!phone) return alert("Vui lòng nhập số điện thoại");
-    sendOtp({ phone: formatPhoneNumber(phone) });
+    if (!phoneRegex.test(rawPhone)) {
+      return toast.error(
+        "Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng và đủ 10 số.",
+        {
+          position: "top-center",
+          autoClose: 4000,
+        }
+      );
+    }
+    const formattedPhone = formatPhoneNumber(rawPhone);
+
+    try {
+      const exists = await checkPhoneExistsAsync(formattedPhone);
+      if (exists) {
+        return toast.error("Số điện thoại đã được đăng ký.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      }
+
+      // Gửi OTP nếu số chưa tồn tại
+      sendOtp({ phone: formattedPhone });
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi kiểm tra số điện thoại", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    }
   };
 
   return (
