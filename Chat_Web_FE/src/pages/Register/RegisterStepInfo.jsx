@@ -1,22 +1,37 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 const RegisterStepInfo = () => {
-  const [fullName, setFullName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
 
-  const phone = location.state?.phone || "";
+  const { phone } = location.state || {};
+  const { register } = useAuth({}); // Không cần setVerificationId hoặc setStep ở bước này
 
   const handleRegister = () => {
-    if (password !== confirmPassword) {
-      alert("Mật khẩu không khớp!");
-      return;
+    if (!displayName || !password || !confirmPassword) {
+      return alert("Vui lòng nhập đầy đủ thông tin");
     }
-    console.log("Đăng ký thành công:", { phone, fullName, password });
-    navigate("/");
+    if (password !== confirmPassword) {
+      return alert("Mật khẩu không khớp!");
+    }
+
+    register(
+      { phone, display_name: displayName, password, avatar: null },
+      {
+        onSuccess: () => {
+          alert("Đăng ký thành công!");
+          navigate("/login");
+        },
+        onError: (error) => {
+          alert("Đăng ký thất bại: " + error.message);
+        },
+      }
+    );
   };
 
   return (
@@ -27,8 +42,8 @@ const RegisterStepInfo = () => {
           type="text"
           className="form-control mb-3"
           placeholder="Họ tên"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
         />
         <input
           type="password"
