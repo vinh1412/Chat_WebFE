@@ -29,6 +29,7 @@
     "react-phone-input-2": "^2.15.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.5.0",
+    "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
     "sockjs-client": "^1.6.1",
     "vite-plugin-node-polyfills": "^0.23.0"
