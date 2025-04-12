@@ -7,9 +7,11 @@ import EditInfoModal from "./EditInfoModal";
 import { useDashboardContext } from "../../context/Dashboard_context";
 import useUser from "../../hooks/useUser";
 // import { current } from "@reduxjs/toolkit";
+import {connectWebSocket, disconnectWebSocket} from "../../services/SocketService"
+import { updateProfile } from "firebase/auth";
 
 const ProfileModal = ({ isOpen, onClose }) => {
-  const { currentUser, fetchUser } = useDashboardContext();
+  const { currentUser, fetchUser, setCurrentUser } = useDashboardContext();
   const { updateUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,9 +19,33 @@ const ProfileModal = ({ isOpen, onClose }) => {
   console.log("currentUser", currentUser);
   const [showEditModal, setShowEditModal] = useState(false);
 
+
+  // connect websocket
+  React.useEffect(() => {
+    if (currentUser?.id) {
+      
+      // function để xử lý khi nhận được tin nhắn từ WebSocket
+      const handleMessageReceived = (updatedProfile) => {
+        console.log("Received message:", updatedProfile);
+        // Cập nhật lại thông tin người dùng trong state
+        setCurrentUser((prevUser) => ({
+          ...prevUser,
+          ...updatedProfile,
+        }));
+      }
+      const client = connectWebSocket(currentUser?.id, handleMessageReceived); // Kết nối WebSocket với user.id
+            
+      return () => {
+          disconnectWebSocket(client); // Ngắt kết nối khi component unmount
+      }
+    }
+  }, [currentUser?.id, setCurrentUser]);
+
   const handleChangeAvatar = () => {
     fileInputRef.current?.click();
   };
+
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -35,6 +61,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         {
           onSuccess: () => {
             fetchUser(); // Cập nhật lại dữ liệu từ DB
+           
             setIsLoading(false);
           },
           onError: (error) => {
@@ -111,7 +138,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 />
               </button>
               <input
-                type="file"
+                type="file" 
                 accept="image/*"
                 ref={fileInputRef}
                 onChange={handleFileChange}
