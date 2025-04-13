@@ -174,7 +174,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
             <h6 className="text-muted mb-3">Thông tin cá nhân</h6>
             <div>
               <strong>Giới tính:</strong>{" "}
-              {currentUser?.gender === "MALE" ? "Nam" : "Nữ"}
+              {currentUser?.gender === "MALE" ? "Nam" : currentUser?.gender ? "Nữ" : "Chưa cập nhật"}
             </div>
             <div>
               <strong>Ngày sinh:</strong>{" "}
