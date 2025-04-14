@@ -1,23 +1,51 @@
 import React, { useState } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import ConservationDetail from "./ConservationDetail";
+import "../../../assets/css/ConservationStyle.css";
 
 const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
 
+    // Hàm gửi tin nhắn
     const handleSendMessage = () => {
         if (newMessage.trim() === "") return;
 
         const newMsg = {
             id: Date.now(),
-            sender: "Bạn",
             text: newMessage,
             timestamp: new Date(),
+            sender: "me",
         };
 
         setMessages((prev) => [...prev, newMsg]);
         setNewMessage("");
+    };
+
+    // Hàm gửi hình ảnh
+    const handleSendImage = (file) => {
+        const newMsg = {
+            id: Date.now(),
+            type: "image",
+            content: URL.createObjectURL(file),
+            sender: "me",
+            timestamp: new Date(),
+            fileName: file.name,
+        };
+        setMessages((prev) => [...prev, newMsg]);
+    };
+
+    // Hàm gửi tệp đính kèm
+    const handleSendFile = (file) => {
+        const newMsg = {
+            id: Date.now(),
+            type: "file",
+            content: URL.createObjectURL(file),
+            sender: "me",
+            timestamp: new Date(),
+            fileName: file.name,
+        };
+        setMessages((prev) => [...prev, newMsg]);
     };
 
     return (
@@ -89,8 +117,41 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
                     <p className="text-muted">Chưa có tin nhắn...</p>
                 ) : (
                     messages.map((msg) => (
-                        <div key={msg.id} className="mb-2">
-                            <strong>{msg.sender}:</strong> {msg.text}
+                        <div
+                            key={msg.id}
+                            className={`mb-2 d-flex ${
+                                msg.sender === "me"
+                                    ? "justify-content-end"
+                                    : "justify-content-start"
+                            }`}
+                        >
+                            <div
+                                className={`p-2 rounded bg-text shadow-sm ${
+                                    msg.sender === "me"
+                                        ? " text-black"
+                                        : "bg-light border"
+                                }`}
+                                style={{ maxWidth: "70%" }}
+                            >
+                                {msg.type === "image" ? (
+                                    <img
+                                        src={msg.content}
+                                        alt="Hình ảnh"
+                                        className="img-fluid rounded"
+                                        style={{ maxWidth: "100%" }}
+                                    />
+                                ) : msg.type === "file" ? (
+                                    <a
+                                        href={msg.content}
+                                        download={msg.fileName}
+                                        className="text-decoration-none text-black"
+                                    >
+                                        📎 {msg.fileName}
+                                    </a>
+                                ) : (
+                                    <span>{msg.text}</span>
+                                )}
+                            </div>
                         </div>
                     ))
                 )}
@@ -114,9 +175,10 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
                         id="image-upload"
                         accept="image/*"
                         style={{ display: "none" }}
-                        onChange={(e) =>
-                            console.log("Hình ảnh:", e.target.files[0])
-                        }
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) handleSendImage(file);
+                        }}
                     />
                     <label className="btn btn-light mb-0" htmlFor="file-upload">
                         <i className="bi bi-paperclip"></i>
@@ -125,9 +187,10 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
                         type="file"
                         id="file-upload"
                         style={{ display: "none" }}
-                        onChange={(e) =>
-                            console.log("Tệp đính kèm:", e.target.files[0])
-                        }
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) handleSendFile(file);
+                        }}
                     />
                     <button className="btn btn-light">
                         <i className="bi bi-hash"></i>
@@ -160,11 +223,21 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
                             if (e.key === "Enter") handleSendMessage();
                         }}
                     />
+
                     <button
-                        className="btn btn-primary"
+                        className="btn btn-light d-flex align-items-center"
                         onClick={handleSendMessage}
                     >
-                        Gửi
+                        <i
+                            className={`bi ${
+                                newMessage.trim()
+                                    ? "bi-send-fill text-primary"
+                                    : "bi-emoji-smile"
+                            }`}
+                        ></i>
+                    </button>
+                    <button className="btn btn-light d-flex align-items-center">
+                        <i className="bi bi-hand-thumbs-up"></i>
                     </button>
                 </div>
             </div>
