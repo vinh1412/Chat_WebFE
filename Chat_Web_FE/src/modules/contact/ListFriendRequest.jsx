@@ -7,26 +7,26 @@ const FriendRequests = () => {
       name: "Dương Nguyễn",
       time: "42 phút - Từ cửa sổ trò chuyện",
       message: "Xin chào, mình là Dương Nguyễn. Kết bạn với mình nhé!",
-      avatar: "avatar1.jpg",
+      avatar: "https://i.pravatar.cc/300?img=1",
     },
     {
       name: "Ngọc Trân",
       time: "1 giờ - Từ cửa sổ trò chuyện",
       message: "Chào bạn, mình là Trân. Kết nối nhé!",
-      avatar: "avatar2.jpg",
+      avatar: "https://i.pravatar.cc/300?img=2",
     },
     {
       name: "Minh Thư",
       time: "2 giờ - Từ cửa sổ trò chuyện",
       message: "Mình muốn làm quen với bạn!",
-      avatar: "avatar3.jpg",
+      avatar: "https://i.pravatar.cc/300?img=3",
     },
   ];
 
   const sentRequests = [
-    { name: "Sharecode", avatar: "avatar4.jpg" },
-    { name: "Linh", avatar: "avatar5.jpg" },
-    { name: "Nguyễn Duy Minh", avatar: "avatar6.jpg" },
+    { name: "Sharecode",       avatar: "https://i.pravatar.cc/300?img=4"    },
+    { name: "Linh",       avatar: "https://i.pravatar.cc/300?img=6"    },
+    { name: "Nguyễn Duy Minh", avatar: "https://i.pravatar.cc/300?img=16"  },
   ];
 
   return (
