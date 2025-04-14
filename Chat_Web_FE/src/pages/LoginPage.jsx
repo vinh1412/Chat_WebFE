@@ -29,6 +29,7 @@ const LoginPage = () => {
           setCurrentUser(user);
           navigate("/");
         } catch (error) {
+
           toast.error("Lỗi lấy thông tin người dùng", error, {
             position: "top-center",
             autoClose: 3000,
