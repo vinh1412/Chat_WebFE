@@ -134,12 +134,23 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
                                 style={{ maxWidth: "70%" }}
                             >
                                 {msg.type === "image" ? (
-                                    <img
-                                        src={msg.content}
-                                        alt="Hình ảnh"
-                                        className="img-fluid rounded"
-                                        style={{ maxWidth: "100%" }}
-                                    />
+                                    <button
+                                        className="btn p-0 border-0 bg-transparent"
+                                        onClick={() =>
+                                            window.open(msg.content, "_blank")
+                                        }
+                                    >
+                                        <img
+                                            src={msg.content}
+                                            alt="Hình ảnh"
+                                            className="img-fluid rounded"
+                                            style={{
+                                                maxWidth: "300px",
+                                                maxHeight: "300px",
+                                                objectFit: "contain",
+                                            }}
+                                        />
+                                    </button>
                                 ) : msg.type === "file" ? (
                                     <a
                                         href={msg.content}
