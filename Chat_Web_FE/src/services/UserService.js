@@ -33,3 +33,28 @@ export const updateUserService = async ({
 
   return response.data;
 };
+
+export const changePasswordService = async (oldPassword, newPassword) => {
+  const response = await axiosInstance.put("/user/change-password", {
+    oldPassword: oldPassword,
+    newPassword: newPassword,
+  });
+  console.log("Change password response:", response.data);
+  return response.data;
+};
+
+export const checkPhoneExistsService = async (phone) => {
+  try {
+    const response = await axiosInstance.post("/user/check-phone", { phone });
+    console.log("Check phone exists response:", response.data);
+    return response.data.exists; // Trả về boolean
+  } catch (error) {
+    console.error(
+      "Error checking phone:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi kiểm tra số điện thoại"
+    );
+  }
+};

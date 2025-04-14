@@ -36,6 +36,13 @@ const DashboardProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    const path = window.location.pathname;
+
+    if (path.startsWith("/register")) {
+      setIsAuthLoading(false);
+      return;
+    }
+
     fetchUser();
   }, []);
 
@@ -52,6 +59,10 @@ const DashboardProvider = ({ children }) => {
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const settingsModalRef = useRef(null);
+
+  // Modal: Thay đổi mật khẩu
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const changePasswordModalRef = useRef(null);
 
   console.log("DashboardProvider", showAddFriendModal);
 
@@ -80,6 +91,10 @@ const DashboardProvider = ({ children }) => {
     showSettingsModal,
     setShowSettingsModal,
     settingsModalRef,
+
+    showChangePasswordModal,
+    setShowChangePasswordModal,
+    changePasswordModalRef,
   };
 
   return (

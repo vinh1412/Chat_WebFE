@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import { useDashboardContext } from "../context/Dashboard_context";
 import { getCurrentUserService } from "../services/UserService";
+import formatPhoneNumber from "../utils/FormatPhoneNumber";
+import { toast } from "react-toastify";
 
 const LoginPage = () => {
-  const [phone, setPhone] = useState("+84862058920");
+  const [phone, setPhone] = useState("0862058920");
   const [password, setPassword] = useState("12345678");
   const navigate = useNavigate();
   const { setCurrentUser } = useDashboardContext();
@@ -16,20 +18,22 @@ const LoginPage = () => {
     e.preventDefault();
 
     const formLogin = {
-      phone,
+      phone: formatPhoneNumber(phone),
       password,
     };
 
     login(formLogin, {
       onSuccess: async () => {
-        console.log("Đăng nhập thành công");
-        const user = await getCurrentUserService();
-        setCurrentUser(user);
-        navigate("/");
-      },
-      onError: (error) => {
-        console.error("Lỗi đăng nhập:", error);
-        alert("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+        try {
+          const user = await getCurrentUserService();
+          setCurrentUser(user);
+          navigate("/");
+        } catch (error) {
+          toast.error("Lỗi lấy thông tin người dùng", {
+            position: "top-center",
+            autoClose: 3000,
+          });
+        }
       },
     });
   };
