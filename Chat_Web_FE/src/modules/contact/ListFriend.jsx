@@ -111,9 +111,6 @@ const ListFriend = () => {
                                 </div>
                                 <div className="dropdown-item" onClick={() => setFilterSubOpen(!filterSubOpen)}>
                                     <span>Phân loại</span>
-                                    {/* <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 ml-2">
-                                        <path fillRule="evenodd" clipRule="evenodd" />
-                                    </svg> */}
                                 </div>
                                 {filterSubOpen && (
                                     <div className="dropdown-submenu">

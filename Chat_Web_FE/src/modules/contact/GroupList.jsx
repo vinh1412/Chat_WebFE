@@ -71,7 +71,30 @@ const GroupList = () => {
           <span>Danh sách nhóm và cộng đồng</span>
       </div>
     
+      <div className="groupList__title">
+          <h5 className="mb-3 fw-bold">Nhóm và cộng đồng ({groups.length})</h5>
 
+          {/* Tìm kiếm & filter */}
+          <Row className="g-2 mb-3">
+            <Col xs={4}>
+              <Form.Control type="text" placeholder="🔍 Tìm kiếm..." />
+            </Col>
+            <Col xs={4}>
+              <Form.Select>
+                <option>Hoạt động (mới → cũ)</option>
+                <option>Hoạt động (cũ → mới)</option>
+                <option>A → Z</option>
+              </Form.Select>
+            </Col>
+            <Col xs={4}>
+              <Form.Select>
+                <option>Tất cả</option>
+                <option>Công việc</option>
+                <option>Học tập</option>
+              </Form.Select>
+            </Col>
+          </Row>
+      </div>
 
 
         <Container fluid className="p-3">
