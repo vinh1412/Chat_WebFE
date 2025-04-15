@@ -3,7 +3,7 @@ import {
   getCurrentUserService,
   updateUserService,
   checkPhoneExistsService,
-  getFriendList,
+  searchUser
 } from "../services/UserService";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -61,6 +61,8 @@ const useUser = () => {
       toast.error(error.message || "Lỗi khi kiểm tra số điện thoại");
     },
   });
+
+  
 
 
   return {

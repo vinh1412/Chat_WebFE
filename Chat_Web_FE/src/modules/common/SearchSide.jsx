@@ -5,6 +5,7 @@ import { BsSearch } from "react-icons/bs";
 
 import { useDispatch } from "react-redux";
 import { setShowSearch, setShowConversation } from "../../redux/slice/commonSlice";
+import { searchUser } from "../../services/UserService";
 
 const searchData = [
     {
@@ -39,7 +40,7 @@ const ItemSerch = ({item}) => {
             style={{cursor: 'pointer'}}
         >
             <img src={item.avatar} alt="" className="rounded-circle img-fluid object-fit-cover" style={{ width: "48px", height: "48px" }} />
-            <span className="ms-2">{item.name}</span>
+            <span className="ms-2">{item.display_name}</span>
         </div>
     )
 }
@@ -58,9 +59,22 @@ const SearchSide = () => {
     },[])
 
     // Hàm xử lý tìm kiếm
-    const handleSearch = (keyword) => {
-        const results = searchData.filter((item) => item.name.includes(keyword));
-        setSearchResults(results);
+    const handleSearch = async (keyword) => {
+        // Gọi API tìm kiếm người dùng
+        try {
+            const response = await searchUser(keyword);
+            if(response.status === "SUCCESS") {
+                if(response.response.length === 0) {
+                    setSearchResults([]);
+                } else {
+                    setSearchResults(response.response);
+                }
+            }
+            console.log("Kết quả tìm kiếm:", response.response);
+           
+        } catch (error) {
+            console.error("Lỗi khi gọi API tìm kiếm:", error);
+        }
     }
 
     React.useEffect(() => 
@@ -105,9 +119,9 @@ const SearchSide = () => {
                     <h6 className="mt-1">Tìm kiếm gần đây</h6>
                     {/* List tìm kiếm gần đây */}
                     <div className="d-flex flex-column gap-2 mt-2">
-                        {searchData.map((item) => (
+                        {/* {searchData.map((item) => (
                             <ItemSerch key={item.id} item={item} />
-                        ))}
+                        ))} */}
                     
                     </div>
                 </>
@@ -121,6 +135,10 @@ const SearchSide = () => {
                         {searchResults.map((item) => (
                             <ItemSerch key={item.id} item={item} />
                         ))}
+
+                        {searchResults.length === 0 && (
+                            <div className="text-center mt-2">Không tìm thấy kết quả nào</div>
+                        )}
                     
                     </div>
                 </>
