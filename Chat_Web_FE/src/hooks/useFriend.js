@@ -39,7 +39,7 @@ const useFriend = () => {
     });
   
     // Send friend request
-    const { mutate: sendRequest, isPending: isLoadingSending } = useMutation({
+    const { mutate: sendRequest, isPending: isLoadingSending, isSuccess: isSuccessSent } = useMutation({
         mutationFn: (friendId) => sendFriendReq(friendId),
         onSuccess: () => {
             queryClient.invalidateQueries(["sentRequests"]);
@@ -124,6 +124,7 @@ const useFriend = () => {
             isLoadingRecive,
             sentRequests,
             isLoadingSent,
+            isSuccessSent,
             sendRequest,
             isLoadingSending,
             acceptRequest,

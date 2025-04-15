@@ -54,3 +54,13 @@ export const recallFriendReq = async (requestId) => {
         throw error;
     }
 }
+
+export const checkFriend = async (friendId) => {
+    try {
+        const response = await axiosInstance.get(`/friend/check-friend?friendId=${friendId}`);
+        return response.data.response; 
+    } catch (error) {
+        console.error("Error checking friend:", error);
+        throw error;
+    }
+}

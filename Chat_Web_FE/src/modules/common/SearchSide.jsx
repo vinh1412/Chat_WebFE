@@ -6,6 +6,8 @@ import { BsSearch } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import { setShowSearch, setShowConversation } from "../../redux/slice/commonSlice";
 import { searchUser } from "../../services/UserService";
+import { checkFriend } from "../../services/FriendService";
+import useFriend from "../../hooks/useFriend";
 
 const searchData = [
     {
@@ -33,14 +35,47 @@ const searchData = [
 
 const ItemSerch = ({item}) => {
     const dispatch = useDispatch();
+    const [isFriend, setIsFriend] = React.useState(false);
+    const { sendRequest, isSuccessSent } = useFriend();
+
+    // Kiểm tra xem người dùng đã là bạn bè hay chưa
+    React.useEffect(() => {
+        const checkFriendStatus = async () => {
+            try {
+                const response = await checkFriend(item.id);
+                console.log("Friend status:", response);
+                setIsFriend(response);
+            } catch (error) {
+                console.error("Error checking friend status:", error);
+            }
+        }
+        checkFriendStatus();
+    }, [item.id]);
 
     return (
-        <div key={item.id} className="overflow-hidden d-flex align-items-center gap-2 mb-2 mt-2"
+        <div key={item.id} className="overflow-hidden d-flex align-items-center justify-content-between gap-2 mb-2 mt-2"
             onClick={() => {dispatch(setShowConversation(true))}}
             style={{cursor: 'pointer'}}
         >
-            <img src={item.avatar} alt="" className="rounded-circle img-fluid object-fit-cover" style={{ width: "48px", height: "48px" }} />
-            <span className="ms-2">{item.display_name}</span>
+            <div className="d-flex align-items-center gap-2">
+                <img src={item.avatar} alt="" className="rounded-circle img-fluid object-fit-cover" style={{ width: "48px", height: "48px" }} />
+                <span className="ms-2">{item.display_name}</span>
+            </div>
+            {/* Kiem tra xem co phai ban khong */}
+            {!isFriend ? (
+
+                // Nếu chưa là bạn bè thì hiển thị nút gửi lời mời kết bạn
+                !isSuccessSent ? (
+                    <button className="rounded-2 btn btn-outline-secondary border" style={{fontSize: '12px', padding: '4px 8px'}} onClick={() => {sendRequest(item.id)}}>
+                        Kết bạn
+                    </button>
+                ) : (
+                    <button className="rounded-2 btn btn-outline-secondary border" style={{fontSize: '12px', padding: '4px 8px'}} disabled>
+                        Đã gửi lời mời
+                    </button>
+                )
+            ): (<div></div>)}
+            
         </div>
     )
 }
