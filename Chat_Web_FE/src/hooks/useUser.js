@@ -3,10 +3,12 @@ import {
   getCurrentUserService,
   updateUserService,
   checkPhoneExistsService,
+  getFriendList,
 } from "../services/UserService";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
+
 
 const useUser = () => {
   const navigate = useNavigate();
@@ -60,6 +62,7 @@ const useUser = () => {
     },
   });
 
+
   return {
     currentUser,
     isLoading,
@@ -74,6 +77,7 @@ const useUser = () => {
     isCheckingPhone,
     isCheckPhoneError,
     checkPhoneError,
+
   };
 };
 

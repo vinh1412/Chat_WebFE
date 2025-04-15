@@ -1,16 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { FaSearch, FaSortAlphaDown, FaFilter, FaCheck, FaUserFriends } from "react-icons/fa"; // Added FaUserFriends here
 import "../../assets/css/ListFriend.css";
-
-const mockFriends = [
-    { id: 1, name: "Anh 2", avatar: "https://randomuser.me/api/portraits/men/1.jpg", category: "Công việc" },
-    { id: 2, name: "Anh Hải", avatar: "https://randomuser.me/api/portraits/men/2.jpg", category: "Cá nhân" },
-    { id: 3, name: "Anh Thư", avatar: "https://randomuser.me/api/portraits/women/3.jpg", category: "Công việc" },
-    { id: 4, name: "Anh Thư", avatar: "https://randomuser.me/api/portraits/women/4.jpg", category: "Cá nhân" },
-    { id: 5, name: "Anh Tuấn Bí thư K", avatar: "https://randomuser.me/api/portraits/men/5.jpg", category: "Công việc" },
-];
+import  useFriend from "../../hooks/useFriend"; // Adjust the import path as necessary
+import Loading from "../../components/common/Loading"; // Adjust the import path as necessary
 
 const ListFriend = () => {
+
+    const { friendList, isLoadingFriends } = useFriend(); // Assuming you have a hook to get the friend list
+    const [loading, setLoading] = useState(false); // Local loading state for the component
+
+    const friends = useMemo(() => {
+        if(isLoadingFriends) return [];
+        return friendList?.response || []; // Use the response from the friendList or an empty array if loading
+    }, [isLoadingFriends, friendList]);
+
+    console.log("Friends:", friends); // Debugging line to check the friends data
+        
+
     const [search, setSearch] = useState("");
     const [sortOpen, setSortOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -18,13 +24,13 @@ const ListFriend = () => {
     const [sortBy, setSortBy] = useState("Tên (A-Z)");
     const [filterBy, setFilterBy] = useState("Tất cả");
 
-    const filteredFriends = mockFriends
-        .filter(friend => friend.name.toLowerCase().includes(search.toLowerCase()) && (filterBy === "Tất cả" || friend.category === filterBy))
+    const filteredFriends = friends
+        .filter(friend => friend.displayName.toLowerCase().includes(search.toLowerCase()) && (filterBy === "Tất cả" || friend.category === filterBy))
         .sort((a, b) => {
             if (sortBy === "Tên (A-Z)") {
-                return a.name.localeCompare(b.name);
+                return a.displayName.localeCompare(b.displayName);
             } else if (sortBy === "Tên (Z-A)") {
-                return b.name.localeCompare(a.name);
+                return b.displayName.localeCompare(a.displayName);
             }
             return 0;
         });
@@ -139,13 +145,15 @@ const ListFriend = () => {
             <div className="friend-list">
                 <div className="alphabet-header">A</div>
                 {filteredFriends.map((friend) => (
-                    <div className="friend-item" key={friend.id}>
-                        <img src={friend.avatar} alt={friend.name} className="avatar" />
-                        <span className="name">{friend.name}</span>
+                    <div className="friend-item" key={friend.userId}>
+                        <img src={friend.avatar} alt={friend.displayName} className="avatar" />
+                        <span className="name">{friend.displayName}</span>
                         <div className="options">...</div>
                     </div>
-                ))}
+                ))} 
             </div>
+
+            <Loading loading={isLoadingFriends} /> {/* Loading component to show loading state */}
         </div>
     );
 };
