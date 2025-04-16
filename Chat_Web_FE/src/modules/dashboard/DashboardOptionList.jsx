@@ -10,161 +10,82 @@ import { setShowSearch } from "../../redux/slice/commonSlice";
 import ItemConservation from "../chat/conservation/ItemConservation";
 import ContactSideBar from "../contact/ContactSideBar";
 import SearchSide from "../common/SearchSide";
-
-const conservationData = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      message: "Bạn có khỏe không?",
-      time: "10:30",
-      avatar: "https://i.pravatar.cc/300?img=1",
-      category: "priority",
-      isGroup: false,
-    },
-    {
-      id: "2",
-      name: "Trần Văn B",
-      message: "Đi nhậu không?",
-      time: "08:15",
-      avatar: "https://i.pravatar.cc/300?img=2",
-      category: "other",
-      isGroup: false,
-    },
-    {
-      id: "3",
-      name: "Đinh Văn C",
-      message: "Làm gì đấy",
-      time: "21:30",
-      avatar: "https://i.pravatar.cc/300?img=1",
-      category: "priority",
-      isGroup: false,
-    },
-    {
-      id: "4",
-      name: "Phan Văn Teo",
-      message: "Hello",
-      time: "07:15",
-      avatar: "https://i.pravatar.cc/300?img=2",
-      category: "priority",
-      isGroup: false,
-    },
-  
-    {
-      id: "5",
-      name: "Nhóm CNM",
-      message: "Làm tới đâu rồi",
-      time: "09:22",
-      avatar: "https://i.pravatar.cc/300?img=3",
-      category: "other",
-      isGroup: true,
-      members: [
-        { name: "Nguyễn Văn A", avatar: "https://i.pravatar.cc/300?img=1" },
-        { name: "Trần Văn B", avatar: "https://i.pravatar.cc/300?img=2" },
-        { name: "Lê Thị C", avatar: "https://i.pravatar.cc/300?img=4" },
-      ],
-    },
-    {
-      id: "6",
-      name: "Nhom dep traiz",
-      message: "Nào đẹp trai vào đây",
-      time: "14:15",
-      avatar: "https://i.pravatar.cc/300?img=4",
-      category: "priority",
-      isGroup: true,
-      members: [
-        { name: "Nguyễn Văn A", avatar: "https://i.pravatar.cc/300?img=1" },
-        { name: "Trần Văn B", avatar: "https://i.pravatar.cc/300?img=2" },
-        { name: "Lê Thị C", avatar: "https://i.pravatar.cc/300?img=4" },
-      ],
-    },
-    {
-      id: "7",
-      name: "Nhóm CNM",
-      message: "Làm tới đâu rồi",
-      time: "09:22",
-      avatar: "https://i.pravatar.cc/300?img=3",
-      category: "other",
-      isGroup: true,
-      members: [
-        { name: "Nguyễn Văn A", avatar: "https://i.pravatar.cc/300?img=1" },
-        { name: "Trần Văn B", avatar: "https://i.pravatar.cc/300?img=2" },
-        { name: "Lê Thị C", avatar: "https://i.pravatar.cc/300?img=4" },
-      ],
-    },
-    {
-      id: "8",
-      name: "Nhom dep",
-      message: "Nào đẹp trai vào đây",
-      time: "14:15",
-      avatar: "https://i.pravatar.cc/300?img=4",
-      category: "priority",
-      isGroup: true,
-      members: [
-        { name: "Nguyễn Văn A", avatar: "https://i.pravatar.cc/300?img=1" },
-        { name: "Trần Văn B", avatar: "https://i.pravatar.cc/300?img=2" },
-        { name: "Lê Thị C", avatar: "https://i.pravatar.cc/300?img=4" },
-      ],
-    }
-  ];
+import useConversation from "../../hooks/useConversation";
 
 const DashboardOptionList = () => {
   const dispatch = useDispatch();
   const currentTab = useSelector((state) => state.chat.currentTab);
   const showSearch = useSelector((state) => state.common.showSearch);
   const { setShowAddFriendModal } = useDashboardContext();
-  
+  const { conversations, isLoadingAllConversations } = useConversation(); // Lấy danh sách cuộc trò chuyện từ hook useConversation
+  console.log("conversations", conversations);
+
   return (
     <Container
       fluid
       className="d-flex flex-column p-0 border-end"
       style={{ width: "344px", minHeight: "100vh" }}
     >
-
       {!showSearch ? (
-
         <>
           {/* Header Search*/}
           <Container
             fluid
             className="d-flex align-items-center justify-content-between p-3 w-100 border-bottom"
           >
-            <Row className="g-0 rounded-2" style={{backgroundColor: '#E5E7EB'}} onClick={() => dispatch(setShowSearch(true))}>
+            <Row
+              className="g-0 rounded-2"
+              style={{ backgroundColor: "#E5E7EB" }}
+              onClick={() => dispatch(setShowSearch(true))}
+            >
               <Col xs="auto" className="d-flex align-items-center ps-2">
                 <BsSearch />
               </Col>
               <Col className="flex-grow-1">
-                <input type="text" className="form-control bg-transparent border-0 rounded-1" placeholder="Tìm kiếm"  />
+                <input
+                  type="text"
+                  className="form-control bg-transparent border-0 rounded-1"
+                  placeholder="Tìm kiếm"
+                />
               </Col>
             </Row>
-            <Row  className="d-flex align-items-center">
+            <Row className="d-flex align-items-center">
               <Col>
-                <AiOutlineUserAdd 
-                  role="button" 
-                  size={24} onClick={(e) => {
+                <AiOutlineUserAdd
+                  role="button"
+                  size={24}
+                  onClick={(e) => {
                     e.stopPropagation(); // Ngăn chặn sự kiện lan rộng
                     setShowAddFriendModal(true);
-                }}
-              />
-    
+                  }}
+                />
               </Col>
               <Col className="">
                 <AiOutlineUsergroupAdd role="button" size={24} />
               </Col>
             </Row>
           </Container>
-    
+
           {currentTab === "Chat" && (
-            <Container fluid className="w-100 border border-top-0 overflow-auto " style={{maxHeight: 'calc(100vh - 56px)'}}>
-                {conservationData.map((item) => (
-                    <ItemConservation key={item.id} item={item} />
-                ))}
+            <Container
+              fluid
+              className="w-100 border border-top-0 overflow-auto "
+              style={{ maxHeight: "calc(100vh - 56px)" }}
+            >
+              {isLoadingAllConversations ? (
+                <div className="text-center mt-3">Đang tải...</div>
+              ) : (
+                conversations?.map((item) => (
+                  <ItemConservation key={item.id} item={item} />
+                ))
+              )}
             </Container>
           )}
-    
+
           {currentTab === "Contact" && <ContactSideBar />}
         </>
       ) : (
-          <SearchSide />
+        <SearchSide />
       )}
     </Container>
   );
