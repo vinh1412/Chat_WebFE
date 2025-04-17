@@ -1,7 +1,10 @@
 import React from "react";
+import { useDashboardContext } from "../../../context/Dashboard_context";
 import "bootstrap-icons/font/bootstrap-icons.css"; // Import Bootstrap Icons
 
-const ConversationDetail = () => {
+const ConversationDetail = ({conversationInfor}) => {
+  console.log("conversationInfor: ", conversationInfor);
+  const { currentUser } = useDashboardContext();
   return (
     <div className="card shadow-sm h-100 " style={{ width: "100%" }}>
       <div className=" card-header text-center">
@@ -15,7 +18,7 @@ const ConversationDetail = () => {
           height={50}
           className="rounded-circle mb-2"
         />
-        <h6 className="mb-0">Dương Dz</h6> {/* Add name below the avatar */}
+        <h6 className="mb-0">{!conversationInfor.is_group ? conversationInfor.members.find((member) => member.id !== currentUser.id).display_name : conversationInfor.name}</h6> {/* Add name below the avatar */}
       </div>
       <div className="card-body">
         <div className="d-flex align-items-center mb-3">

@@ -13,15 +13,12 @@ import { Client } from '@stomp/stompjs';
 import { toast } from "react-toastify";
 
 
-const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
+const Conservation = ({ onShowDetail, onHideDetail, showDetail, selectedConversation }) => {
 
   // tự động scroll xuống cuối khi có tin nhắn mới
   const bottomRef = React.useRef(null);
 
-  // Lấy selectedConversationId từ Redux
-  const selectedConversation = useSelector(
-    (state) => state.common.selectedConversation
-  );
+
 
   // lấy danh sách tin nhắn theo conversationId
   const { messages, isLoadingAllMessages } = useMessage(
@@ -380,6 +377,11 @@ const App = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [conversationWidth, setConversationWidth] = useState("100%");
 
+    // Lấy selectedConversationId từ Redux
+    const selectedConversation = useSelector(
+      (state) => state.common.selectedConversation
+    );
+
   const handleShowDetail = () => {
     setShowDetail(true);
     setConversationWidth("70%");
@@ -403,6 +405,7 @@ const App = () => {
           onShowDetail={handleShowDetail}
           onHideDetail={handleHideDetail}
           showDetail={showDetail}
+          selectedConversation={selectedConversation}
         />
       </div>
       {showDetail && (
@@ -413,7 +416,7 @@ const App = () => {
             height: "100vh",
           }}
         >
-          <ConversationDetail />
+          <ConversationDetail conversationInfor={selectedConversation}/>
         </div>
       )}
     </div>
