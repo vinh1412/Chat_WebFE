@@ -5,15 +5,15 @@ const conmmonSlice = createSlice({
   initialState: {
     showConversation: false,
     showSearch: false,
-    selectedConversationId: null,
+    selectedConversation: null,
   },
   reducers: {
     setShowConversation: (state, action) => ({
       ...state,
       showConversation: action.payload,
     }),
-    setSelectedConversationId: (state, action) => {
-      state.selectedConversationId = action.payload; // Directly update the property
+    setSelectedConversation: (state, action) => {
+      state.selectedConversation = action.payload; // Directly update the property
     },
     setShowSearch: (state, action) => ({
       ...state,
@@ -22,6 +22,6 @@ const conmmonSlice = createSlice({
   },
 });
 
-export const { setShowConversation, setShowSearch, setSelectedConversationId } =
+export const { setShowConversation, setShowSearch, setSelectedConversation } =
   conmmonSlice.actions;
 export default conmmonSlice.reducer;

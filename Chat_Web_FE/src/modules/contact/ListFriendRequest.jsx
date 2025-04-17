@@ -66,7 +66,7 @@ const FriendRequests = () => {
                   </div>
                 </div>
                 <span className="time">{request.time}</span>
-                <div className="message-box">{request.message}</div>
+                <div className="message-box">Xin chào mình là {request.displayName}. Kết bạn với mình nhé</div>
                 <div className="action-buttons">
                   <button className="btn btn-decline" onClick={() => rejectRequest(request.requestId)}>Từ chối</button>
                   <button className="btn btn-accept" onClick={() => acceptRequest(request.requestId)}>Đồng ý</button>

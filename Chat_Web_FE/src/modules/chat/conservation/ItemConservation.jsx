@@ -2,7 +2,7 @@ import React from "react";
 import { Row, Col, Button } from "react-bootstrap";
 import {
   setShowConversation,
-  setSelectedConversationId,
+  setSelectedConversation,
 } from "../../../redux/slice/commonSlice";
 import { useDispatch } from "react-redux";
 import formatTime from "../../../utils/FormatTime";
@@ -14,13 +14,13 @@ const ItemConservation = ({ item }) => {
   const { currentUser, fetchUser } = useDashboardContext();
 
   console.log("Item Conservation", item.is_group);
-  console.log("SelectedConversationId", setSelectedConversationId(item.id));
+  console.log("SelectedConversationId", setSelectedConversation(item.id));
 
   // Hàm xử lý khi click vào item
   const handleClick = () => {
     console.log(item);
     // Gọi action để cập nhật state selectedConversationId với id của cuộc trò chuyện hiện tại
-    dispatch(setSelectedConversationId(item.id));
+    dispatch(setSelectedConversation(item));
     // Gọi action để cập nhật state showConversation thành true để hiển thị conversation
     dispatch(setShowConversation(true));
   };
@@ -30,7 +30,7 @@ const ItemConservation = ({ item }) => {
   if (!item.is_group && item.members) {
     // Nếu là cuộc trò chuyện 1-1, tìm người còn lại
     const otherMember = item.members.find(
-      (member) => member.user_id !== currentUser.id
+      (member) => member.id !== currentUser.id
     );
     displayAvatar = otherMember?.avatar || item.avatar;
   }
@@ -72,7 +72,7 @@ const ItemConservation = ({ item }) => {
       <Col className="d-flex flex-column justify-content-center p-2">
         <div className="" style={{ fontSize: "1.1rem", fontWeight: "500" }}>
           {!item.is_group
-            ? item.members.find((member) => member.user_id !== currentUser.id)
+            ? item.members.find((member) => member.id !== currentUser.id)
                 ?.display_name
             : item.name}
         </div>
