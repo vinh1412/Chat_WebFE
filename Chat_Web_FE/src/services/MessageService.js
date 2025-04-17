@@ -31,3 +31,28 @@ export const sendMessageService = async (messageData) => {
     throw new Error(error.response?.data?.message || "Lỗi khi gửi tin nhắn");
   }
 };
+
+export const reCallMessageService = async ({
+  messageId,
+  senderId,
+  conversationId,
+}) => {
+  try {
+    const response = await axiosInstance.post("/messages/recall", {
+      messageId,
+      senderId,
+      conversationId,
+    });
+    console.log("Response reCallMessageService data:");
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error recalling message:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi thu hồi tin nhắn"
+    );
+  }
+};
