@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMessagesByConversationIdService,
+  reCallMessageService,
   sendMessageService,
 } from "../services/MessageService";
 const useMessage = (conversationId) => {
@@ -42,12 +43,36 @@ const useMessage = (conversationId) => {
   console.log("messages ues", messages);
   console.log("isLoadingAllMessages", isLoadingAllMessages);
 
+  // Mutation để thu hồi tin nhắn
+  const recallMessageMutation = useMutation({
+    mutationFn: ({ messageId, senderId, conversationId }) =>
+      reCallMessageService({ messageId, senderId, conversationId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["messages", conversationId]);
+      queryClient.invalidateQueries(["conversations"]);
+    },
+    onError: (error) => {
+      console.error("Recall message error:", error.message);
+    },
+  });
+
+  // Hàm thu hồi tin nhắn
+  const recallMessage = async ({ messageId, senderId, conversationId }) => {
+    return recallMessageMutation.mutateAsync({
+      messageId,
+      senderId,
+      conversationId,
+    });
+  };
+
   return {
     messages,
     isLoadingAllMessages,
     sendMessage,
     sendMessageMutation,
     refetchMessages,
+    recallMessage,
+    recallMessageMutation,
   };
 };
 
