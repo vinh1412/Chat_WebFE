@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import useMessage from "../../../hooks/useMessage"; // Đường dẫn đến hook useMessage
 import { useDashboardContext } from "../../../context/Dashboard_context";
@@ -7,63 +7,137 @@ import "../../../assets/css/ConservationStyle.css";
 import ConversationDetail from "./ConservationDetail";
 import { useSelector } from "react-redux"; // Import useSelector từ react-redux
 
+
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import { toast } from "react-toastify";
+
+
 const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
+
+  // tự động scroll xuống cuối khi có tin nhắn mới
+  const bottomRef = React.useRef(null);
+
   // Lấy selectedConversationId từ Redux
-  const selectedConversationId = useSelector(
-    (state) => state.common.selectedConversationId
+  const selectedConversation = useSelector(
+    (state) => state.common.selectedConversation
   );
-  console.log("selectedConversationId message:", selectedConversationId);
-  const { messages, isLoadingAllMessages, sendMessage } = useMessage(
-    selectedConversationId
+
+  const { messages, isLoadingAllMessages } = useMessage(
+    selectedConversation.id
   );
+
   const messagesMemo = useMemo(() => {
     if (!messages) return [];
     return messages;
   }, [messages]);
+
   // Lấy currentUser từ context
   const { currentUser } = useDashboardContext();
   console.log("messages:", messages);
 
+  console.log("messagesMemo:");
+  console.log(messagesMemo);
+
+  
   // State để quản lý tin nhắn mới (chưa gửi lên server)
   const [newMessage, setNewMessage] = useState("");
   const [localMessages, setLocalMessages] = useState([]); // Quản lý tin nhắn mới chưa được gửi lên server
+  
+  console.log("localMessages:", localMessages);
+
+  useEffect(() => {
+    if (messagesMemo.response) {
+      
+      // tự động sort tin nhắn hiển thị tin nhắn nằm ở duới cùng
+      const result = messagesMemo.response.sort((a, b) => {
+        return new Date(a.timestamp) - new Date(b.timestamp);
+      });
+      
+      setLocalMessages(result); // Cập nhật localMessages từ messagesMemo
+    }
+  }, [messagesMemo.response]);
+  
+
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [localMessages]);
+ 
+
+  const client = React.useRef(null);
+
+  // connect websocket
+  useEffect(() => {
+    const socket = new SockJS('http://localhost:8080/ws'); // Thay thế bằng URL WebSocket của bạn
+    client.current = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      debug: (str) => {
+        console.log(str);
+      },
+      onConnect: () => {
+        console.log("Connected to WebSocket");
+        client.current.subscribe(`/chat/message/single/${selectedConversation.id}`, (message) => {
+          const newMessage = JSON.parse(message.body);
+          console.log("New message received:", newMessage);
+          // Cập nhật tin nhắn mới vào state localMessages
+          setLocalMessages((prev) => [...prev, newMessage]);
+          // setLocalMessages((prev) => [...prev, newMessage]);
+        });
+      },
+      onStompError: (frame) => {
+        console.error('Broker reported error: ' + frame.headers['message']);
+        console.error('Additional details: ' + frame.body);
+    },
+    });
+
+    client.current.activate();
+
+    return () => {
+      if (client.current && client.current.connected) {
+        client.current.deactivate();
+      }
+    }
+  },[selectedConversation.id])
 
   // Hàm gửi tin nhắn
   const handleSendMessage = async () => {
-    if (newMessage.trim() === "" || !selectedConversationId) {
+    if (newMessage.trim() === "" || !selectedConversation.id) {
       alert("Vui lòng chọn cuộc trò chuyện và nhập tin nhắn");
       return;
     }
 
-    // Tạo tin nhắn tạm thời cho optimistic update
-    const tempMessage = {
-      id: Date.now().toString(),
-      content: newMessage,
-      created_at: new Date().toISOString(),
-      sender_id: currentUser.id,
-      conversation_id: selectedConversationId,
-      message_type: "text",
-    };
-
-    setLocalMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
 
     try {
       const request = {
-        conversationId: selectedConversationId,
+        conversationId: selectedConversation.id,
         senderId: currentUser.id,
         content: newMessage,
         messageType: "TEXT",
       };
-      await sendMessage(request);
-      setLocalMessages((prev) =>
-        prev.filter((msg) => msg.id !== tempMessage.id)
-      );
+
+      // Gửi tin nhắn qua WebSocket
+      if (!client.current || !client.current.connected) {
+        toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      client.current.publish({
+        destination: '/app/chat/send',
+        body: JSON.stringify(request),
+      });
+
+    
     } catch (error) {
       console.error("Conservation send message error:", error.message);
-      setLocalMessages((prev) =>
-        prev.filter((msg) => msg.id !== tempMessage.id)
-      );
+    
       alert("Gửi tin nhắn thất bại: " + error.message);
     }
   };
@@ -96,10 +170,7 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
     // Gọi API gửi file tại đây (chưa triển khai)
   };
 
-  console.log("messagesMemo:");
-  console.log(messagesMemo);
-  // Kết hợp tin nhắn từ server và tin nhắn mới chưa gửi
-  const allMessages = messagesMemo.response || [];
+
 
   return (
     <div
@@ -121,7 +192,7 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
             className="rounded-circle me-3"
           />
           <div className="flex-grow-1">
-            <h6 className="mb-0">Dương Dz</h6>
+            <h6 className="mb-0">{!selectedConversation.is_group ? selectedConversation.members.find((member) => member.id !== currentUser.id).display_name : selectedConversation.name}</h6>
             <small className="text-muted">Người lạ · Không có nhóm chung</small>
           </div>
         </div>
@@ -164,10 +235,10 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
       >
         {isLoadingAllMessages ? (
           <p className="text-muted text-center">Đang tải tin nhắn...</p>
-        ) : allMessages.length === 0 ? (
+        ) : localMessages.length === 0 ? (
           <p className="text-muted text-center">Chưa có tin nhắn...</p>
         ) : (
-          allMessages.map((msg) => (
+          localMessages.map((msg) => (
             <div
               key={msg.id}
               className={`mb-2 d-flex ${
@@ -220,6 +291,7 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
             </div>
           ))
         )}
+        <div ref={bottomRef} /> {/* Để tự động cuộn xuống cuối */}
       </div>
 
       {/* Input Section */}
