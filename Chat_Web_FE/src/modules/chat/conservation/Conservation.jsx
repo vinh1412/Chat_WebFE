@@ -64,19 +64,23 @@ const Conservation = ({
   const client = React.useRef(null);
 
   useEffect(() => {
+    // Khởi tạo tạo kết nối WebSocket
     const socket = new SockJS("http://localhost:8080/ws"); // Thay thế bằng URL WebSocket của bạn
+    // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
     client.current = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000,
+      webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
+      reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
       debug: (str) => {
         console.log(str);
       },
       onConnect: () => {
+        // Hàm được gọi khi kết nối thành công
         console.log("Connected to WebSocket");
         client.current.subscribe(
-          `/chat/message/single/${selectedConversation.id}`,
+          `/chat/message/single/${selectedConversation.id}`, //Đăng ký vào một kênh (topic) cụ thể,
+          // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
           (message) => {
-            const newMessage = JSON.parse(message.body);
+            const newMessage = JSON.parse(message.body); // Chuyển đổi tin nhắn từ JSON string sang object
             console.log("Raw WebSocket message:", message.body);
             console.log("Parsed message:", newMessage);
             console.log("Message ID:", newMessage.id || newMessage._id);
@@ -99,14 +103,16 @@ const Conservation = ({
                   // Nếu tìm thấy tin nhắn cần thu hồi
                   if (msgId === recalledMsgId) {
                     console.log("Found message to recall:", msg);
-                    return { ...msg, recalled: true }; // Cập nhật tin nhắn với thông tin mới
+                    return { ...msg, recalled: true }; // Cập nhật thuộc tính recalled: true cho tin nhắn đó, giữ nguyên các thuộc tính khác
                   }
-                  return msg;
+                  return msg; // Trả về mảng mới để cập nhật state
                 });
               });
             } else {
               // Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
               const messageId = newMessage.id || newMessage._id;
+
+              // Dùng some để kiểm tra xem có tin nhắn nào trong localMessages có ID trùng với messageId không
               const messageExists = localMessages.some(
                 (msg) =>
                   (msg.id && String(msg.id) === String(messageId)) ||
@@ -128,16 +134,17 @@ const Conservation = ({
         );
       },
       onStompError: (frame) => {
+        // Hàm được gọi khi có lỗi trong giao thức STOMP
         console.error("Broker reported error: " + frame.headers["message"]);
         console.error("Additional details: " + frame.body);
       },
     });
 
-    client.current.activate();
+    client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
 
     return () => {
       if (client.current && client.current.connected) {
-        client.current.deactivate();
+        client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
       }
     };
   }, [selectedConversation.id]);
@@ -269,6 +276,7 @@ const Conservation = ({
             String(msg._id) === String(messageId)
         );
 
+        // Kiểm tra xem tin nhắn có tồn tại trong localMessages không, nếu không thì không thu hồi được, thông báo lỗi
         if (!messageToRecall) {
           console.error("Could not find message with ID:", messageId);
           toast.error("Không thể tìm thấy tin nhắn để thu hồi", {
@@ -279,7 +287,7 @@ const Conservation = ({
         }
 
         console.log("Message to recall:", messageToRecall);
-        // Gửi yêu cầu thu hồi qua WebSocket
+        // Gửi yêu cầu thu hồi qua WebSocket, Server sẽ xử lý yêu cầu này và gửi thông báo thu hồi tới tất cả client trong cuộc trò chuyện
         client.current.publish({
           destination: "/app/chat/recall",
           body: JSON.stringify({
@@ -289,7 +297,6 @@ const Conservation = ({
           }),
         });
 
-        // Không cần cập nhật UI ở đây vì sẽ nhận cập nhật qua WebSocket
         return true;
       } else {
         // Fallback nếu WebSocket không hoạt động
