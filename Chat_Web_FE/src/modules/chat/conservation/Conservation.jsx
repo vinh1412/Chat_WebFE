@@ -23,6 +23,7 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
     (state) => state.common.selectedConversation
   );
 
+  // lấy danh sách tin nhắn theo conversationId
   const { messages, isLoadingAllMessages } = useMessage(
     selectedConversation.id
   );
@@ -34,15 +35,12 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
 
   // Lấy currentUser từ context
   const { currentUser } = useDashboardContext();
-  console.log("messages:", messages);
 
   console.log("messagesMemo:");
   console.log(messagesMemo);
 
-  
-  // State để quản lý tin nhắn mới (chưa gửi lên server)
   const [newMessage, setNewMessage] = useState("");
-  const [localMessages, setLocalMessages] = useState([]); // Quản lý tin nhắn mới chưa được gửi lên server
+  const [localMessages, setLocalMessages] = useState([]);  // State để lưu trữ tin nhắn 
   
   console.log("localMessages:", localMessages);
 
@@ -67,9 +65,9 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
   }, [localMessages]);
  
 
+  // connect websocket
   const client = React.useRef(null);
 
-  // connect websocket
   useEffect(() => {
     const socket = new SockJS('http://localhost:8080/ws'); // Thay thế bằng URL WebSocket của bạn
     client.current = new Client({
@@ -83,9 +81,9 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
         client.current.subscribe(`/chat/message/single/${selectedConversation.id}`, (message) => {
           const newMessage = JSON.parse(message.body);
           console.log("New message received:", newMessage);
+
           // Cập nhật tin nhắn mới vào state localMessages
           setLocalMessages((prev) => [...prev, newMessage]);
-          // setLocalMessages((prev) => [...prev, newMessage]);
         });
       },
       onStompError: (frame) => {
@@ -120,7 +118,6 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
         messageType: "TEXT",
       };
 
-      // Gửi tin nhắn qua WebSocket
       if (!client.current || !client.current.connected) {
         toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
           position: "top-center",
@@ -128,12 +125,15 @@ const Conservation = ({ onShowDetail, onHideDetail, showDetail }) => {
         });
         return;
       }
-
+      
+      // Gửi tin nhắn qua WebSocket
       client.current.publish({
         destination: '/app/chat/send',
         body: JSON.stringify(request),
       });
 
+
+      setNewMessage("");
     
     } catch (error) {
       console.error("Conservation send message error:", error.message);
