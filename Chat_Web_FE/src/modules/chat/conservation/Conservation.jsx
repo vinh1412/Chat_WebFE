@@ -5,13 +5,15 @@ import { useDashboardContext } from "../../../context/Dashboard_context";
 import formatTime from "../../../utils/FormatTime";
 import "../../../assets/css/ConservationStyle.css";
 import ConversationDetail from "./ConservationDetail";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { toast } from "react-toastify";
 import MessageActionsDropdown from "../../message/MessageActionsDropdown";
 import { checkFriend } from "../../../services/FriendService";
+import useFriend from "../../../hooks/useFriend";
+import { setIsSuccessSent } from "../../../redux/friendSlice";
 
 const Conservation = ({
   onShowDetail,
@@ -19,6 +21,9 @@ const Conservation = ({
   showDetail,
   selectedConversation,
 }) => {
+
+  const dispatch = useDispatch();
+
   // tự động scroll xuống cuối khi có tin nhắn mới
   const bottomRef = React.useRef(null);
 
@@ -41,6 +46,9 @@ const Conservation = ({
   const [showActionsFor, setShowActionsFor] = useState(null); // Track which message actions are visible
 
   const [isFriend, setIsFriend] = useState(false); // Track friend status
+  const { sendRequest } = useFriend();
+  const { isSuccessSent } = useSelector((state) => state.friend);
+
   console.log("isFriend:", isFriend);
 
   // Ref để lưu trữ các phần tử tin nhắn và kích thước của chúng
@@ -54,6 +62,7 @@ const Conservation = ({
     return null;
   }, [selectedConversation, currentUser]);
   console.log("User receiver updated:", userReceiver);
+  console.log("isSuccessSent:", isSuccessSent[userReceiver?.id]);
 
 
   // check xem có phải là bạn bè không
@@ -404,7 +413,7 @@ const Conservation = ({
                   ).display_name
                 : selectedConversation.name}
             </h6>
-            <small className="text-muted">Người lạ · Không có nhóm chung</small>
+            <small className="text-muted"> {!selectedConversation.is_group && !isFriend ? "Người lạ" : ""} · Không có nhóm chung</small>
           </div>
         </div>
         <div className="d-flex gap-2">
@@ -432,9 +441,20 @@ const Conservation = ({
             <i className="bi bi-person-plus-fill mx-2"></i>
             <span>Gửi yêu cầu kết bạn tới người này</span>
           </div>
-          <button className="btn btn-outline-secondary btn-sm">
-            Gửi kết bạn
-          </button>
+          
+          {isSuccessSent[userReceiver?.id] ? (
+            <button className="btn btn-outline-secondary btn-sm" disabled>
+            Đã gửi lời mời kết bạn
+            </button>
+          ) : (
+            <button className="btn btn-outline-secondary btn-sm" 
+                 onClick={() => {sendRequest(userReceiver.id);  
+                  dispatch(setIsSuccessSent(userReceiver.id)); // Cập nhật trạng thái gửi lời mời kết bạn thành công
+            }}>
+              Gửi kết bạn
+            </button>
+          )}
+          
         </div>
       )}
 
