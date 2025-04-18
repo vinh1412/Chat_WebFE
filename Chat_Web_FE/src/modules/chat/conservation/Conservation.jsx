@@ -22,7 +22,7 @@ const Conservation = ({
 }) => {
 
   const bottomRef = React.useRef(null);
-  const { messages, isLoadingAllMessages, recallMessage } = useMessage(
+  const { messages, isLoadingAllMessages, recallMessage,deleteForUserMessage } = useMessage(
     selectedConversation.id
   );
 
@@ -416,6 +416,51 @@ const Conservation = ({
     }
   };
 
+  const handleDeleteForUser = async ({ messageId, userId }) => {
+    try {
+      // Nếu WebSocket đang kết nối, gửi yêu cầu xóa qua WebSocket
+      if (client.current && client.current.connected) {
+        client.current.publish({
+          destination: "/app/chat/delete-for-user",
+          body: JSON.stringify({
+            messageId: messageId,
+            userId: userId,
+          }),
+        });
+
+        // Cập nhật UI ngay lập tức cho người dùng hiện tại
+        setLocalMessages((prevMessages) =>
+          prevMessages.filter(
+            (msg) => String(msg.id || msg._id) !== String(messageId)
+          )
+        );
+        return true;
+      } else {
+        // Fallback - gọi API nếu WebSocket không hoạt động
+        await deleteForUserMessage({ messageId, userId });
+
+        // Cập nhật UI
+        setLocalMessages((prevMessages) =>
+          prevMessages.filter(
+            (msg) => String(msg.id || msg._id) !== String(messageId)
+          )
+        );
+        return true;
+      }
+    } catch (error) {
+      console.error("Error deleting message for user:", error);
+      toast.error(
+        "Không thể xóa tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+        {
+          position: "top-center",
+          autoClose: 2000,
+        }
+      );
+      return false;
+    }
+  };
+
+
   // Handle click outside to close message actions
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -433,6 +478,35 @@ const Conservation = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showActionsFor]);
+
+  // Function to find sender info
+  const getSenderInfo = (msg) => {
+    const isSentByMe = msg.sender === "me" || msg.senderId === currentUser.id;
+
+    if (isSentByMe) {
+      return { avatar: currentUser.avatar, name: currentUser.display_name };
+    } else {
+      if (!selectedConversation.is_group) {
+        // In 1-on-1 chat, the other person is the sender
+        const otherMember = selectedConversation.members.find(
+          (member) => member.id !== currentUser.id
+        );
+        return {
+          avatar: otherMember?.avatar,
+          name: otherMember?.display_name || "User",
+        };
+      } else {
+        // In group chat, find the specific sender
+        const sender = selectedConversation.members.find(
+          (member) => member.id === msg.senderId
+        );
+        return {
+          avatar: sender?.avatar,
+          name: sender?.display_name || "Unknown User",
+        };
+      }
+    }
+  };
 
   return (
     <div
@@ -524,19 +598,38 @@ const Conservation = ({
               msg.sender === "me" ||
               msg.senderId === currentUser.id;
             const isRecalled = msg.recalled === true;
+            const senderInfo = getSenderInfo(msg);
 
             return (
               <div
                 key={messageId}
-                className={`mb-2 d-flex position-relative message-container ${isSentByMe
-                  ? "justify-content-end"
-                  : "justify-content-start"
-                  }`}
-                onMouseEnter={() =>
-                  setHoveredMessageId(messageId)
-                }
+                className={`mb-2 d-flex position-relative message-container ${
+                  isSentByMe ? "justify-content-end" : "justify-content-start"
+                }`}
+                onMouseEnter={() => setHoveredMessageId(messageId)}
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
+                {/* Show avatar for messages from other users */}
+                {!isSentByMe && (
+                  <div className="me-2 d-flex flex-column align-items-center justify-content-center">
+                    <img
+                      src={senderInfo.avatar}
+                      alt={senderInfo.name}
+                      className="rounded-circle"
+                      width={45}
+                      height={45}
+                      style={{ objectFit: "cover" }}
+                    />
+                    {selectedConversation.is_group && (
+                      <small
+                        className="text-muted mt-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {senderInfo.name?.split(" ").pop() || "User"}
+                      </small>
+                    )}
+                  </div>
+                )}
                 <div
                   className={`p-2 rounded shadow-sm message-bubble ${isSentByMe
                     ? "text-black message-sent"
@@ -701,6 +794,7 @@ const Conservation = ({
                         onRecallMessage={
                           handleRecallMessage
                         }
+                        onDeleteForUser={handleDeleteForUser}
                         currentUserId={currentUser.id}
                         isRecalled={isRecalled}
                       />
