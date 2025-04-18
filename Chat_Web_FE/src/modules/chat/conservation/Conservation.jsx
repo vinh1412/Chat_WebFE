@@ -11,6 +11,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { toast } from "react-toastify";
 import MessageActionsDropdown from "../../message/MessageActionsDropdown";
+import { checkFriend } from "../../../services/FriendService";
 
 const Conservation = ({
   onShowDetail,
@@ -39,8 +40,44 @@ const Conservation = ({
   const [hoveredMessageId, setHoveredMessageId] = useState(null); // Track which message is being hovered
   const [showActionsFor, setShowActionsFor] = useState(null); // Track which message actions are visible
 
+  const [isFriend, setIsFriend] = useState(false); // Track friend status
+  console.log("isFriend:", isFriend);
+
   // Ref để lưu trữ các phần tử tin nhắn và kích thước của chúng
   const messageRefs = useRef({});
+
+  // Lấy thông tin người dùng ngẫu nhiên
+  const userReceiver = useMemo(() => {
+    if(!selectedConversation?.is_group) {
+      return selectedConversation?.members.find((member) => member?.id !== currentUser?.id);
+    }
+    return null;
+  }, [selectedConversation, currentUser]);
+  console.log("User receiver updated:", userReceiver);
+
+
+  // check xem có phải là bạn bè không
+  useEffect(() => {
+    const checkFriendStatus = async () => {
+      try {
+        const response = await checkFriend(userReceiver?.id);
+        setIsFriend(response);
+
+      } catch (error) {
+        console.error("Error checking friend status:", error);
+      }
+    }
+
+    if (userReceiver) {
+      checkFriendStatus();
+    }
+  }, [userReceiver])
+
+  useEffect(() => {
+    if (userReceiver) {
+      console.log("User receiver updated:", userReceiver);
+    }
+  }, [userReceiver]);
 
   useEffect(() => {
     if (messagesMemo.response) {
@@ -388,15 +425,18 @@ const Conservation = ({
       </div>
 
       {/* Notification */}
-      <div className="card-body d-flex align-items-center justify-content-between">
-        <div>
-          <i className="bi bi-person-plus-fill mx-2"></i>
-          <span>Gửi yêu cầu kết bạn tới người này</span>
+      {!selectedConversation.is_group && !isFriend && (
+
+        <div className="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <i className="bi bi-person-plus-fill mx-2"></i>
+            <span>Gửi yêu cầu kết bạn tới người này</span>
+          </div>
+          <button className="btn btn-outline-secondary btn-sm">
+            Gửi kết bạn
+          </button>
         </div>
-        <button className="btn btn-outline-secondary btn-sm">
-          Gửi kết bạn
-        </button>
-      </div>
+      )}
 
       {/* Chat Messages */}
       <div
