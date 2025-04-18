@@ -25,12 +25,12 @@ const ListFriend = () => {
     const [filterBy, setFilterBy] = useState("Tất cả");
 
     const filteredFriends = friends
-        .filter(friend => friend.displayName.toLowerCase().includes(search.toLowerCase()) && (filterBy === "Tất cả" || friend.category === filterBy))
+        .filter(friend => friend?.displayName?.toLowerCase().includes(search?.toLowerCase()) && (filterBy === "Tất cả" || friend?.category === filterBy))
         .sort((a, b) => {
             if (sortBy === "Tên (A-Z)") {
-                return a.displayName.localeCompare(b.displayName);
+                return a?.displayName.localeCompare(b?.displayName);
             } else if (sortBy === "Tên (Z-A)") {
-                return b.displayName.localeCompare(a.displayName);
+                return b?.displayName.localeCompare(a?.displayName);
             }
             return 0;
         });
