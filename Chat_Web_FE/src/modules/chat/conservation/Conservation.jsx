@@ -6,11 +6,13 @@ import formatTime from "../../../utils/FormatTime";
 import "../../../assets/css/ConservationStyle.css";
 import ConversationDetail from "./ConservationDetail";
 import { useSelector } from "react-redux";
-
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { toast } from "react-toastify";
 import MessageActionsDropdown from "../../message/MessageActionsDropdown";
+import ForwardMessageModal from "../../../components/modal/ForwardMessageModal";
+import { forwardMessageService } from "../../../services/MessageService";
+
 
 const Conservation = ({
   onShowDetail,
@@ -18,10 +20,7 @@ const Conservation = ({
   showDetail,
   selectedConversation,
 }) => {
-  // tự động scroll xuống cuối khi có tin nhắn mới
   const bottomRef = React.useRef(null);
-
-  // lấy danh sách tin nhắn theo conversationId
   const { messages, isLoadingAllMessages, recallMessage } = useMessage(
     selectedConversation.id
   );
@@ -31,170 +30,122 @@ const Conservation = ({
     return messages;
   }, [messages]);
 
-  // Lấy currentUser từ context
   const { currentUser } = useDashboardContext();
 
   const [newMessage, setNewMessage] = useState("");
-  const [localMessages, setLocalMessages] = useState([]); // State để lưu trữ tin nhắn
-  const [hoveredMessageId, setHoveredMessageId] = useState(null); // Track which message is being hovered
-  const [showActionsFor, setShowActionsFor] = useState(null); // Track which message actions are visible
+  const [localMessages, setLocalMessages] = useState([]);
+  const [hoveredMessageId, setHoveredMessageId] = useState(null);
+  const [showActionsFor, setShowActionsFor] = useState(null);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [selectedReceivers, setSelectedReceivers] = useState([]);
 
-  // Ref để lưu trữ các phần tử tin nhắn và kích thước của chúng
   const messageRefs = useRef({});
 
   useEffect(() => {
     if (messagesMemo.response) {
-      // tự động sort tin nhắn hiển thị tin nhắn nằm ở duới cùng
       const result = messagesMemo.response.sort((a, b) => {
         return new Date(a.timestamp) - new Date(b.timestamp);
       });
-
-      setLocalMessages(result); // Cập nhật localMessages từ messagesMemo
+      setLocalMessages(result);
     }
   }, [messagesMemo.response]);
 
-  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [localMessages]);
 
-  // connect websocket
   const client = React.useRef(null);
 
   useEffect(() => {
-    // Khởi tạo tạo kết nối WebSocket
-    const socket = new SockJS("http://localhost:8080/ws"); // Thay thế bằng URL WebSocket của bạn
-    // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
+    const socket = new SockJS("http://localhost:8080/ws");
     client.current = new Client({
-      webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
-      reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
-      debug: (str) => {
-        console.log(str);
-      },
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      debug: (str) => console.log(str),
       onConnect: () => {
-        // Hàm được gọi khi kết nối thành công
         console.log("Connected to WebSocket");
+  
         client.current.subscribe(
-          `/chat/message/single/${selectedConversation.id}`, //Đăng ký vào một kênh (topic) cụ thể,
-          // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
+          `/chat/message/single/${selectedConversation.id}`,
           (message) => {
-            const newMessage = JSON.parse(message.body); // Chuyển đổi tin nhắn từ JSON string sang object
-            console.log("Raw WebSocket message:", message.body);
-            console.log("Parsed message:", newMessage);
-            console.log("Message ID:", newMessage.id || newMessage._id);
-            console.log("Is recalled:", newMessage.recalled);
-
-            // Kiểm tra nếu là tin nhắn đã thu hồi
-            if (newMessage.recalled === true) {
-              console.log("Received a recalled message:", newMessage);
-
-              // In ra ID tin nhắn cần thu hồi
-              const recalledMsgId = String(newMessage.id || newMessage._id);
-              // Cập nhật tin nhắn trong state để hiển thị là đã thu hồi
-              setLocalMessages((prevMessages) => {
-                console.log(
-                  "Current message IDs:",
-                  prevMessages.map((m) => String(m.id || m._id))
-                );
-                return prevMessages.map((msg) => {
-                  const msgId = String(msg.id || msg._id);
-                  // Nếu tìm thấy tin nhắn cần thu hồi
-                  if (msgId === recalledMsgId) {
-                    console.log("Found message to recall:", msg);
-                    return { ...msg, recalled: true }; // Cập nhật thuộc tính recalled: true cho tin nhắn đó, giữ nguyên các thuộc tính khác
-                  }
-                  return msg; // Trả về mảng mới để cập nhật state
-                });
-              });
-            } else {
-              // Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
-              const messageId = newMessage.id || newMessage._id;
-
-              // Dùng some để kiểm tra xem có tin nhắn nào trong localMessages có ID trùng với messageId không
-              const messageExists = localMessages.some(
-                (msg) =>
-                  (msg.id && String(msg.id) === String(messageId)) ||
-                  (msg._id && String(msg._id) === String(messageId))
+            const newMessage = JSON.parse(message.body);
+            const recalledMsgId = String(newMessage.id || newMessage._id);
+  
+            setLocalMessages((prev) => {
+              const exists = prev.some(
+                (msg) => String(msg.id || msg._id) === recalledMsgId
               );
-
-              // Chỉ thêm tin nhắn mới nếu chưa tồn tại
-              if (!messageExists) {
-                console.log("Adding new message to local state:", newMessage);
-                setLocalMessages((prev) => [...prev, newMessage]);
-              } else {
-                console.log(
-                  "Message already exists, not adding again:",
-                  messageId
+  
+              // Tin nhắn đã bị thu hồi
+              if (newMessage.recalled === true) {
+                return prev.map((msg) =>
+                  String(msg.id || msg._id) === recalledMsgId
+                    ? { ...msg, recalled: true }
+                    : msg
                 );
               }
-            }
+  
+              // Nếu đã có rồi thì bỏ qua
+              if (exists) return prev;
+  
+              return [...prev, newMessage];
+            });
           }
         );
       },
       onStompError: (frame) => {
-        // Hàm được gọi khi có lỗi trong giao thức STOMP
         console.error("Broker reported error: " + frame.headers["message"]);
-        console.error("Additional details: " + frame.body);
       },
     });
-
-    client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
-
+  
+    client.current.activate();
+  
     return () => {
       if (client.current && client.current.connected) {
-        client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
+        client.current.deactivate();
       }
     };
-  }, [selectedConversation.id]);
+  }, [selectedConversation.id]);  
 
-  // Handlers for message reactions/actions
+  const handleSelectReceiver = async (receiver) => {
+    try {
+      await forwardMessageService({
+        messageId: selectedMessage.id,
+        senderId: currentUser.id,
+        receiverId: receiver.id,
+        content: messages || selectedMessage.content, // dùng lại nội dung gốc nếu người dùng không nhập gì
+      });
+      toast.success(`Đã chia sẻ tới ${receiver.name || 'người nhận'}`);
+    } catch (error) {
+      console.error("Forward message error:", error.message);
+      toast.error("Lỗi khi chia sẻ tin nhắn: " + error.message);
+    }
+  };
+  
+
   const handleReaction = (messageId, reaction) => {
-    console.log(`Reaction ${reaction} on message ${messageId}`);
-    // Implement reaction logic here
     toast.success(`Đã thêm biểu cảm: ${reaction}`, {
       position: "top-center",
       autoClose: 1000,
     });
   };
 
-  const handleCopyText = (text) => {
-    navigator.clipboard.writeText(text);
-    toast.info("Đã sao chép tin nhắn", {
-      position: "top-center",
-      autoClose: 1000,
-    });
-  };
+  // const handleCopyText = (text) => {
+  //   navigator.clipboard.writeText(text);
+  //   toast.info("Đã sao chép tin nhắn", {
+  //     position: "top-center",
+  //     autoClose: 1000,
+  //   });
+  // };
 
   const handleForwardMessage = (message) => {
-    console.log("Forwarding message:", message);
-    // Implement forward logic here
-    toast.info("Tính năng chuyển tiếp đang được phát triển", {
-      position: "top-center",
-      autoClose: 1000,
-    });
+    setSelectedMessage(message);
+    setShowForwardModal(true);
   };
 
-  const handleOpenAddModel = (messageId) => {
-    console.log("Deleting message:", messageId);
-    // Implement delete logic here
-    toast.info("Tính năng xóa tin nhắn đang được phát triển", {
-      position: "top-center",
-      autoClose: 1000,
-    });
-  };
-
-  // Toggle message actions visibility
-  const toggleMessageActions = (messageId) => {
-    if (showActionsFor === messageId) {
-      setShowActionsFor(null); // Hide if already showing
-    } else {
-      setShowActionsFor(messageId); // Show for this message
-    }
-  };
-
-  // Hàm gửi tin nhắn
   const handleSendMessage = async () => {
     if (newMessage.trim() === "" || !selectedConversation.id) {
       alert("Vui lòng chọn cuộc trò chuyện và nhập tin nhắn");
@@ -217,7 +168,6 @@ const Conservation = ({
         return;
       }
 
-      // Gửi tin nhắn qua WebSocket
       client.current.publish({
         destination: "/app/chat/send",
         body: JSON.stringify(request),
@@ -230,7 +180,6 @@ const Conservation = ({
     }
   };
 
-  // Hàm gửi hình ảnh
   const handleSendImage = (file) => {
     const newMsg = {
       id: Date.now(),
@@ -241,10 +190,8 @@ const Conservation = ({
       fileName: file.name,
     };
     setLocalMessages((prev) => [...prev, newMsg]);
-    // Gọi API gửi hình ảnh tại đây (chưa triển khai)
   };
 
-  // Hàm gửi tệp đính kèm
   const handleSendFile = (file) => {
     const newMsg = {
       id: Date.now(),
@@ -255,28 +202,21 @@ const Conservation = ({
       fileName: file.name,
     };
     setLocalMessages((prev) => [...prev, newMsg]);
-    // Gọi API gửi file tại đây (chưa triển khai)
   };
 
-  // Hàm thu hồi tin nhắn
   const handleRecallMessage = async ({
     messageId,
     senderId,
     conversationId,
   }) => {
     try {
-      console.log("Recalling message:", messageId, senderId, conversationId);
-
-      // Nếu đang sử dụng WebSocket và kết nối đang hoạt động
       if (client.current && client.current.connected) {
-        // Đảm bảo messageId đang được dùng là đúng
         const messageToRecall = localMessages.find(
           (msg) =>
             String(msg.id) === String(messageId) ||
             String(msg._id) === String(messageId)
         );
 
-        // Kiểm tra xem tin nhắn có tồn tại trong localMessages không, nếu không thì không thu hồi được, thông báo lỗi
         if (!messageToRecall) {
           console.error("Could not find message with ID:", messageId);
           toast.error("Không thể tìm thấy tin nhắn để thu hồi", {
@@ -286,8 +226,6 @@ const Conservation = ({
           return false;
         }
 
-        console.log("Message to recall:", messageToRecall);
-        // Gửi yêu cầu thu hồi qua WebSocket, Server sẽ xử lý yêu cầu này và gửi thông báo thu hồi tới tất cả client trong cuộc trò chuyện
         client.current.publish({
           destination: "/app/chat/recall",
           body: JSON.stringify({
@@ -299,7 +237,6 @@ const Conservation = ({
 
         return true;
       } else {
-        // Fallback nếu WebSocket không hoạt động
         await recallMessage({ messageId, senderId, conversationId });
         return true;
       }
@@ -316,7 +253,6 @@ const Conservation = ({
     }
   };
 
-  // Handle click outside to close message actions
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -343,15 +279,14 @@ const Conservation = ({
         height: "100vh",
       }}
     >
-      {/* Header */}
       <div className="card-header d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center">
           <img
             src={
               !selectedConversation.is_group
                 ? selectedConversation.members.find(
-                    (member) => member.id !== currentUser.id
-                  ).avatar
+                  (member) => member.id !== currentUser.id
+                ).avatar
                 : selectedConversation.avatar
             }
             alt="avatar"
@@ -363,8 +298,8 @@ const Conservation = ({
             <h6 className="mb-0">
               {!selectedConversation.is_group
                 ? selectedConversation.members.find(
-                    (member) => member.id !== currentUser.id
-                  ).display_name
+                  (member) => member.id !== currentUser.id
+                ).display_name
                 : selectedConversation.name}
             </h6>
             <small className="text-muted">Người lạ · Không có nhóm chung</small>
@@ -379,15 +314,13 @@ const Conservation = ({
             onClick={showDetail ? onHideDetail : onShowDetail}
           >
             <i
-              className={`bi ${
-                showDetail ? "bi bi-arrow-bar-right" : "bi bi-arrow-bar-left"
-              } me-2`}
+              className={`bi ${showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"
+                } me-2`}
             ></i>
           </button>
         </div>
       </div>
 
-      {/* Notification */}
       <div className="card-body d-flex align-items-center justify-content-between">
         <div>
           <i className="bi bi-person-plus-fill mx-2"></i>
@@ -398,7 +331,6 @@ const Conservation = ({
         </button>
       </div>
 
-      {/* Chat Messages */}
       <div
         className="card-body bg-light"
         style={{
@@ -421,18 +353,16 @@ const Conservation = ({
             return (
               <div
                 key={messageId}
-                className={`mb-2 d-flex position-relative message-container ${
-                  isSentByMe ? "justify-content-end" : "justify-content-start"
-                }`}
+                className={`mb-2 d-flex position-relative message-container ${isSentByMe ? "justify-content-end" : "justify-content-start"
+                  }`}
                 onMouseEnter={() => setHoveredMessageId(messageId)}
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
                 <div
-                  className={`p-2 rounded shadow-sm message-bubble ${
-                    isSentByMe
+                  className={`p-2 rounded shadow-sm message-bubble ${isSentByMe
                       ? "text-black message-sent"
                       : "bg-light border message-received"
-                  } ${isRecalled ? "message-recalled" : ""}`}
+                    } ${isRecalled ? "message-recalled" : ""}`}
                   style={{
                     maxWidth: "70%",
                     backgroundColor: isSentByMe
@@ -455,7 +385,7 @@ const Conservation = ({
                     <button
                       className="btn p-0 border-0 bg-transparent"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering toggleMessageActions
+                        e.stopPropagation();
                         window.open(msg.content, "_blank");
                       }}
                     >
@@ -475,7 +405,7 @@ const Conservation = ({
                       href={msg.content}
                       download={msg.fileName}
                       className="text-decoration-none text-black"
-                      onClick={(e) => e.stopPropagation()} // Prevent triggering toggleMessageActions
+                      onClick={(e) => e.stopPropagation()}
                     >
                       📎 {msg.fileName}
                     </a>
@@ -489,81 +419,72 @@ const Conservation = ({
                   </div>
                 </div>
 
-                {/* Show message actions on hover OR when clicked */}
                 {(hoveredMessageId === messageId ||
                   showActionsFor === messageId) && (
-                  <div
-                    className="message-actions"
-                    style={{
-                      position: "absolute",
-                      top: "15px",
-                      right: isSentByMe
-                        ? `${messageRefs.current[msg.id]?.offsetWidth + 10}px`
-                        : "auto",
-                      left: !isSentByMe
-                        ? `${messageRefs.current[msg.id]?.offsetWidth + 10}px`
-                        : "auto",
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      borderRadius: "20px",
-                      padding: "5px 10px",
-                      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                      display: "flex",
-                      gap: "12px",
-                      zIndex: 100,
-                    }}
-                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
-                  >
-                    <i
-                      className="bi bi-chat-quote action-icon"
-                      onClick={() => handleReaction(msg.id, "smile")}
-                      style={{ cursor: "pointer", color: "#666" }}
-                      title="Trả lời"
-                    ></i>
-                    {isSentByMe ? (
+                    <div
+                      className="message-actions"
+                      style={{
+                        position: "absolute",
+                        top: "15px",
+                        right: isSentByMe
+                          ? `${messageRefs.current[msg.id]?.offsetWidth + 10}px`
+                          : "auto",
+                        left: !isSentByMe
+                          ? `${messageRefs.current[msg.id]?.offsetWidth + 10}px`
+                          : "auto",
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        borderRadius: "20px",
+                        padding: "5px 10px",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                        display: "flex",
+                        gap: "12px",
+                        zIndex: 100,
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <i
-                        className="bi bi-reply action-icon"
-                        onClick={() => handleForwardMessage(msg)}
+                        className="bi bi-chat-quote action-icon"
+                        onClick={() => handleReaction(msg.id, "smile")}
                         style={{ cursor: "pointer", color: "#666" }}
-                        title="Chuyển tiếp"
+                        title="Trả lời"
                       ></i>
-                    ) : (
-                      <i
-                        className="bi bi-reply action-icon"
-                        onClick={() => handleForwardMessage(msg)}
-                        style={{
-                          cursor: "pointer",
-                          color: "#666",
-                          transform: "scaleX(-1)",
-                        }}
-                        title="Chuyển tiếp"
-                      ></i>
-                    )}
-                    {/* <i
-                      className="bi bi-three-dots action-icon"
-                      onClick={() => handleOpenAddModel(msg.id)}
-                      style={{ cursor: "pointer", color: "#666" }}
-                      title="Thêm"
-                    ></i> */}
-                    <MessageActionsDropdown
-                      messageId={messageId}
-                      senderId={msg.senderId}
-                      conversationId={selectedConversation.id}
-                      onRecallMessage={handleRecallMessage}
-                      currentUserId={currentUser.id}
-                      isRecalled={isRecalled}
-                    />
-                  </div>
-                )}
+                      {isSentByMe ? (
+                        <i
+                          className="bi bi-reply action-icon"
+                          onClick={() => handleForwardMessage(msg)}
+                          style={{ cursor: "pointer", color: "#666" }}
+                          title="Chuyển tiếp"
+                        ></i>
+                      ) : (
+                        <i
+                          className="bi bi-reply action-icon"
+                          onClick={() => handleForwardMessage(msg)}
+                          style={{
+                            cursor: "pointer",
+                            color: "#666",
+                            transform: "scaleX(-1)",
+                          }}
+                          title="Chuyển tiếp"
+                        ></i>
+                      )}
+                      <MessageActionsDropdown
+                        messageId={messageId}
+                        senderId={msg.senderId}
+                        conversationId={selectedConversation.id}
+                        onRecallMessage={handleRecallMessage}
+                        currentUserId={currentUser.id}
+                        isRecalled={isRecalled}
+                      />
+                    </div>
+                  )}
               </div>
             );
           })
         )}
-        <div ref={bottomRef} /> {/* Để tự động cuộn xuống cuối */}
+        <div ref={bottomRef} />
       </div>
 
-      {/* Input Section */}
       <div className="card-footer">
-        {/* Icons Above Input */}
         <div className="d-flex align-items-center gap-2 mb-2">
           <button className="btn btn-light">
             <i className="bi bi-emoji-smile"></i>
@@ -610,7 +531,6 @@ const Conservation = ({
           </button>
         </div>
 
-        {/* Input + Gửi */}
         <div className="d-flex align-items-center gap-2">
           <input
             type="text"
@@ -627,11 +547,10 @@ const Conservation = ({
             onClick={handleSendMessage}
           >
             <i
-              className={`bi ${
-                newMessage.trim()
+              className={`bi ${newMessage.trim()
                   ? "bi-send-fill text-primary"
                   : "bi-emoji-smile"
-              }`}
+                }`}
             ></i>
           </button>
           <button className="btn btn-light d-flex align-items-center">
@@ -639,6 +558,16 @@ const Conservation = ({
           </button>
         </div>
       </div>
+
+      <ForwardMessageModal
+        showForwardModal={showForwardModal}
+        setShowForwardModal={setShowForwardModal}
+        selectedMessage={selectedMessage}
+        currentUser={currentUser}
+        handleSelectReceiver={handleSelectReceiver}
+        selectedReceivers={selectedReceivers}
+        setSelectedReceivers={setSelectedReceivers}
+      />
     </div>
   );
 };
@@ -647,7 +576,6 @@ const App = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [conversationWidth, setConversationWidth] = useState("100%");
 
-  // Lấy selectedConversationId từ Redux
   const selectedConversation = useSelector(
     (state) => state.common.selectedConversation
   );

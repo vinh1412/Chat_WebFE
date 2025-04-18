@@ -105,3 +105,15 @@ export const logoutService = async () => {
   const response = await axiosInstance.post("/auth/logout");
   return response.data;
 };
+
+export const generateQRCode = async () => {
+  return await axiosInstance.post("/qr/generate");
+};
+
+export const verifyQRCode = async (sessionId, userId) => {
+  return await axiosInstance.post("/qr/verify", { sessionId, userId });
+};
+
+export const checkQRStatus = async (sessionId) => {
+  return await axiosInstance.get(`/qr/status/${sessionId}`);
+};

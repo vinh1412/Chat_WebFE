@@ -56,3 +56,31 @@ export const reCallMessageService = async ({
     );
   }
 };
+
+export const forwardMessageService = async (payload) => {
+  try {
+    // Kiểm tra và log payload trước khi gửi
+    console.log("Payload chuyển tiếp tin nhắn:", payload);
+
+    // Validate đơn giản (nếu cần)
+    if (
+      !payload.messageId || typeof payload.messageId !== "string" ||
+      !payload.senderId || typeof payload.senderId !== "string" ||
+      !payload.receiverId || typeof payload.receiverId !== "string" ||
+      !payload.content || typeof payload.content !== "string"
+    ) {
+      throw new Error("Payload không hợp lệ. Vui lòng kiểm tra lại các trường dữ liệu.");
+    }
+
+    const response = await axiosInstance.post(`/messages/forward`, payload);
+
+    console.log("Phản hồi từ server khi chuyển tiếp:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi chuyển tiếp tin nhắn:", error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi chuyển tiếp tin nhắn"
+    );
+  }
+};
+
