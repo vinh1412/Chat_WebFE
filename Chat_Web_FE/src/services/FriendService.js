@@ -64,3 +64,13 @@ export const checkFriend = async (friendId) => {
         throw error;
     }
 }
+
+export const getFriendsList = async () => {
+    try {
+      const response = await axiosInstance.get("/friend/my-friends");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching friends list:", error);
+      throw error;
+    }
+  };
