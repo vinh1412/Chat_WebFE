@@ -56,3 +56,23 @@ export const reCallMessageService = async ({
     );
   }
 };
+
+export const deleteForUserMessageService = async ({ messageId, userId }) => {
+  try {
+    const response = await axiosInstance.post("/messages/delete-for-user", {
+      messageId,
+      userId,
+    });
+    console.log("Response deleteForUserMessageService data:");
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error deleting for user message:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi xóa tin nhắn cho người dùng"
+    );
+  }
+};

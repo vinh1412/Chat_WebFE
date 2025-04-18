@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  deleteForUserMessageService,
   getMessagesByConversationIdService,
   reCallMessageService,
   sendMessageService,
@@ -65,6 +66,23 @@ const useMessage = (conversationId) => {
     });
   };
 
+  const deleteForUserMessageMutation = useMutation({
+    mutationFn: ({ messageId, userId }) =>
+      deleteForUserMessageService({ messageId, userId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["messages", conversationId]);
+      queryClient.invalidateQueries(["conversations"]);
+    },
+    onError: (error) => {
+      console.error("Delete for user message error:", error.message);
+    },
+  });
+
+  // Hàm xóa tin nhắn cho người dùng
+  const deleteForUserMessage = async ({ messageId, userId }) => {
+    return deleteForUserMessageMutation.mutateAsync({ messageId, userId });
+  };
+
   return {
     messages,
     isLoadingAllMessages,
@@ -73,6 +91,8 @@ const useMessage = (conversationId) => {
     refetchMessages,
     recallMessage,
     recallMessageMutation,
+    deleteForUserMessage,
+    deleteForUserMessageMutation,
   };
 };
 
