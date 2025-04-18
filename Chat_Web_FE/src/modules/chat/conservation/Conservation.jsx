@@ -5,11 +5,14 @@ import { useDashboardContext } from "../../../context/Dashboard_context";
 import formatTime from "../../../utils/FormatTime";
 import "../../../assets/css/ConservationStyle.css";
 import ConversationDetail from "./ConservationDetail";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { toast } from "react-toastify";
 import MessageActionsDropdown from "../../message/MessageActionsDropdown";
+import { checkFriend } from "../../../services/FriendService";
+import useFriend from "../../../hooks/useFriend";
+import { setIsSuccessSent } from "../../../redux/friendSlice";
 import ForwardMessageModal from "../../../components/modal/ForwardMessageModal";
 import { forwardMessageService } from "../../../services/MessageService";
 
@@ -20,10 +23,15 @@ const Conservation = ({
     showDetail,
     selectedConversation,
 }) => {
+    const dispatch = useDispatch();
     const bottomRef = React.useRef(null);
-    const { messages, isLoadingAllMessages, recallMessage } = useMessage(
-        selectedConversation?.id
-    );
+    // lấy danh sách tin nhắn theo conversationId
+    const {
+        messages,
+        isLoadingAllMessages,
+        recallMessage,
+        deleteForUserMessage,
+    } = useMessage(selectedConversation?.id);
 
     const messagesMemo = useMemo(() => {
         if (!messages) return [];
@@ -40,17 +48,65 @@ const Conservation = ({
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [selectedReceivers, setSelectedReceivers] = useState([]);
     const [showStickerPicker, setShowStickerPicker] = useState(false);
+    const [isFriend, setIsFriend] = useState(false); // Track friend status
+    const { sendRequest } = useFriend();
+    const { isSuccessSent } = useSelector((state) => state.friend);
 
     const messageRefs = useRef({});
+    // Lấy thông tin người dùng ngẫu nhiên
+    const userReceiver = useMemo(() => {
+        if (!selectedConversation?.is_group) {
+            return selectedConversation?.members.find(
+                (member) => member?.id !== currentUser?.id
+            );
+        }
+        return null;
+    }, [selectedConversation, currentUser]);
+    console.log("User receiver updated:", userReceiver);
+    console.log("isSuccessSent:", isSuccessSent[userReceiver?.id]);
+
+    // check xem có phải là bạn bè không
+    useEffect(() => {
+        const checkFriendStatus = async () => {
+            try {
+                const response = await checkFriend(userReceiver?.id);
+                setIsFriend(response);
+            } catch (error) {
+                console.error("Error checking friend status:", error);
+            }
+        };
+
+        if (userReceiver) {
+            checkFriendStatus();
+        }
+    }, [userReceiver]);
+
+    useEffect(() => {
+        if (userReceiver) {
+            console.log("User receiver updated:", userReceiver);
+        }
+    }, [userReceiver]);
 
     useEffect(() => {
         if (messagesMemo.response) {
-            const result = messagesMemo.response.sort((a, b) => {
+            // Lọc các tin nhắn để không hiển thị những tin nhắn đã bị xóa cho người dùng hiện tại
+            const filteredMessages = messagesMemo.response.filter((msg) => {
+                // Nếu deletedByUserIds tồn tại và chứa ID của người dùng hiện tại, không hiển thị tin nhắn này
+
+                return !(
+                    msg.deletedByUserIds &&
+                    msg.deletedByUserIds.includes(currentUser.id)
+                );
+            });
+
+            // tự động sort tin nhắn hiển thị tin nhắn nằm ở duới cùng
+            const result = filteredMessages.sort((a, b) => {
                 return new Date(a.timestamp) - new Date(b.timestamp);
             });
-            setLocalMessages(result);
+
+            setLocalMessages(result); // Cập nhật localMessages từ messagesMemo
         }
-    }, [messagesMemo.response]);
+    }, [messagesMemo.response, currentUser.id]);
 
     useEffect(() => {
         if (bottomRef.current) {
@@ -254,14 +310,14 @@ const Conservation = ({
     //   });
     // };
 
-    // const handleOpenAddModel = (messageId) => {
-    //   console.log("Deleting message:", messageId);
-    //   // Implement delete logic here
-    //   toast.info("Tính năng xóa tin nhắn đang được phát triển", {
-    //     position: "top-center",
-    //     autoClose: 1000,
-    //   });
-    // };
+    const handleOpenAddModel = (messageId) => {
+        console.log("Deleting message:", messageId);
+        // Implement delete logic here
+        toast.info("Tính năng xóa tin nhắn đang được phát triển", {
+            position: "top-center",
+            autoClose: 1000,
+        });
+    };
 
     // Toggle message actions visibility
     const toggleMessageActions = (messageId) => {
@@ -399,6 +455,51 @@ const Conservation = ({
         }
     };
 
+    // Hàm xóa tin nhắn cho người dùng
+    const handleDeleteForUser = async ({ messageId, userId }) => {
+        try {
+            // Nếu WebSocket đang kết nối, gửi yêu cầu xóa qua WebSocket
+            if (client.current && client.current.connected) {
+                client.current.publish({
+                    destination: "/app/chat/delete-for-user",
+                    body: JSON.stringify({
+                        messageId: messageId,
+                        userId: userId,
+                    }),
+                });
+
+                // Cập nhật UI ngay lập tức cho người dùng hiện tại
+                setLocalMessages((prevMessages) =>
+                    prevMessages.filter(
+                        (msg) => String(msg.id || msg._id) !== String(messageId)
+                    )
+                );
+                return true;
+            } else {
+                // Fallback - gọi API nếu WebSocket không hoạt động
+                await deleteForUserMessage({ messageId, userId });
+
+                // Cập nhật UI
+                setLocalMessages((prevMessages) =>
+                    prevMessages.filter(
+                        (msg) => String(msg.id || msg._id) !== String(messageId)
+                    )
+                );
+                return true;
+            }
+        } catch (error) {
+            console.error("Error deleting message for user:", error);
+            toast.error(
+                "Không thể xóa tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+                {
+                    position: "top-center",
+                    autoClose: 2000,
+                }
+            );
+            return false;
+        }
+    };
+
     // Handle click outside to close message actions
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -416,6 +517,38 @@ const Conservation = ({
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [showActionsFor]);
+    // Function to find sender info
+    const getSenderInfo = (msg) => {
+        const isSentByMe =
+            msg.sender === "me" || msg.senderId === currentUser.id;
+
+        if (isSentByMe) {
+            return {
+                avatar: currentUser.avatar,
+                name: currentUser.display_name,
+            };
+        } else {
+            if (!selectedConversation.is_group) {
+                // In 1-on-1 chat, the other person is the sender
+                const otherMember = selectedConversation.members.find(
+                    (member) => member.id !== currentUser.id
+                );
+                return {
+                    avatar: otherMember?.avatar,
+                    name: otherMember?.display_name || "User",
+                };
+            } else {
+                // In group chat, find the specific sender
+                const sender = selectedConversation.members.find(
+                    (member) => member.id === msg.senderId
+                );
+                return {
+                    avatar: sender?.avatar,
+                    name: sender?.display_name || "Unknown User",
+                };
+            }
+        }
+    };
 
     return (
         <div
@@ -451,7 +584,11 @@ const Conservation = ({
                                 : selectedConversation?.name}
                         </h6>
                         <small className="text-muted">
-                            Người lạ · Không có nhóm chung
+                            {" "}
+                            {!selectedConversation.is_group && !isFriend
+                                ? "Người lạ"
+                                : ""}{" "}
+                            · Không có nhóm chung
                         </small>
                     </div>
                 </div>
@@ -474,15 +611,33 @@ const Conservation = ({
                 </div>
             </div>
             {/* Notification */}
-            <div className="card-body d-flex align-items-center justify-content-between">
-                <div>
-                    <i className="bi bi-person-plus-fill mx-2"></i>
-                    <span>Gửi yêu cầu kết bạn tới người này</span>
+            {!selectedConversation.is_group && !isFriend && (
+                <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <i className="bi bi-person-plus-fill mx-2"></i>
+                        <span>Gửi yêu cầu kết bạn tới người này</span>
+                    </div>
+
+                    {isSuccessSent[userReceiver?.id] ? (
+                        <button
+                            className="btn btn-outline-secondary btn-sm"
+                            disabled
+                        >
+                            Đã gửi lời mời kết bạn
+                        </button>
+                    ) : (
+                        <button
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => {
+                                sendRequest(userReceiver.id);
+                                dispatch(setIsSuccessSent(userReceiver.id)); // Cập nhật trạng thái gửi lời mời kết bạn thành công
+                            }}
+                        >
+                            Gửi kết bạn
+                        </button>
+                    )}
                 </div>
-                <button className="btn btn-outline-secondary btn-sm">
-                    Gửi kết bạn
-                </button>
-            </div>
+            )}
 
             {/* Chat Messages */}
             <div
@@ -509,7 +664,7 @@ const Conservation = ({
                             msg?.sender === "me" ||
                             msg?.senderId === currentUser?.id;
                         const isRecalled = msg?.recalled === true;
-
+                        const senderInfo = getSenderInfo(msg);
                         return (
                             <div
                                 key={messageId}
@@ -523,6 +678,29 @@ const Conservation = ({
                                 }
                                 onMouseLeave={() => setHoveredMessageId(null)}
                             >
+                                {/* Show avatar for messages from other users */}
+                                {!isSentByMe && (
+                                    <div className="me-2 d-flex flex-column align-items-center justify-content-center">
+                                        <img
+                                            src={senderInfo.avatar}
+                                            alt={senderInfo.name}
+                                            className="rounded-circle"
+                                            width={45}
+                                            height={45}
+                                            style={{ objectFit: "cover" }}
+                                        />
+                                        {selectedConversation.is_group && (
+                                            <small
+                                                className="text-muted mt-1"
+                                                style={{ fontSize: "0.7rem" }}
+                                            >
+                                                {senderInfo.name
+                                                    ?.split(" ")
+                                                    .pop() || "User"}
+                                            </small>
+                                        )}
+                                    </div>
+                                )}
                                 <div
                                     className={`p-2 rounded shadow-sm message-bubble ${
                                         isSentByMe
@@ -692,6 +870,9 @@ const Conservation = ({
                                             }
                                             onRecallMessage={
                                                 handleRecallMessage
+                                            }
+                                            onDeleteForUser={
+                                                handleDeleteForUser
                                             }
                                             currentUserId={currentUser.id}
                                             isRecalled={isRecalled}
