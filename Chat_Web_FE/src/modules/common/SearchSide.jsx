@@ -9,29 +9,6 @@ import { searchUser } from "../../services/UserService";
 import { checkFriend } from "../../services/FriendService";
 import useFriend from "../../hooks/useFriend";
 
-const searchData = [
-    {
-        id: "1",
-        name: "Nguyễn Văn A",
-        avatar: "https://i.pravatar.cc/300?img=1",
-    },
-    {
-        id: "2",
-        name: "Trần Văn B",
-        avatar: "https://i.pravatar.cc/300?img=2",
-    },
-    {
-        id: "3",
-        name: "Đinh Văn C",
-        avatar: "https://i.pravatar.cc/300?img=1",
-    },
-
-    {
-        id: "4",
-        name: "Phan Văn Teo",
-        avatar: "https://i.pravatar.cc/300?img=2",
-    },
-]
 
 const ItemSerch = ({item}) => {
     const dispatch = useDispatch();
