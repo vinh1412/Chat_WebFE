@@ -12,6 +12,8 @@ import { getFriendList } from "../services/UserService";
 import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 
+
+
 const useFriend = () => {
 
     const queryClient = useQueryClient();
@@ -41,8 +43,9 @@ const useFriend = () => {
     // Send friend request
     const { mutate: sendRequest, isPending: isLoadingSending, isSuccess: isSuccessSent } = useMutation({
         mutationFn: (friendId) => sendFriendReq(friendId),
-        onSuccess: () => {
+        onSuccess:  () => {
             queryClient.invalidateQueries(["sentRequests"]);
+            console.log("Friend request sent successfully:", );
             toast.success("Gửi yêu cầu kết bạn thành công!", {
                 position: 'top-center',
                 autoClose: 2000,
