@@ -28,9 +28,12 @@ const Conservation = ({
   const bottomRef = React.useRef(null);
 
   // lấy danh sách tin nhắn theo conversationId
-  const { messages, isLoadingAllMessages, recallMessage } = useMessage(
-    selectedConversation.id
-  );
+  const {
+    messages,
+    isLoadingAllMessages,
+    recallMessage,
+    deleteForUserMessage,
+  } = useMessage(selectedConversation.id);
 
   const messagesMemo = useMemo(() => {
     if (!messages) return [];
@@ -90,14 +93,23 @@ const Conservation = ({
 
   useEffect(() => {
     if (messagesMemo.response) {
+      // Lọc các tin nhắn để không hiển thị những tin nhắn đã bị xóa cho người dùng hiện tại
+      const filteredMessages = messagesMemo.response.filter((msg) => {
+        // Nếu deletedByUserIds tồn tại và chứa ID của người dùng hiện tại, không hiển thị tin nhắn này
+
+        return !(
+          msg.deletedByUserIds && msg.deletedByUserIds.includes(currentUser.id)
+        );
+      });
+
       // tự động sort tin nhắn hiển thị tin nhắn nằm ở duới cùng
-      const result = messagesMemo.response.sort((a, b) => {
+      const result = filteredMessages.sort((a, b) => {
         return new Date(a.timestamp) - new Date(b.timestamp);
       });
 
       setLocalMessages(result); // Cập nhật localMessages từ messagesMemo
     }
-  }, [messagesMemo.response]);
+  }, [messagesMemo.response, currentUser.id]);
 
   // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
@@ -132,6 +144,27 @@ const Conservation = ({
             console.log("Message ID:", newMessage.id || newMessage._id);
             console.log("Is recalled:", newMessage.recalled);
 
+            if (
+              newMessage.deletedByUserIds &&
+              newMessage.deletedByUserIds.length > 0
+            ) {
+              // Chỉ xử lý nếu người dùng hiện tại có trong danh sách deletedByUserIds
+              if (newMessage.deletedByUserIds.includes(currentUser.id)) {
+                console.log(
+                  "Removing deleted message from state:",
+                  newMessage.id
+                );
+                setLocalMessages((prevMessages) =>
+                  prevMessages.filter(
+                    (msg) =>
+                      String(msg.id || msg._id) !==
+                      String(newMessage.id || newMessage._id)
+                  )
+                );
+              }
+              return;
+            }
+
             // Kiểm tra nếu là tin nhắn đã thu hồi
             if (newMessage.recalled === true) {
               console.log("Received a recalled message:", newMessage);
@@ -157,23 +190,50 @@ const Conservation = ({
             } else {
               // Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
               const messageId = newMessage.id || newMessage._id;
+              const isDeletedForCurrentUser =
+                newMessage.deletedByUserIds &&
+                newMessage.deletedByUserIds.includes(currentUser.id);
 
-              // Dùng some để kiểm tra xem có tin nhắn nào trong localMessages có ID trùng với messageId không
-              const messageExists = localMessages.some(
-                (msg) =>
-                  (msg.id && String(msg.id) === String(messageId)) ||
-                  (msg._id && String(msg._id) === String(messageId))
+              // Kiểm tra xem tin nhắn này đã tồn tại trong state chưa
+              const existingMessageIndex = localMessages.findIndex(
+                (msg) => String(msg.id || msg._id) === messageId
               );
-
-              // Chỉ thêm tin nhắn mới nếu chưa tồn tại
-              if (!messageExists) {
-                console.log("Adding new message to local state:", newMessage);
-                setLocalMessages((prev) => [...prev, newMessage]);
+              if (existingMessageIndex !== -1) {
+                // Tin nhắn đã tồn tại trong state - cần cập nhật hoặc xóa
+                if (isDeletedForCurrentUser) {
+                  // Tin nhắn đã bị xóa cho người dùng hiện tại - xóa khỏi state
+                  console.log(
+                    "Removing deleted message from state:",
+                    messageId
+                  );
+                  setLocalMessages((prevMessages) =>
+                    prevMessages.filter(
+                      (msg) => String(msg.id || msg._id) !== messageId
+                    )
+                  );
+                } else {
+                  // Cập nhật tin nhắn với thuộc tính mới
+                  console.log("Updating existing message:", messageId);
+                  setLocalMessages((prevMessages) => {
+                    const updatedMessages = [...prevMessages];
+                    updatedMessages[existingMessageIndex] = {
+                      ...updatedMessages[existingMessageIndex],
+                      ...newMessage,
+                    };
+                    return updatedMessages;
+                  });
+                }
               } else {
-                console.log(
-                  "Message already exists, not adding again:",
-                  messageId
-                );
+                // Đây là tin nhắn mới
+                if (!isDeletedForCurrentUser) {
+                  console.log("Adding new message to local state:", newMessage);
+                  setLocalMessages((prev) => [...prev, newMessage]);
+                } else {
+                  console.log(
+                    "Message was deleted for user, not adding to local state:",
+                    messageId
+                  );
+                }
               }
             }
           }
@@ -362,6 +422,50 @@ const Conservation = ({
     }
   };
 
+  const handleDeleteForUser = async ({ messageId, userId }) => {
+    try {
+      // Nếu WebSocket đang kết nối, gửi yêu cầu xóa qua WebSocket
+      if (client.current && client.current.connected) {
+        client.current.publish({
+          destination: "/app/chat/delete-for-user",
+          body: JSON.stringify({
+            messageId: messageId,
+            userId: userId,
+          }),
+        });
+
+        // Cập nhật UI ngay lập tức cho người dùng hiện tại
+        setLocalMessages((prevMessages) =>
+          prevMessages.filter(
+            (msg) => String(msg.id || msg._id) !== String(messageId)
+          )
+        );
+        return true;
+      } else {
+        // Fallback - gọi API nếu WebSocket không hoạt động
+        await deleteForUserMessage({ messageId, userId });
+
+        // Cập nhật UI
+        setLocalMessages((prevMessages) =>
+          prevMessages.filter(
+            (msg) => String(msg.id || msg._id) !== String(messageId)
+          )
+        );
+        return true;
+      }
+    } catch (error) {
+      console.error("Error deleting message for user:", error);
+      toast.error(
+        "Không thể xóa tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+        {
+          position: "top-center",
+          autoClose: 2000,
+        }
+      );
+      return false;
+    }
+  };
+
   // Handle click outside to close message actions
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -379,6 +483,35 @@ const Conservation = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showActionsFor]);
+
+  // Function to find sender info
+  const getSenderInfo = (msg) => {
+    const isSentByMe = msg.sender === "me" || msg.senderId === currentUser.id;
+
+    if (isSentByMe) {
+      return { avatar: currentUser.avatar, name: currentUser.display_name };
+    } else {
+      if (!selectedConversation.is_group) {
+        // In 1-on-1 chat, the other person is the sender
+        const otherMember = selectedConversation.members.find(
+          (member) => member.id !== currentUser.id
+        );
+        return {
+          avatar: otherMember?.avatar,
+          name: otherMember?.display_name || "User",
+        };
+      } else {
+        // In group chat, find the specific sender
+        const sender = selectedConversation.members.find(
+          (member) => member.id === msg.senderId
+        );
+        return {
+          avatar: sender?.avatar,
+          name: sender?.display_name || "Unknown User",
+        };
+      }
+    }
+  };
 
   return (
     <div
@@ -477,6 +610,7 @@ const Conservation = ({
             const isSentByMe =
               msg.sender === "me" || msg.senderId === currentUser.id;
             const isRecalled = msg.recalled === true;
+            const senderInfo = getSenderInfo(msg);
 
             return (
               <div
@@ -487,6 +621,27 @@ const Conservation = ({
                 onMouseEnter={() => setHoveredMessageId(messageId)}
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
+                {/* Show avatar for messages from other users */}
+                {!isSentByMe && (
+                  <div className="me-2 d-flex flex-column align-items-center justify-content-center">
+                    <img
+                      src={senderInfo.avatar}
+                      alt={senderInfo.name}
+                      className="rounded-circle"
+                      width={45}
+                      height={45}
+                      style={{ objectFit: "cover" }}
+                    />
+                    {selectedConversation.is_group && (
+                      <small
+                        className="text-muted mt-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {senderInfo.name?.split(" ").pop() || "User"}
+                      </small>
+                    )}
+                  </div>
+                )}
                 <div
                   className={`p-2 rounded shadow-sm message-bubble ${
                     isSentByMe
@@ -558,10 +713,10 @@ const Conservation = ({
                       position: "absolute",
                       top: "15px",
                       right: isSentByMe
-                        ? `${messageRefs.current[msg.id]?.offsetWidth + 10}px`
+                        ? `${messageRefs.current[msg.id]?.offsetWidth + 20}px`
                         : "auto",
                       left: !isSentByMe
-                        ? `${messageRefs.current[msg.id]?.offsetWidth + 10}px`
+                        ? `${messageRefs.current[msg.id]?.offsetWidth + 70}px`
                         : "auto",
                       backgroundColor: "rgba(255, 255, 255, 0.9)",
                       borderRadius: "20px",
@@ -609,6 +764,7 @@ const Conservation = ({
                       senderId={msg.senderId}
                       conversationId={selectedConversation.id}
                       onRecallMessage={handleRecallMessage}
+                      onDeleteForUser={handleDeleteForUser}
                       currentUserId={currentUser.id}
                       isRecalled={isRecalled}
                     />

@@ -8,6 +8,7 @@ const MessageActionsDropdown = ({
   onRecallMessage, // Hàm thu hồi tin nhắn được truyền từ cha
   currentUserId,
   isRecalled = false, // Thêm prop mới để kiểm tra tin nhắn đã thu hồi chưa
+  onDeleteForUser,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -51,6 +52,24 @@ const MessageActionsDropdown = ({
       console.error("Error recalling message:", error);
       toast.error(
         "Không thể thu hồi tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+        {
+          position: "top-center",
+          autoClose: 2000,
+        }
+      );
+    }
+    setShowDropdown(false);
+  };
+
+  const handleDeleteForUserAction = async () => {
+    try {
+      console.log("Deleting message for user:", messageId, senderId);
+      await onDeleteForUser({ messageId, userId: currentUserId });
+    } catch (error) {
+      console.error("Error deleting message for user:", error);
+      toast.error(
+        "Không thể xóa tin nhắn cho người dùng: " +
+          (error.message || "Đã xảy ra lỗi"),
         {
           position: "top-center",
           autoClose: 2000,
@@ -118,7 +137,7 @@ const MessageActionsDropdown = ({
                 <div className="action-group">
                   <div
                     className="action-item"
-                    onClick={() => handleAction("Xóa chỉ ở phía tôi")}
+                    onClick={handleDeleteForUserAction}
                     style={{ ...actionItemStyle, color: "#e74c3c" }}
                   >
                     <i
@@ -217,7 +236,7 @@ const MessageActionsDropdown = ({
                   )}
                   <div
                     className="action-item"
-                    onClick={() => handleAction("Xóa chỉ ở phía tôi")}
+                    onClick={handleDeleteForUserAction}
                     style={{ ...actionItemStyle, color: "#e74c3c" }}
                   >
                     <i
