@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ReactModal from "react-modal";
 import { FaSave, FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
 import { changePasswordService } from "../../services/UserService";
+import { toast } from "react-toastify";
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
     const [oldPassword, setOldPassword] = useState("");
@@ -15,19 +16,27 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
     const handleChangePassword = async () => {
         if (newPassword !== confirmPassword) {
-            alert("Mật khẩu mới và xác nhận không khớp!");
+            toast.error("Mật khẩu mới và xác nhận không khớp!", {
+                position: "top-center",
+                autoClose: 3000,
+            });
             return;
         }
-
-        setIsLoading(true);
         try {
             await changePasswordService(oldPassword, newPassword);
-            alert("Đổi mật khẩu thành công!");
+            toast.success("Đổi mật khẩu thành công!", {
+                position: "top-center",
+                autoClose: 3000,
+            });
             onClose();
         } catch (error) {
-            alert(
+            toast.error(
                 "Lỗi đổi mật khẩu: " +
-                    (error.response?.data?.message || error.message)
+                    (error.response?.data?.message || error.message),
+                {
+                    position: "top-center",
+                    autoClose: 3000,
+                }
             );
         } finally {
             setIsLoading(false);
