@@ -1,0 +1,155 @@
+/* Wrapper for the Group List */
+.group-list-wrapper {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  /* margin-top: 20px; */
+  max-width: 100%;
+}
+
+
+.ListFriend__header svg {
+  margin-right: 12px;
+  color: #007bff; /* Color for icon */
+  font-size: 1.4rem;
+}
+.groupList__title{
+  background-color: #fff;
+  padding: 20px;
+  height: 120px;
+
+}
+
+/* Search & Filter Section */
+.group-list-wrapper .mb-3 {
+  font-size: 1.1rem;
+  color: #495057;
+  margin-bottom: 20px;
+}
+.grouplist_title{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: #fff;
+}
+
+.group-list-wrapper .form-select,
+.group-list-wrapper .form-control {
+  border-radius: 8px;
+  box-shadow: none;
+  padding-left: 40px; /* Add space for the search icon */
+}
+
+.group-list-wrapper .form-select,
+.group-list-wrapper .form-control {
+  border: 1px solid #ced4da;
+  background-color: #F0F2F5;
+}
+
+.group-list-wrapper .form-control:focus,
+.group-list-wrapper .form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+.group-list-wrapper .form-control {
+  padding-left: 40px; /* Add space for the search icon */
+  background-color: #F0F2F5;
+}
+
+/* Group list items */
+.group-list .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  transition: background-color 0.3s ease;
+  background-color: #ffffff;
+  /* border-radius: 8px; */
+}
+
+.group-list .row:hover {
+  background-color: #e9ecef;
+}
+
+.group-list .row:last-child {
+  border-bottom: none;
+}
+
+/* Avatar styling */
+.group-list .overflow-hidden {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.group-list img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* Group Name and Info */
+.group-list .fw-bold {
+  font-size: 1.1rem;
+  color: #212529;
+  font-weight: 600;
+}
+
+.group-list .text-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Menu icon */
+.group-list .BsThreeDots {
+  cursor: pointer;
+  font-size: 1.6rem;
+  color: #495057;
+  transition: color 0.3s;
+}
+
+.group-list .BsThreeDots:hover {
+  color: #007bff;
+}
+
+/* Add some padding around the select inputs and form controls */
+.group-list-wrapper .form-select,
+.group-list-wrapper .form-control {
+  padding: 8px 15px;
+  margin-bottom: 10px;
+}
+
+/* Adjustments for hover states */
+.group-list .row:hover .fw-bold {
+  color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .group-list-wrapper {
+    padding: 15px;
+  }
+
+  .group-list .row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .group-list .overflow-hidden {
+    margin-bottom: 10px;
+  }
+
+  .group-list .fw-bold {
+    font-size: 1rem;
+  }
+
+  .group-list .BsThreeDots {
+    font-size: 1.4rem;
+  }
+}
