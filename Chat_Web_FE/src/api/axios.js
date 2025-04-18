@@ -55,49 +55,79 @@ axiosInstance.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      getRefreshToken()
+      !(originalRequest.url.includes("/api/v1/auth/refresh-token") || 
+        originalRequest.url.includes("/api/v1/auth/sign-in"))
     ) {
-      console.log("🔄 Refresh token:", getRefreshToken());
+      console.log("Refresh token: ", getRefreshToken());
 
       originalRequest._retry = true;
+      const refreshToken = getRefreshToken();
+      if(refreshToken) {
+        try {
+          const response = await axios.post(
+            `${API_URL}/auth/refresh-token`, 
+            { refreshToken: refreshToken }
+          );
+          
+          if(response.status === 200) {
+            const accessTokenNew = response.data.response.accessToken;
+            console.log(" New access token:", accessTokenNew);
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({
-            resolve: (token) => {
-              originalRequest.headers["Authorization"] = `Bearer ${token}`;
-              resolve(axiosInstance(originalRequest));
-            },
-            reject,
-          });
-        });
+            saveAccessToken(accessTokenNew);
+
+            // cập nhật access token cho các request tiếp theo
+            axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessTokenNew}`;
+            
+            // thử lại request ban đầu với access token mới
+            originalRequest.headers["Authorization"] = `Bearer ${accessTokenNew}`;
+
+            // Gọi lại request gốc với token mới
+            return axiosInstance(originalRequest);
+          }
+        } catch (err) {
+          console.error("Error refreshing token:", err);
+          return Promise.reject(err);
+        }
       }
 
-      isRefreshing = true;
+      // if (isRefreshing) {
+      //   return new Promise((resolve, reject) => {
+      //     failedQueue.push({
+      //       resolve: (token) => {
+      //         originalRequest.headers["Authorization"] = `Bearer ${token}`;
+      //         resolve(axiosInstance(originalRequest));
+      //       },
+      //       reject,
+      //     });
+      //   });
+      // }
 
-      try {
-        const response = await refreshTokenService(getRefreshToken());
-        const { accessToken, refreshToken } = response.response;
-        console.log("🚀 New access token:", accessToken);
-        console.log("🚀 New refresh token:", refreshToken);
-        saveAccessToken(accessToken);
-        if (refreshToken) saveRefreshToken(refreshToken);
+      // isRefreshing = true;
 
-        processQueue(null, accessToken);
-        originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (err) {
-        hasRefreshFailed = true;
-        console.error("🔄 Refresh token failed:", err);
-        processQueue(err, null);
-        removeTokens();
-        window.location.href = "/login";
-        isRefreshing = false;
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
-      }
+      // try {
+      //   const response = await refreshTokenService(getRefreshToken());
+      //   const { accessToken, refreshToken } = response.response;
+      //   console.log("🚀 New access token:", accessToken);
+      //   console.log("🚀 New refresh token:", refreshToken);
+      //   saveAccessToken(accessToken);
+      //   if (refreshToken) saveRefreshToken(refreshToken);
+
+      //   processQueue(null, accessToken);
+      //   originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
+      //   return axiosInstance(originalRequest);
+      // } catch (err) {
+      //   hasRefreshFailed = true;
+      //   console.error("🔄 Refresh token failed:", err);
+      //   processQueue(err, null);
+      //   removeTokens();
+      //   window.location.href = "/login";
+      //   isRefreshing = false;
+      //   return Promise.reject(err);
+      // } finally {
+      //   isRefreshing = false;
+      // }
     }
+    console.error("API call failed:", error);
 
     return Promise.reject(error);
   }
