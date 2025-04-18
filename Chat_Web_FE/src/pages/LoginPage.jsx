@@ -5,6 +5,7 @@ import { useDashboardContext } from "../context/Dashboard_context";
 import { getCurrentUserService } from "../services/UserService";
 import formatPhoneNumber from "../utils/FormatPhoneNumber";
 import { toast } from "react-toastify";
+import QRLogin from "../pages/QRLogin";
 
 const LoginPage = () => {
   const [phone, setPhone] = useState("0862058920");
@@ -29,7 +30,7 @@ const LoginPage = () => {
           setCurrentUser(user);
           navigate("/");
         } catch (error) {
-          toast.error("Lỗi lấy thông tin người dùng", {
+          toast.error("Lỗi lấy thông tin người dùng", error, {
             position: "top-center",
             autoClose: 3000,
           });
@@ -49,12 +50,13 @@ const LoginPage = () => {
   return (
     <div style={styles.wrapper}>
       <div style={styles.loginBox}>
-        <img
+        {/* <img
           src="https://stc-zaloprofile.zdn.vn/pc/v1/images/logo.svg"
           alt="Zalo Logo"
           style={styles.logo}
-        />
-        <h2 style={styles.title}>Đăng nhập Zalo</h2>
+        /> */}
+        <h1 style={{ color: "#0068ff" }}>Chat</h1>
+        <h2 style={styles.title}>Đăng nhập</h2>
         <form onSubmit={handleLogin} style={styles.form}>
           <input
             type="text"
@@ -84,6 +86,8 @@ const LoginPage = () => {
           </button>
         </div>
       </div>
+      {/* QR Code Login Component */}
+      <QRLogin />
     </div>
   );
 };

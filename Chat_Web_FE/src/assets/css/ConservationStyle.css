@@ -1,0 +1,38 @@
+.bg-text {
+    background-color: #daeaff;
+}
+
+
+.message-actions {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.message-bubble {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.message-bubble:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.message-sent {
+    background-color: #dbebff !important;
+}
+
+.message-received {
+    background-color: #ffffff !important;
+}
+
+.action-icon:hover {
+    transform: scale(1.2);
+    color: #0d6efd !important;
+}
+
+.message-recalled {
+    font-style: italic;
+}
+
+.message-recalled span {
+    color: #888;
+}
