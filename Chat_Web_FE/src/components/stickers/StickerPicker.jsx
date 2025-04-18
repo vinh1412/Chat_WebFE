@@ -65,12 +65,6 @@ const StickerPicker = ({ onStickerSelect }) => {
             fetchGifs();
         }
     }, [searchTerm, activeTab]);
-
-    // Lọc sticker theo từ khóa tìm kiếm
-    const filteredStickers = stickerList.filter((sticker) =>
-        sticker.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     return (
         <div
             style={{
@@ -148,29 +142,7 @@ const StickerPicker = ({ onStickerSelect }) => {
                             gridTemplateColumns: "repeat(4, 1fr)",
                             gap: "10px",
                         }}
-                    >
-                        {filteredStickers.length > 0 ? (
-                            filteredStickers.map((sticker) => (
-                                <img
-                                    key={sticker.id}
-                                    src={sticker.url}
-                                    alt={sticker.category}
-                                    style={{
-                                        width: "70px",
-                                        height: "70px",
-                                        objectFit: "contain",
-                                        cursor: "pointer",
-                                        borderRadius: "5px",
-                                    }}
-                                    onClick={() => onStickerSelect(sticker.url)}
-                                />
-                            ))
-                        ) : (
-                            <p style={{ color: "#aaa", textAlign: "center" }}>
-                                Không tìm thấy sticker
-                            </p>
-                        )}
-                    </div>
+                    ></div>
                 )}
 
                 {activeTab === "Emoji" && (
