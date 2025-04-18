@@ -64,6 +64,10 @@ const DashboardProvider = ({ children }) => {
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const changePasswordModalRef = useRef(null);
 
+  // Modal: Chuyển tiếp tin nhắn
+  const [showForwardMessageModal, setShowForwardMessageModal] = useState(false);
+  const forwardMessageModalRef = useRef(null);
+
   console.log("DashboardProvider", showAddFriendModal);
 
   const contextValue = {
@@ -95,6 +99,10 @@ const DashboardProvider = ({ children }) => {
     showChangePasswordModal,
     setShowChangePasswordModal,
     changePasswordModalRef,
+
+    showForwardMessageModal,
+    setShowForwardMessageModal,
+    forwardMessageModalRef,
   };
 
   return (

@@ -5,6 +5,7 @@ import { useDashboardContext } from "../context/Dashboard_context";
 import { getCurrentUserService } from "../services/UserService";
 import formatPhoneNumber from "../utils/FormatPhoneNumber";
 import { toast } from "react-toastify";
+import QRLogin from "../pages/QRLogin";
 
 const LoginPage = () => {
   const [phone, setPhone] = useState("0862058920");
@@ -85,6 +86,8 @@ const LoginPage = () => {
           </button>
         </div>
       </div>
+      {/* QR Code Login Component */}
+      <QRLogin />
     </div>
   );
 };

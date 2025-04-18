@@ -6,6 +6,7 @@ import AccountInfoModal from "./AccountInfoModal";
 import ProfileModal from "./ProfileModal";
 import SettingsModal from "./SettingsModal";
 import ChangePasswordModal from "./ChangePasswordModal";
+import ForwardMessageModal from "./ForwardMessageModal";
 
 const Modal = () => {
     const {
@@ -19,6 +20,8 @@ const Modal = () => {
         setShowSettingsModal,
         showChangePasswordModal,
         setShowChangePasswordModal,
+        showForwardMessageModal,
+        setShowForwardMessageModal,
     } = useDashboardContext();
 
     return (
@@ -65,6 +68,19 @@ const Modal = () => {
                 isOpen={showChangePasswordModal}
                 onClose={() => setShowChangePasswordModal(false)}
             />
+            {/* Modal: Chuyển tiếp tin nhắn */}
+            <ReactModal
+                isOpen={showForwardMessageModal}
+                onRequestClose={() => setShowForwardMessageModal(false)}
+                contentLabel="Forward Message Modal"
+                className="modal-content bg-white rounded border-0 p-2 position-absolute top-0 start-0 m-3"
+                overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 w-100 h-100"
+            >
+                <ForwardMessageModal
+                    isOpen={showForwardMessageModal}
+                    onClose={() => setShowForwardMessageModal(false)}
+                />
+            </ReactModal>
         </>
     );
 };
