@@ -33,3 +33,29 @@ export const getConversationByIdService = async (conversationId) => {
     throw new Error(error.response?.data?.message || "Lỗi khi lấy hội thoại");
   }
 };
+
+export const findOrCreateConversationService = async (senderId, receiverId) => {
+  try {
+    const response = await axiosInstance.post(
+      "/conversations/find-or-create",
+      null,
+      {
+        params: {
+          senderId,
+          receiverId,
+        },
+      }
+    );
+    console.log("Created or found conversation:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error creating or finding conversation:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi tạo hoặc tìm hội thoại"
+    );
+  }
+};
+
