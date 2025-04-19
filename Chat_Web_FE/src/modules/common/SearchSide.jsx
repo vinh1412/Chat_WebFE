@@ -4,16 +4,22 @@ import { Container, Col, Row, Button } from "react-bootstrap";
 import { BsSearch } from "react-icons/bs";
 
 import { useDispatch } from "react-redux";
-import { setShowSearch, setShowConversation } from "../../redux/slice/commonSlice";
+import { setShowSearch, setShowConversation, setSelectedConversation } from "../../redux/slice/commonSlice";
 import { searchUser } from "../../services/UserService";
 import { checkFriend } from "../../services/FriendService";
 import useFriend from "../../hooks/useFriend";
+import handleClick from "../../modules/chat/conservation/ItemConservation";
+import { useDashboardContext } from "../../context/Dashboard_context";
+import useConversation from "../../hooks/useConversation";
 
 
 const ItemSerch = ({item}) => {
+    // console.log("ItemSerch", item);
     const dispatch = useDispatch();
     const [isFriend, setIsFriend] = React.useState(false);
     const { sendRequest, isSuccessSent } = useFriend();
+    const { currentUser } = useDashboardContext();
+    const { findOrCreateConversation } = useConversation();
 
     // Kiểm tra xem người dùng đã là bạn bè hay chưa
     React.useEffect(() => {
@@ -29,9 +35,32 @@ const ItemSerch = ({item}) => {
         checkFriendStatus();
     }, [item.id]);
 
+    const handleClick = () => {
+        // console.log("Item clicked:---------------", item);
+        const senderId = currentUser._id || currentUser.id; // hoặc tùy theo cấu trúc user của bạn
+        const receiverId = item._id || item.id;
+        // console.log("Sender ID:", senderId);
+        // console.log("Receiver ID:", receiverId);
+    
+        findOrCreateConversation(
+          { senderId, receiverId },
+          {
+            onSuccess: (conversation) => {
+              // Đã có hội thoại hoặc tạo mới thành công
+              dispatch(setSelectedConversation(conversation));
+              dispatch(setShowConversation(true));
+            },
+            onError: (err) => {
+              console.error("Lỗi khi tìm/tao cuộc hội thoại:", err.message);
+            },
+          }
+        );
+      };
+
+
     return (
         <div key={item.id} className="overflow-hidden d-flex align-items-center justify-content-between gap-2 mb-2 mt-2"
-            onClick={() => {dispatch(setShowConversation(true))}}
+            onClick={handleClick}
             style={{cursor: 'pointer'}}
         >
             <div className="d-flex align-items-center gap-2">
@@ -83,6 +112,8 @@ const SearchSide = () => {
                 }
             }
             console.log("Kết quả tìm kiếm:", response.response);
+            console.log("Kết quả tìm kiếm:", response); 
+            
            
         } catch (error) {
             console.error("Lỗi khi gọi API tìm kiếm:", error);
@@ -145,7 +176,8 @@ const SearchSide = () => {
                     {/* List tìm kiếm gần đây */}
                     <div className="d-flex flex-column gap-2 mt-2">
                         {searchResults.map((item) => (
-                            <ItemSerch key={item.id} item={item} />
+                            // Gọi component ItemSerch và truyền props vào
+                            <ItemSerch key={item.id} item={item} onClick={handleClick}/>
                         ))}
 
                         {searchResults.length === 0 && (
