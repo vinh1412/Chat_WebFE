@@ -15,10 +15,9 @@ const ItemConservation = ({ item }) => {
 
   console.log("Item Conservation", item.is_group);
   console.log("SelectedConversationId", setSelectedConversation(item.id));
-
   // Hàm xử lý khi click vào item
   const handleClick = () => {
-    console.log(item);
+    
     // Gọi action để cập nhật state selectedConversationId với id của cuộc trò chuyện hiện tại
     dispatch(setSelectedConversation(item));
     // Gọi action để cập nhật state showConversation thành true để hiển thị conversation

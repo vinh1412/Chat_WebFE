@@ -23,6 +23,7 @@ const Conservation = ({
     showDetail,
     selectedConversation,
 }) => {
+    // console.log("Conservation selectedConversation----", selectedConversation);
     const dispatch = useDispatch();
     const bottomRef = React.useRef(null);
     // lấy danh sách tin nhắn theo conversationId
@@ -32,7 +33,7 @@ const Conservation = ({
         recallMessage,
         deleteForUserMessage,
     } = useMessage(selectedConversation?.id);
-
+// console.log("Conservation Selected------------->", selectedConversation);
     const messagesMemo = useMemo(() => {
         if (!messages) return [];
         return messages;
@@ -585,7 +586,7 @@ const Conservation = ({
                         </h6>
                         <small className="text-muted">
                             {" "}
-                            {!selectedConversation.is_group && !isFriend
+                            {!selectedConversation?.is_group && !isFriend
                                 ? "Người lạ"
                                 : ""}{" "}
                             · Không có nhóm chung
@@ -611,7 +612,7 @@ const Conservation = ({
                 </div>
             </div>
             {/* Notification */}
-            {!selectedConversation.is_group && !isFriend && (
+            {!selectedConversation?.is_group && !isFriend && (
                 <div className="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <i className="bi bi-person-plus-fill mx-2"></i>
