@@ -13,6 +13,7 @@ const ItemConservation = ({ item }) => {
 
     const { currentUser, fetchUser } = useDashboardContext();
 
+<<<<<<< HEAD
     // console.log("Item Conservation", item.is_group);
     // console.log("SelectedConversationId", setSelectedConversation(item.id));
 
@@ -24,6 +25,18 @@ const ItemConservation = ({ item }) => {
         // Gọi action để cập nhật state showConversation thành true để hiển thị conversation
         dispatch(setShowConversation(true));
     };
+=======
+  console.log("Item Conservation", item.is_group);
+  console.log("SelectedConversationId", setSelectedConversation(item.id));
+  // Hàm xử lý khi click vào item
+  const handleClick = () => {
+    
+    // Gọi action để cập nhật state selectedConversationId với id của cuộc trò chuyện hiện tại
+    dispatch(setSelectedConversation(item));
+    // Gọi action để cập nhật state showConversation thành true để hiển thị conversation
+    dispatch(setShowConversation(true));
+  };
+>>>>>>> 9077e711a6ee606f7209f086ef0999093408feec
 
     // Lấy avatar đúng cho cuộc trò chuyện
     let displayAvatar = item.avatar;
