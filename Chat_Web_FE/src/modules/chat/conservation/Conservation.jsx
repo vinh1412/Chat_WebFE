@@ -38,7 +38,7 @@ const Conservation = ({
         recallMessage,
         deleteForUserMessage,
     } = useMessage(selectedConversation?.id);
-// console.log("Conservation Selected------------->", selectedConversation);
+    // console.log("Conservation Selected------------->", selectedConversation);
     const messagesMemo = useMemo(() => {
         if (!messages) return [];
         return messages;
@@ -998,7 +998,7 @@ const Conservation = ({
                                                 ? `${
                                                       messageRefs.current[
                                                           msg?.id
-                                                      ]?.offsetWidth + 10
+                                                      ]?.offsetWidth + 65
                                                   }px`
                                                 : "auto",
                                             backgroundColor:
