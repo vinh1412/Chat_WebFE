@@ -68,13 +68,13 @@ const StickerPicker = ({ onStickerSelect }) => {
     return (
         <div
             style={{
-                background: "#1c2526",
+                background: "#fff",
                 borderRadius: "10px",
                 width: "350px",
                 maxHeight: "400px",
                 overflow: "hidden",
                 boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-                color: "#fff",
+                color: "#000",
                 fontFamily: "Arial, sans-serif",
             }}
         >
@@ -82,8 +82,8 @@ const StickerPicker = ({ onStickerSelect }) => {
             <div
                 style={{
                     display: "flex",
-                    borderBottom: "1px solid #3a4445",
-                    background: "#121a1b",
+                    borderBottom: "1px solid #ddd",
+                    background: "#f9f9f9",
                 }}
             >
                 {["Sticker", "Emoji", "GIF"].map((tab) => (
@@ -93,9 +93,9 @@ const StickerPicker = ({ onStickerSelect }) => {
                             flex: 1,
                             padding: "10px",
                             background:
-                                activeTab === tab ? "#3a4445" : "transparent",
+                                activeTab === tab ? "#e0e0e0" : "transparent",
                             border: "none",
-                            color: activeTab === tab ? "#00a6ff" : "#fff",
+                            color: activeTab === tab ? "#007bff" : "#000",
                             fontWeight: activeTab === tab ? "bold" : "normal",
                             cursor: "pointer",
                             textTransform: "uppercase",
@@ -109,23 +109,25 @@ const StickerPicker = ({ onStickerSelect }) => {
             </div>
 
             {/* Thanh tìm kiếm */}
-            <div style={{ padding: "10px" }}>
-                <input
-                    type="text"
-                    placeholder="Tìm kiếm sticker"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "5px",
-                        border: "1px solid #3a4445",
-                        background: "#2a3435",
-                        color: "#fff",
-                        fontSize: "14px",
-                    }}
-                />
-            </div>
+            {activeTab !== "Emoji" && (
+                <div style={{ padding: "10px" }}>
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm sticker"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            width: "100%",
+                            padding: "8px",
+                            borderRadius: "5px",
+                            border: "1px solid #ddd",
+                            background: "#f9f9f9",
+                            color: "#000",
+                            fontSize: "14px",
+                        }}
+                    />
+                </div>
+            )}
 
             {/* Nội dung theo tab */}
             <div
@@ -153,7 +155,7 @@ const StickerPicker = ({ onStickerSelect }) => {
                             }
                             width="100%"
                             height="300px"
-                            theme="dark"
+                            theme="light"
                             searchPlaceholder="Tìm kiếm emoji"
                         />
                     </div>
@@ -202,7 +204,7 @@ const StickerPicker = ({ onStickerSelect }) => {
                     display: "flex",
                     gap: "5px",
                     padding: "10px",
-                    borderTop: "1px solid #3a4445",
+                    borderTop: "1px solid #ddd",
                     overflowX: "auto",
                 }}
             >
@@ -211,11 +213,11 @@ const StickerPicker = ({ onStickerSelect }) => {
                         <button
                             key={category}
                             style={{
-                                background: "#2a3435",
-                                border: "none",
+                                background: "#f9f9f9",
+                                border: "1px solid #ddd",
                                 borderRadius: "5px",
                                 padding: "5px 10px",
-                                color: "#fff",
+                                color: "#000",
                                 cursor: "pointer",
                                 fontSize: "12px",
                             }}
