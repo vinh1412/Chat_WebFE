@@ -15,8 +15,13 @@ import useFriend from "../../../hooks/useFriend";
 import { setIsSuccessSent } from "../../../redux/friendSlice";
 import ForwardMessageModal from "../../../components/modal/ForwardMessageModal";
 import { forwardMessageService } from "../../../services/MessageService";
+import ReactionEmojiModal from "../../../components/modal/ReactionEmojiModal";
+import { uploadFile } from "../../../services/FileService";
+import axiosInstance from "../../../api/axios";
+import "../../../assets/css/UploadFile.css";
 
 import StickerPicker from "../../../components/stickers/StickerPicker";
+import { getFileIcon } from "../../../utils/FormatIconFile";
 const Conservation = ({
     onShowDetail,
     onHideDetail,
@@ -52,6 +57,26 @@ const Conservation = ({
     const [isFriend, setIsFriend] = useState(false); // Track friend status
     const { sendRequest } = useFriend();
     const { isSuccessSent } = useSelector((state) => state.friend);
+
+    // show reaction emoji modal và các emoji mặc định
+    const [showReactionModal, setShowReactionModal] = useState(false);
+    const [defaultReactionEmoji, setDefaultReactionEmoji] = useState({
+        id: "thumbs-up",
+        icon: "👍",
+    });
+    const handleOpenReactionModal = () => {
+        setShowReactionModal(true);
+    };
+
+    const handleCloseReactionModal = () => {
+        setShowReactionModal(false);
+    };
+
+    const handleSelectDefaultEmoji = (emoji) => {
+        setDefaultReactionEmoji(emoji);
+        setShowReactionModal(false);
+        // Optionally show a success message
+    };
 
     const messageRefs = useRef({});
     // Lấy thông tin người dùng ngẫu nhiên
@@ -332,7 +357,7 @@ const Conservation = ({
     // Hàm gửi tin nhắn
     const handleSendMessage = async () => {
         if (newMessage.trim() === "" || !selectedConversation?.id) {
-            alert("Vui lòng chọn cuộc trò chuyện và nhập tin nhắn");
+            // alert("Vui lòng chọn cuộc trò chuyện và nhập tin nhắn");
             return;
         }
         try {
@@ -365,31 +390,123 @@ const Conservation = ({
     };
 
     // Hàm gửi hình ảnh
-    const handleSendImage = (file) => {
-        const newMsg = {
-            id: Date.now(),
-            type: "image",
-            content: URL.createObjectURL(file),
-            sender: "me",
+    const handleSendImage = async (file) => {
+        if (!selectedConversation?.id) {
+            toast.error("Vui lòng chọn cuộc trò chuyện trước");
+            return;
+        }
+        // Then after uploading
+
+        const tempId = `temp-${Date.now()}`;
+        const tempUrl = URL.createObjectURL(file);
+        const tempMsg = {
+            id: tempId,
+            senderId: currentUser.id,
+            messageType: "IMAGE",
+            fileUrl: tempUrl,
             timestamp: new Date(),
             fileName: file.name,
+            uploading: true,
         };
-        setLocalMessages((prev) => [...prev, newMsg]);
-        // Gọi API gửi hình ảnh tại đây (chưa triển khai)
+
+        setLocalMessages((prev) => [...prev, tempMsg]);
+
+        try {
+            const chatMessageRequest = {
+                senderId: currentUser.id,
+                conversationId: selectedConversation.id,
+                messageType: "IMAGE",
+                // fileUrl: tempUrl,
+                content: null,
+            };
+
+            const result = await uploadFile(file, chatMessageRequest);
+            const updatedRequest = {
+                ...chatMessageRequest,
+                fileUrl: result.fileUrl,
+            };
+            client.current.publish({
+                destination: "/app/chat/send",
+                body: JSON.stringify(updatedRequest),
+            });
+
+            setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        } catch (error) {
+            toast.error(`Lỗi khi gửi hình ảnh: ${error.message}`);
+            setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        }
     };
 
     // Hàm gửi tệp đính kèm
-    const handleSendFile = (file) => {
-        const newMsg = {
-            id: Date.now(),
-            type: "file",
-            content: URL.createObjectURL(file),
-            sender: "me",
+    const handleSendFile = async (file) => {
+        if (!selectedConversation?.id) {
+            toast.error("Vui lòng chọn cuộc trò chuyện trước");
+            return;
+        }
+        // Then after uploading
+
+        const tempId = `temp-${Date.now()}`;
+        const tempUrl = URL.createObjectURL(file);
+        const tempMsg = {
+            id: tempId,
+            senderId: currentUser.id,
+            messageType: "FILE",
+            fileUrl: tempUrl,
             timestamp: new Date(),
-            fileName: file.name,
+            uploading: true,
         };
-        setLocalMessages((prev) => [...prev, newMsg]);
-        // Gọi API gửi file tại đây (chưa triển khai)
+
+        setLocalMessages((prev) => [...prev, tempMsg]);
+
+        try {
+            const chatMessageRequest = {
+                senderId: currentUser.id,
+                conversationId: selectedConversation.id,
+                messageType: "FILE",
+                content: file.name,
+            };
+
+            const result = await uploadFile(file, chatMessageRequest);
+            const updatedRequest = {
+                ...chatMessageRequest,
+                fileUrl: result.fileUrl,
+            };
+
+            client.current.publish({
+                destination: "/app/chat/send",
+                body: JSON.stringify(updatedRequest),
+            });
+
+            setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        } catch (error) {
+            toast.error(`Lỗi khi gửi tệp đính kèm: ${error.message}`);
+            setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        }
+    };
+
+    // Hàm gửi nhanh emoji
+    const handleQuickReaction = () => {
+        if (!selectedConversation?.id) return;
+        if (!client.current || !client.current.connected) {
+            toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+                position: "top-center",
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        // Send the emoji reaction via WebSocket
+        const request = {
+            conversationId: selectedConversation?.id,
+            senderId: currentUser.id,
+            messageType: "EMOJI",
+            content: defaultReactionEmoji.icon,
+        };
+
+        client.current.publish({
+            destination: "/app/chat/send",
+            body: JSON.stringify(request),
+        });
     };
 
     // Hàm thu hồi tin nhắn
@@ -742,37 +859,113 @@ const Conservation = ({
                                                 objectFit: "contain",
                                             }}
                                         />
-                                    ) : msg?.type === "image" ? (
-                                        <button
-                                            className="btn p-0 border-0 bg-transparent"
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // Prevent triggering toggleMessageActions
-                                                window.open(
-                                                    msg?.content,
-                                                    "_blank"
-                                                );
-                                            }}
-                                        >
-                                            <img
-                                                src={msg?.content}
-                                                alt="Hình ảnh"
-                                                className="img-fluid rounded"
-                                                style={{
-                                                    maxWidth: "300px",
-                                                    maxHeight: "300px",
-                                                    objectFit: "contain",
+                                    ) : msg?.messageType === "IMAGE" ||
+                                      msg?.type === "IMAGE" ? (
+                                        msg.uploading ? (
+                                            <div className="d-flex align-items-center">
+                                                <div
+                                                    className="spinner-border spinner-border-sm me-2"
+                                                    role="status"
+                                                >
+                                                    <span className="visually-hidden">
+                                                        Loading...
+                                                    </span>
+                                                </div>
+                                                <span>Đang tải...</span>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                className="btn p-0 border-0 bg-transparent"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(
+                                                        msg?.fileUrl,
+                                                        "_blank"
+                                                    );
                                                 }}
-                                            />
-                                        </button>
-                                    ) : msg?.type === "file" ? (
-                                        <a
-                                            href={msg?.content}
-                                            download={msg?.fileName}
-                                            className="text-decoration-none text-black"
-                                            onClick={(e) => e.stopPropagation()} // Prevent triggering toggleMessageActions
-                                        >
-                                            📎 {msg?.fileName}
-                                        </a>
+                                            >
+                                                <img
+                                                    src={msg?.fileUrl}
+                                                    alt="Hình ảnh"
+                                                    className="img-fluid rounded"
+                                                    style={{
+                                                        maxWidth: "300px",
+                                                        maxHeight: "300px",
+                                                        objectFit: "contain",
+                                                    }}
+                                                />
+                                            </button>
+                                        )
+                                    ) : msg?.messageType === "FILE" ? (
+                                        msg.uploading ? (
+                                            <div className="d-flex align-items-center">
+                                                <div
+                                                    className="spinner-border spinner-border-sm me-2"
+                                                    role="status"
+                                                >
+                                                    <span className="visually-hidden">
+                                                        Loading...
+                                                    </span>
+                                                </div>
+                                                <span>Đang tải tệp...</span>
+                                            </div>
+                                        ) : (
+                                            <div className="file-container">
+                                                <button
+                                                    className="btn p-0 border-0 bg-transparent d-flex align-items-center"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(
+                                                            msg?.fileUrl,
+                                                            "_blank"
+                                                        );
+                                                    }}
+                                                >
+                                                    <span className="me-2 fs-4">
+                                                        {getFileIcon(
+                                                            msg?.content
+                                                        )}
+                                                    </span>
+                                                    <div className="d-flex flex-column align-items-start">
+                                                        <span className="file-name">
+                                                            {msg?.content}
+                                                        </span>
+                                                        <small className="text-muted">
+                                                            Nhấn để xem • Nhấn
+                                                            phải để tải xuống
+                                                        </small>
+                                                    </div>
+                                                </button>
+                                                <a
+                                                    href={msg?.fileUrl}
+                                                    download={msg?.content}
+                                                    className="download-link ms-2"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        // Create a hidden anchor for downloading
+                                                        const downloadLink =
+                                                            document.createElement(
+                                                                "a"
+                                                            );
+                                                        downloadLink.href =
+                                                            msg?.fileUrl;
+                                                        downloadLink.download =
+                                                            msg?.content;
+                                                        document.body.appendChild(
+                                                            downloadLink
+                                                        );
+                                                        downloadLink.click();
+                                                        document.body.removeChild(
+                                                            downloadLink
+                                                        );
+                                                    }}
+                                                    title="Tải xuống"
+                                                >
+                                                    <i className="bi bi-download text-primary"></i>
+                                                </a>
+                                            </div>
+                                        )
                                     ) : (
                                         <span>{msg?.content || msg?.text}</span>
                                     )}
@@ -942,7 +1135,7 @@ const Conservation = ({
                         <i className="bi bi-three-dots"></i>
                     </button>
                 </div>
-
+                {/* form sticker/ emoji / gif */}
                 {showStickerPicker && (
                     <div
                         style={{
@@ -988,9 +1181,30 @@ const Conservation = ({
                             }`}
                         ></i>
                     </button>
-                    <button className="btn btn-light d-flex align-items-center">
-                        <i className="bi bi-hand-thumbs-up"></i>
+                    <button
+                        className="btn btn-light d-flex align-items-center"
+                        onClick={handleQuickReaction} // Left click sends the reaction
+                        onContextMenu={(e) => {
+                            e.preventDefault(); // Prevent default context menu
+                            handleOpenReactionModal(); // Show custom modal on right click
+                            return false;
+                        }}
+                    >
+                        {defaultReactionEmoji.id === "thumbs-up" ? (
+                            <i className="bi bi-hand-thumbs-up-fill text-warning"></i>
+                        ) : (
+                            <span style={{ fontSize: "1.2rem" }}>
+                                {defaultReactionEmoji.icon}
+                            </span>
+                        )}
                     </button>
+                    {/* Form Reaction EmojiModal */}
+                    <ReactionEmojiModal
+                        show={showReactionModal}
+                        onClose={handleCloseReactionModal}
+                        onSelect={handleSelectDefaultEmoji}
+                        selectedEmoji={defaultReactionEmoji}
+                    />
                 </div>
             </div>
 
