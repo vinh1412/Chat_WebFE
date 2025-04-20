@@ -180,8 +180,9 @@ const Conservation = ({
                     // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
                     (message) => {
                         const newMessage = JSON.parse(message.body); // Chuyển đổi tin nhắn từ JSON string sang object
+
                         // console.log("Raw WebSocket message:", message.body);
-                        // console.log("Parsed message:", newMessage);
+                        // console.log("Parsed message--------------------------:", newMessage);
                         // console.log(
                         //     "Message ID:",
                         //     newMessage.id || newMessage._id
@@ -263,6 +264,8 @@ const Conservation = ({
                                 );
                             }
                         }
+
+                        
                     }
                 );
             },

@@ -34,13 +34,13 @@ const ForwardMessageModal = ({
     // Lọc và sắp xếp danh sách bạn bè
     const filteredFriends = friends
         .filter((friend) =>
-            friend.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+            friend?.displayName?.toLowerCase().includes(searchTerm?.toLowerCase())
         )
         .sort((a, b) => {
             if (sortBy === "Tên (A-Z)") {
-                return a.displayName.localeCompare(b.displayName);
+                return a.displayName?.localeCompare(b.displayName);
             } else if (sortBy === "Tên (Z-A)") {
-                return b.displayName.localeCompare(a.displayName);
+                return b.displayName?.localeCompare(a.displayName);
             }
             return 0;
         });
@@ -56,9 +56,9 @@ const ForwardMessageModal = ({
             return;
         }
         setSelectedReceivers((prev) => {
-            const newState = prev.includes(friend.userId)
-                ? prev.filter((id) => id !== friend.userId)
-                : [...prev, friend.userId];
+            const newState = prev.includes(friend?.userId)
+                ? prev.filter((id) => id !== friend?.userId)
+                : [...prev, friend?.userId];
             console.log("New Selected Receivers:", newState);
             return newState;
         });
@@ -77,7 +77,7 @@ const ForwardMessageModal = ({
 
     // Xử lý gửi tin nhắn chuyển tiếp
     const handleShare = async () => {
-        if (selectedReceivers.length === 0) {
+        if (selectedReceivers?.length === 0) {
             toast.error("Vui lòng chọn ít nhất một người để chia sẻ.");
             return;
         }
