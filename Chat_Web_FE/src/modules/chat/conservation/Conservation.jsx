@@ -17,7 +17,6 @@ import ForwardMessageModal from "../../../components/modal/ForwardMessageModal";
 import { forwardMessageService } from "../../../services/MessageService";
 import ReactionEmojiModal from "../../../components/modal/ReactionEmojiModal";
 import { uploadFile } from "../../../services/FileService";
-import axiosInstance from "../../../api/axios";
 import "../../../assets/css/UploadFile.css";
 
 import StickerPicker from "../../../components/stickers/StickerPicker";
@@ -265,7 +264,7 @@ const Conservation = ({
         client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
       }
     };
-  }, [selectedConversation?.id, localMessages]);
+  }, [selectedConversation?.id, localMessages, currentUser.id]);
 
   //Handle sending GIF or Sticker
   const handleSendGifOrSticker = (url, type) => {
@@ -319,14 +318,14 @@ const Conservation = ({
   //   });
   // };
 
-  const handleOpenAddModel = (messageId) => {
-    console.log("Deleting message:", messageId);
-    // Implement delete logic here
-    toast.info("Tính năng xóa tin nhắn đang được phát triển", {
-      position: "top-center",
-      autoClose: 1000,
-    });
-  };
+//   const handleOpenAddModel = (messageId) => {
+//     console.log("Deleting message:", messageId);
+//     // Implement delete logic here
+//     toast.info("Tính năng xóa tin nhắn đang được phát triển", {
+//       position: "top-center",
+//       autoClose: 1000,
+//     });
+//   };
 
   // Toggle message actions visibility
   const toggleMessageActions = (messageId) => {
