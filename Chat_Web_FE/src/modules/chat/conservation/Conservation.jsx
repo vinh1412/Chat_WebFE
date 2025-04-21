@@ -36,12 +36,8 @@ const Conservation = ({
     isLoadingAllMessages,
     recallMessage,
     deleteForUserMessage,
+    refetchMessages,
   } = useMessage(selectedConversation?.id);
-  // console.log("Conservation Selected------------->", selectedConversation);
-  const messagesMemo = useMemo(() => {
-    if (!messages) return [];
-    return messages;
-  }, [messages]);
 
   const { currentUser } = useDashboardContext();
 
@@ -87,8 +83,8 @@ const Conservation = ({
     }
     return null;
   }, [selectedConversation, currentUser]);
-  console.log("User receiver updated:", userReceiver);
-  console.log("isSuccessSent:", isSuccessSent[userReceiver?.id]);
+  // console.log("User receiver updated:", userReceiver);
+  // console.log("isSuccessSent:", isSuccessSent[userReceiver?.id]);
 
   // check xem có phải là bạn bè không
   useEffect(() => {
@@ -113,24 +109,35 @@ const Conservation = ({
   }, [userReceiver]);
 
   useEffect(() => {
-    if (messagesMemo.response) {
+    if (messages) {
+      // console.log("Messages from server:", messages);
       // Lọc các tin nhắn để không hiển thị những tin nhắn đã bị xóa cho người dùng hiện tại
-      const filteredMessages = messagesMemo.response.filter((msg) => {
+      const filteredMessages = messages.response.filter((msg) => {
         // Nếu deletedByUserIds tồn tại và chứa ID của người dùng hiện tại, không hiển thị tin nhắn này
+        // console.log("msg.deletedByUserIds", msg.deletedByUserIds);
 
         return !(
           msg.deletedByUserIds && msg.deletedByUserIds.includes(currentUser.id)
         );
       });
+      // Kiểm tra xem server có trả về đúng trạng thái recalled không
+      // console.log(
+      //   "Messages after filtering:",
+      //   filteredMessages.map((msg) => ({
+      //     id: msg.id || msg._id,
+      //     recalled: msg.recalled,
+      //     content: msg.content,
+      //   }))
+      // );
 
       // tự động sort tin nhắn hiển thị tin nhắn nằm ở duới cùng
       const result = filteredMessages.sort((a, b) => {
         return new Date(a.timestamp) - new Date(b.timestamp);
       });
 
-      setLocalMessages(result); // Cập nhật localMessages từ messagesMemo
+      setLocalMessages(result); // Cập nhật localMessages
     }
-  }, [messagesMemo.response, currentUser.id]);
+  }, [messages, currentUser.id]);
 
   useEffect(() => {
     if (bottomRef.current) {
@@ -181,30 +188,7 @@ const Conservation = ({
             const newMessage = JSON.parse(message.body);
             console.log("New message received:", newMessage);
 
-            // Kiểm tra nếu tin nhắn đã bị xóa cho người dùng hiện tại
-            const isDeletedForCurrentUser =
-              newMessage.deletedByUserIds &&
-              newMessage.deletedByUserIds.includes(currentUser.id);
-
-            //CASE 1: Nếu tin nhắn đã bị xóa cho người dùng hiện tại, xóa khỏi state
-            if (isDeletedForCurrentUser) {
-              console.log(
-                "Tin nhắn đã bị xóa cho người dùng hiện tại:",
-                newMessage
-              );
-              setLocalMessages((prevMessages) =>
-                prevMessages.filter((msg) => {
-                  const msgId = String(msg?.id || msg?._id);
-
-                  const updatedMsgId = String(newMessage.id || newMessage._id);
-
-                  return msgId !== updatedMsgId;
-                })
-              );
-              return;
-            }
-
-            //CASE 2: Kiểm tra nếu là tin nhắn đã thu hồi
+            //CASE 1: Kiểm tra nếu là tin nhắn đã thu hồi
             if (newMessage.recalled === true) {
               setLocalMessages((prevMessages) =>
                 prevMessages.map((msg) => {
@@ -220,7 +204,7 @@ const Conservation = ({
                 })
               );
 
-              //CASE 3: Nếu không phải là tin nhắn đã thu hồi, thêm mới hoặc cập nhật tin nhắn
+              //CASE 2: Nếu không phải là tin nhắn đã thu hồi, thêm mới hoặc cập nhật tin nhắn
             } else {
               const messageId = newMessage.id || newMessage._id;
 
@@ -231,7 +215,7 @@ const Conservation = ({
               );
 
               //Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
-              //CASE 3.1: Nếu tin nhắn đã tồn tại, cập nhật lại nội dung
+              //CASE 2.1: Nếu tin nhắn đã tồn tại, cập nhật lại nội dung
               if (existingMessageIndex !== -1) {
                 setLocalMessages((prevMessages) => {
                   const newMessages = [...prevMessages];
@@ -242,10 +226,18 @@ const Conservation = ({
                 });
               }
 
-              //CASE 3.2: Nếu tin nhắn chưa tồn tại, thêm mới
+              //CASE 2.2: Nếu tin nhắn chưa tồn tại, thêm mới
               else {
+                console.log("Adding new message:", newMessage);
                 setLocalMessages((prev) => [...prev, newMessage]);
               }
+            }
+
+            refetchMessages();
+
+            // Tự động cuộn xuống cuối danh sách tin nhắn khi có tin nhắn mới
+            if (bottomRef.current) {
+              bottomRef.current.scrollIntoView({ behavior: "smooth" });
             }
           }
         );
@@ -318,14 +310,14 @@ const Conservation = ({
   //   });
   // };
 
-//   const handleOpenAddModel = (messageId) => {
-//     console.log("Deleting message:", messageId);
-//     // Implement delete logic here
-//     toast.info("Tính năng xóa tin nhắn đang được phát triển", {
-//       position: "top-center",
-//       autoClose: 1000,
-//     });
-//   };
+  //   const handleOpenAddModel = (messageId) => {
+  //     console.log("Deleting message:", messageId);
+  //     // Implement delete logic here
+  //     toast.info("Tính năng xóa tin nhắn đang được phát triển", {
+  //       position: "top-center",
+  //       autoClose: 1000,
+  //     });
+  //   };
 
   // Toggle message actions visibility
   const toggleMessageActions = (messageId) => {
@@ -498,7 +490,7 @@ const Conservation = ({
     conversationId,
   }) => {
     try {
-      console.log("Recalling message:", messageId, senderId, conversationId);
+      // console.log("Recalling message:", messageId, senderId, conversationId);
 
       // Nếu đang sử dụng WebSocket và kết nối đang hoạt động
       if (client.current && client.current.connected) {
@@ -520,15 +512,19 @@ const Conservation = ({
         }
 
         console.log("Message to recall:", messageToRecall);
+
+        const request = {
+          messageId: messageId,
+          senderId: senderId,
+          conversationId: conversationId,
+        };
+
         // Gửi yêu cầu thu hồi qua WebSocket, Server sẽ xử lý yêu cầu này và gửi thông báo thu hồi tới tất cả client trong cuộc trò chuyện
         client.current.publish({
           destination: "/app/chat/recall",
-          body: JSON.stringify({
-            messageId: messageId,
-            senderId: senderId,
-            conversationId: conversationId,
-          }),
+          body: JSON.stringify(request),
         });
+        await recallMessage({ messageId, senderId, conversationId });
 
         return true;
       } else {
@@ -562,24 +558,13 @@ const Conservation = ({
           }),
         });
 
-        // Cập nhật UI ngay lập tức cho người dùng hiện tại
-        setLocalMessages((prevMessages) =>
-          prevMessages.filter(
-            (msg) => String(msg.id || msg._id) !== String(messageId)
-          )
-        );
         await deleteForUserMessage({ messageId, userId });
+
         return true;
       } else {
         // Fallback - gọi API nếu WebSocket không hoạt động
         await deleteForUserMessage({ messageId, userId });
 
-        // Cập nhật UI
-        setLocalMessages((prevMessages) =>
-          prevMessages.filter(
-            (msg) => String(msg.id || msg._id) !== String(messageId)
-          )
-        );
         return true;
       }
     } catch (error) {
