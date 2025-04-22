@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { DashboardContext } from "../Dashboard_context";
 import { getCurrentUserService } from "../../services/UserService";
 import { removeTokens } from "../../services/AuthService";
+import { useQueryClient } from "@tanstack/react-query";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+import { toast } from "react-toastify";
 
 const DashboardProvider = ({ children }) => {
   // Trạng thái hiển thị của modal thêm bạn bè
@@ -11,6 +15,65 @@ const DashboardProvider = ({ children }) => {
   // Thêm currentUser vào context
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  const stompClient = useRef(null);
+  const queryClient = useQueryClient();
+
+  // Kết nối WebSocket
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    // Kết nối đến WebSocket server
+    const socket = new SockJS("http://localhost:8080/ws");
+    stompClient.current = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      debug: (str) => {
+        console.log(str);
+      },
+      onConnect: () => {
+        console.log("Connected to WebSocket in Dashboard context");
+
+        // Đăng ký lắng nghe tin nhắn từ server
+        stompClient.current.subscribe(
+          `/chat/create/group/${currentUser.id}`,
+          (message) => {
+            try {
+              const newGroupConversation = JSON.parse(message.body);
+              console.log(
+                "New group conversation received:",
+                newGroupConversation
+              );
+
+              // Cập nhật lại danh sách hội thoại
+              queryClient.invalidateQueries(["conversations"]);
+
+              // Thông báo cho người dùng về việc được thêm vào nhóm
+              if (newGroupConversation.name) {
+                toast.success(
+                  `Bạn đã được thêm vào nhóm "${newGroupConversation.name}"!`
+                );
+              }
+            } catch (error) {
+              console.error("Error processing group creation message:", error);
+            }
+          }
+        );
+      },
+      onStompError: (frame) => {
+        console.error("Broker reported error: " + frame.headers["message"]);
+        console.error("Additional details: " + frame.body);
+      },
+    });
+
+    stompClient.current.activate();
+
+    return () => {
+      if (stompClient.current && stompClient.current.connected) {
+        stompClient.current.deactivate();
+      }
+    };
+  }, [currentUser?.id, queryClient]);
 
   // Lấy currentUser sau khi đã login
   const fetchUser = async () => {
