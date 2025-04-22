@@ -18,6 +18,7 @@ import { forwardMessageService } from "../../../services/MessageService";
 import ReactionEmojiModal from "../../../components/modal/ReactionEmojiModal";
 import { uploadFile } from "../../../services/FileService";
 import "../../../assets/css/UploadFile.css";
+import "../../../assets/css/StickerGif.css";
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
 
@@ -171,10 +172,13 @@ const Conservation = ({
             // Kiểm tra giới hạn 3 tin nhắn ghim
             if (pinnedMessages.length >= 3) {
                 setShowLimitWarning(true);
-                toast.warn("Bạn chỉ có thể ghim tối đa 3 tin nhắn. Vui lòng bỏ ghim một tin nhắn để ghim tin mới.", {
-                    position: "top-center",
-                    autoClose: 3000,
-                });
+                toast.warn(
+                    "Bạn chỉ có thể ghim tối đa 3 tin nhắn. Vui lòng bỏ ghim một tin nhắn để ghim tin mới.",
+                    {
+                        position: "top-center",
+                        autoClose: 3000,
+                    }
+                );
                 return false;
             }
 
@@ -202,7 +206,8 @@ const Conservation = ({
         } catch (error) {
             console.error("Error pinning message:", error);
             toast.error(
-                "Không thể ghim tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+                "Không thể ghim tin nhắn: " +
+                    (error.message || "Đã xảy ra lỗi"),
                 {
                     position: "top-center",
                     autoClose: 2000,
@@ -243,7 +248,7 @@ const Conservation = ({
             console.error("Error unpinning message:", error);
             toast.error(
                 "Không thể bỏ ghim tin nhắn: " +
-                (error.message || "Đã xảy ra lỗi")
+                    (error.message || "Đã xảy ra lỗi")
             );
             return false;
         }
@@ -309,10 +314,10 @@ const Conservation = ({
                                     (msg) =>
                                         (msg?.id &&
                                             String(msg?.id) ===
-                                            String(messageId)) ||
+                                                String(messageId)) ||
                                         (msg?._id &&
                                             String(msg?._id) ===
-                                            String(messageId))
+                                                String(messageId))
                                 );
 
                             //Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
@@ -727,7 +732,7 @@ const Conservation = ({
             console.error("Error recalling message:", error);
             toast.error(
                 "Không thể thu hồi tin nhắn: " +
-                (error.message || "Đã xảy ra lỗi"),
+                    (error.message || "Đã xảy ra lỗi"),
                 {
                     position: "top-center",
                     autoClose: 2000,
@@ -838,8 +843,8 @@ const Conservation = ({
                         src={
                             !selectedConversation?.is_group
                                 ? selectedConversation?.members.find(
-                                    (member) => member?.id !== currentUser?.id
-                                ).avatar
+                                      (member) => member?.id !== currentUser?.id
+                                  ).avatar
                                 : selectedConversation?.avatar
                         }
                         alt="avatar"
@@ -851,8 +856,8 @@ const Conservation = ({
                         <h6 className="mb-0">
                             {!selectedConversation?.is_group
                                 ? selectedConversation?.members.find(
-                                    (member) => member?.id !== currentUser?.id
-                                ).display_name
+                                      (member) => member?.id !== currentUser?.id
+                                  ).display_name
                                 : selectedConversation?.name}
                         </h6>
                         <small className="text-muted">
@@ -872,10 +877,11 @@ const Conservation = ({
                         onClick={showDetail ? onHideDetail : onShowDetail}
                     >
                         <i
-                            className={`bi ${showDetail
+                            className={`bi ${
+                                showDetail
                                     ? "bi-arrow-bar-right"
                                     : "bi-arrow-bar-left"
-                                } me-2`}
+                            } me-2`}
                         ></i>
                     </button>
                 </div>
@@ -908,7 +914,6 @@ const Conservation = ({
                 </div>
             )}
 
-
             {/* Hiển thị thông báo nếu vượt quá giới hạn (tùy chọn, có thể bỏ nếu chỉ dùng toast) */}
 
             {showLimitWarning && (
@@ -917,7 +922,8 @@ const Conservation = ({
                     role="alert"
                     style={{ fontSize: "14px", padding: "8px" }}
                 >
-                    Bạn chỉ có thể ghim tối đa 3 tin nhắn. Vui lòng bỏ ghim một tin nhắn để ghim tin mới.
+                    Bạn chỉ có thể ghim tối đa 3 tin nhắn. Vui lòng bỏ ghim một
+                    tin nhắn để ghim tin mới.
                     <button
                         type="button"
                         className="btn-close"
@@ -966,13 +972,14 @@ const Conservation = ({
                                         {isSentByMe ? "Bạn" : senderInfo.name}:{" "}
                                         {msg.messageType === "TEXT"
                                             ? msg.content.length > 50
-                                                ? msg.content.substring(0, 50) + "..."
+                                                ? msg.content.substring(0, 50) +
+                                                  "..."
                                                 : msg.content
                                             : msg.messageType === "IMAGE"
-                                                ? "[Hình ảnh]"
-                                                : msg.messageType === "FILE"
-                                                    ? "[Tệp đính kèm]"
-                                                    : "[Sticker/GIF]"}
+                                            ? "[Hình ảnh]"
+                                            : msg.messageType === "FILE"
+                                            ? "[Tệp đính kèm]"
+                                            : "[Sticker/GIF]"}
                                     </small>
                                 </div>
                                 <button
@@ -982,7 +989,8 @@ const Conservation = ({
                                         handleUnpinMessage({
                                             messageId,
                                             userId: currentUser.id,
-                                            conversationId: selectedConversation.id,
+                                            conversationId:
+                                                selectedConversation.id,
                                         });
                                         setShowLimitWarning(false); // Ẩn thông báo khi bỏ ghim
                                     }}
@@ -993,7 +1001,7 @@ const Conservation = ({
                         );
                     })}
                 </div>
-            ): null}
+            ) : null}
 
             {/* Chat Messages */}
             <div
@@ -1028,10 +1036,11 @@ const Conservation = ({
                             <div
                                 key={messageId}
                                 id={`message-${messageId}`}
-                                className={`mb-2 d-flex position-relative message-container ${isSentByMe
+                                className={`mb-2 d-flex position-relative message-container ${
+                                    isSentByMe
                                         ? "justify-content-end"
                                         : "justify-content-start"
-                                    }`}
+                                }`}
                                 onMouseEnter={() =>
                                     setHoveredMessageId(messageId)
                                 }
@@ -1061,19 +1070,35 @@ const Conservation = ({
                                     </div>
                                 )}
                                 <div
-                                    className={`p-2 rounded shadow-sm message-bubble ${isSentByMe
+                                    className={`p-2 rounded shadow-sm message-bubble ${
+                                        isSentByMe
                                             ? "text-black message-sent"
                                             : "bg-light border message-received"
-                                        } ${isRecalled ? "message-recalled" : ""}`}
+                                    } ${isRecalled ? "message-recalled" : ""} ${
+                                        msg?.messageType === "STICKER" ||
+                                        msg?.messageType === "GIF"
+                                            ? "sticker-message"
+                                            : ""
+                                    }`}
                                     style={{
                                         maxWidth: "70%",
                                         backgroundColor: isSentByMe
                                             ? isRecalled
                                                 ? "#f0f0f0"
+                                                : msg?.messageType === "STICKER"
+                                                ? "transparent"
                                                 : "#dcf8c6"
+                                            : msg?.messageType === "STICKER"
+                                            ? "transparent"
                                             : "#ffffff",
                                         position: "relative",
                                         opacity: isRecalled ? 0.7 : 1,
+                                        ...(msg?.messageType === "STICKER"
+                                            ? {
+                                                  boxShadow: "none",
+                                                  border: "none",
+                                              }
+                                            : {}),
                                     }}
                                     ref={(el) =>
                                         (messageRefs.current[messageId] = el)
@@ -1088,19 +1113,13 @@ const Conservation = ({
                                             Tin nhắn đã bị thu hồi
                                         </span>
                                     ) : msg?.messageType === "GIF" ||
-                                        msg?.messageType === "STICKER" ? (
+                                      msg?.messageType === "STICKER" ? (
                                         <img
                                             src={msg?.fileUrl}
                                             alt={msg?.messageType}
-                                            className="img-fluid rounded"
-                                            style={{
-                                                maxWidth: "300px",
-                                                maxHeight: "300px",
-                                                objectFit: "contain",
-                                            }}
                                         />
                                     ) : msg?.messageType === "IMAGE" ||
-                                        msg?.type === "IMAGE" ? (
+                                      msg?.type === "IMAGE" ? (
                                         msg.uploading ? (
                                             <div className="d-flex align-items-center">
                                                 <div
@@ -1251,7 +1270,7 @@ const Conservation = ({
                                         <small className="text-muted d-block">
                                             {formatTime(
                                                 msg?.created_at ||
-                                                msg?.timestamp
+                                                    msg?.timestamp
                                             )}
                                         </small>
                                     </div>
@@ -1260,98 +1279,100 @@ const Conservation = ({
                                 {/* Show message actions on hover OR when clicked */}
                                 {(hoveredMessageId === messageId ||
                                     showActionsFor === messageId) && (
-                                        <div
-                                            className="message-actions"
+                                    <div
+                                        className="message-actions"
+                                        style={{
+                                            position: "absolute",
+                                            top: "15px",
+                                            right: isSentByMe
+                                                ? `${
+                                                      messageRefs.current[
+                                                          messageId
+                                                      ]?.offsetWidth + 10
+                                                  }px`
+                                                : "auto",
+                                            left: !isSentByMe
+                                                ? `${
+                                                      messageRefs.current[
+                                                          msg?.id
+                                                      ]?.offsetWidth + 65
+                                                  }px`
+                                                : "auto",
+                                            backgroundColor:
+                                                "rgba(255, 255, 255, 0.9)",
+                                            borderRadius: "20px",
+                                            padding: "5px 10px",
+                                            boxShadow:
+                                                "0 2px 5px rgba(0,0,0,0.1)",
+                                            display: "flex",
+                                            gap: "12px",
+                                            zIndex: 100,
+                                        }}
+                                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
+                                    >
+                                        <i
+                                            className="bi bi-chat-quote action-icon"
+                                            onClick={() =>
+                                                handleReaction(msg?.id, "smile")
+                                            }
                                             style={{
-                                                position: "absolute",
-                                                top: "15px",
-                                                right: isSentByMe
-                                                    ? `${messageRefs.current[
-                                                        messageId
-                                                    ]?.offsetWidth + 10
-                                                    }px`
-                                                    : "auto",
-                                                left: !isSentByMe
-                                                    ? `${messageRefs.current[
-                                                        msg?.id
-                                                    ]?.offsetWidth + 65
-                                                    }px`
-                                                    : "auto",
-                                                backgroundColor:
-                                                    "rgba(255, 255, 255, 0.9)",
-                                                borderRadius: "20px",
-                                                padding: "5px 10px",
-                                                boxShadow:
-                                                    "0 2px 5px rgba(0,0,0,0.1)",
-                                                display: "flex",
-                                                gap: "12px",
-                                                zIndex: 100,
+                                                cursor: "pointer",
+                                                color: "#666",
                                             }}
-                                            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
-                                        >
+                                            title="Trả lời"
+                                        ></i>
+                                        {isSentByMe ? (
                                             <i
-                                                className="bi bi-chat-quote action-icon"
+                                                className="bi bi-reply action-icon"
                                                 onClick={() =>
-                                                    handleReaction(msg?.id, "smile")
+                                                    handleForwardMessage(msg)
                                                 }
                                                 style={{
                                                     cursor: "pointer",
                                                     color: "#666",
                                                 }}
-                                                title="Trả lời"
+                                                title="Chuyển tiếp"
                                             ></i>
-                                            {isSentByMe ? (
-                                                <i
-                                                    className="bi bi-reply action-icon"
-                                                    onClick={() =>
-                                                        handleForwardMessage(msg)
-                                                    }
-                                                    style={{
-                                                        cursor: "pointer",
-                                                        color: "#666",
-                                                    }}
-                                                    title="Chuyển tiếp"
-                                                ></i>
-                                            ) : (
-                                                <i
-                                                    className="bi bi-reply action-icon"
-                                                    onClick={() =>
-                                                        handleForwardMessage(msg)
-                                                    }
-                                                    style={{
-                                                        cursor: "pointer",
-                                                        color: "#666",
-                                                        transform: "scaleX(-1)",
-                                                    }}
-                                                    title="Chuyển tiếp"
-                                                ></i>
-                                            )}
-                                            {/* <i
+                                        ) : (
+                                            <i
+                                                className="bi bi-reply action-icon"
+                                                onClick={() =>
+                                                    handleForwardMessage(msg)
+                                                }
+                                                style={{
+                                                    cursor: "pointer",
+                                                    color: "#666",
+                                                    transform: "scaleX(-1)",
+                                                }}
+                                                title="Chuyển tiếp"
+                                            ></i>
+                                        )}
+                                        {/* <i
                       className="bi bi-three-dots action-icon"
                       onClick={() => handleOpenAddModel(msg?.id)}
                       style={{ cursor: "pointer", color: "#666" }}
                       title="Thêm"
                     ></i> */}
-                                            <MessageActionsDropdown
-                                                messageId={messageId}
-                                                senderId={msg?.senderId}
-                                                conversationId={
-                                                    selectedConversation?.id
-                                                }
-                                                onRecallMessage={
-                                                    handleRecallMessage
-                                                }
-                                                onDeleteForUser={
-                                                    handleDeleteForUser
-                                                }
-                                                currentUserId={currentUser.id}
-                                                isRecalled={isRecalled}
-                                                onPinMessage={handlePinMessage}
-                                                onUnpinMessage={handleUnpinMessage}
-                                                isPinned={msg.pinned}
-                                            />
-                                        </div>
-                                    )}
+                                        <MessageActionsDropdown
+                                            messageId={messageId}
+                                            senderId={msg?.senderId}
+                                            conversationId={
+                                                selectedConversation?.id
+                                            }
+                                            onRecallMessage={
+                                                handleRecallMessage
+                                            }
+                                            onDeleteForUser={
+                                                handleDeleteForUser
+                                            }
+                                            currentUserId={currentUser.id}
+                                            isRecalled={isRecalled}
+                                            onPinMessage={handlePinMessage}
+                                            onUnpinMessage={handleUnpinMessage}
+                                            isPinned={msg.pinned}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         );
                     })
@@ -1466,10 +1487,11 @@ const Conservation = ({
                         onClick={handleSendMessage}
                     >
                         <i
-                            className={`bi ${newMessage.trim()
+                            className={`bi ${
+                                newMessage.trim()
                                     ? "bi-send-fill text-primary"
                                     : "bi-emoji-smile"
-                                }`}
+                            }`}
                         ></i>
                     </button>
                     <button
