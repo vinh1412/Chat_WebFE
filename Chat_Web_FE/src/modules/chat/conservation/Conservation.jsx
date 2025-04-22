@@ -18,9 +18,9 @@ import { forwardMessageService } from "../../../services/MessageService";
 import ReactionEmojiModal from "../../../components/modal/ReactionEmojiModal";
 import { uploadFile } from "../../../services/FileService";
 import "../../../assets/css/UploadFile.css";
-
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
+
 const Conservation = ({
     onShowDetail,
     onHideDetail,
@@ -49,9 +49,10 @@ const Conservation = ({
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [selectedReceivers, setSelectedReceivers] = useState([]);
     const [showStickerPicker, setShowStickerPicker] = useState(false);
-    const [isFriend, setIsFriend] = useState(false); // Track friend status
+    const [isFriend, setIsFriend] = useState(false);
     const { sendRequest } = useFriend();
     const { isSuccessSent } = useSelector((state) => state.friend);
+    const [pinnedMessages, setPinnedMessages] = useState([]);
 
     // show reaction emoji modal và các emoji mặc định
     const [showReactionModal, setShowReactionModal] = useState(false);
@@ -107,36 +108,31 @@ const Conservation = ({
             console.log("User receiver updated:", userReceiver);
         }
     }, [userReceiver]);
+    // check xem có phải là bạn bè không
+    useEffect(() => {
+        const checkFriendStatus = async () => {
+            try {
+                const response = await checkFriend(userReceiver?.id);
+                setIsFriend(response);
+            } catch (error) {
+                console.error("Error checking friend status:", error);
+            }
+        };
+        if (userReceiver) checkFriendStatus();
+    }, [userReceiver]);
 
     useEffect(() => {
         if (messages) {
-            // console.log("Messages from server:", messages);
-            // Lọc các tin nhắn để không hiển thị những tin nhắn đã bị xóa cho người dùng hiện tại
-            const filteredMessages = messages.response.filter((msg) => {
-                // Nếu deletedByUserIds tồn tại và chứa ID của người dùng hiện tại, không hiển thị tin nhắn này
-                // console.log("msg.deletedByUserIds", msg.deletedByUserIds);
+            const filteredMessages = messages.response.filter(
+                (msg) => !msg.deletedByUserIds?.includes(currentUser.id)
+            );
+            const sortedMessages = filteredMessages.sort(
+                (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+            );
+            setLocalMessages(sortedMessages);
 
-                return !(
-                    msg.deletedByUserIds &&
-                    msg.deletedByUserIds.includes(currentUser.id)
-                );
-            });
-            // Kiểm tra xem server có trả về đúng trạng thái recalled không
-            // console.log(
-            //   "Messages after filtering:",
-            //   filteredMessages.map((msg) => ({
-            //     id: msg.id || msg._id,
-            //     recalled: msg.recalled,
-            //     content: msg.content,
-            //   }))
-            // );
-
-            // tự động sort tin nhắn hiển thị tin nhắn nằm ở duới cùng
-            const result = filteredMessages.sort((a, b) => {
-                return new Date(a.timestamp) - new Date(b.timestamp);
-            });
-
-            setLocalMessages(result); // Cập nhật localMessages
+            const pinned = filteredMessages.filter((msg) => msg.pinned);
+            setPinnedMessages(pinned);
         }
     }, [messages, currentUser.id]);
 
@@ -166,6 +162,87 @@ const Conservation = ({
     const handleForwardMessage = (message) => {
         setSelectedMessage(message);
         setShowForwardModal(true);
+    };
+
+    //hàm ghim tin nhắn
+    const handlePinMessage = async ({ messageId, userId, conversationId }) => {
+        try {
+            if (!client.current || !client.current.connected) {
+                toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+                    position: "top-center",
+                    autoClose: 2000,
+                });
+                return false;
+            }
+
+            const request = {
+                messageId,
+                userId,
+                conversationId,
+            };
+
+            client.current.publish({
+                destination: "/app/chat/pin",
+                body: JSON.stringify(request),
+            });
+
+            return true;
+        } catch (error) {
+            console.error("Error pinning message:", error);
+            toast.error(
+                "Không thể ghim tin nhắn: " + (error.message || "Đã xảy ra lỗi")
+            );
+            return false;
+        }
+    };
+
+    //hàm bỏ ghim tin nhắn
+    const handleUnpinMessage = async ({
+        messageId,
+        userId,
+        conversationId,
+    }) => {
+        try {
+            if (!client.current || !client.current.connected) {
+                toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+                    position: "top-center",
+                    autoClose: 2000,
+                });
+                return false;
+            }
+
+            const request = {
+                messageId,
+                userId,
+                conversationId,
+            };
+
+            client.current.publish({
+                destination: "/app/chat/unpin",
+                body: JSON.stringify(request),
+            });
+
+            return true;
+        } catch (error) {
+            console.error("Error unpinning message:", error);
+            toast.error(
+                "Không thể bỏ ghim tin nhắn: " +
+                    (error.message || "Đã xảy ra lỗi")
+            );
+            return false;
+        }
+    };
+
+    //hàm nhảy tới tin nhắn
+    const handleJumpToMessage = (messageId) => {
+        const messageElement = document.getElementById(`message-${messageId}`);
+        if (messageElement) {
+            messageElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+            messageElement.classList.add("highlight-message");
+        }
     };
 
     useEffect(() => {
@@ -227,21 +304,43 @@ const Conservation = ({
                             if (existingMessageIndex !== -1) {
                                 setLocalMessages((prevMessages) => {
                                     const newMessages = [...prevMessages];
-
                                     newMessages[existingMessageIndex] =
                                         newMessage;
-
                                     return newMessages;
                                 });
                             }
-
                             //CASE 2.2: Nếu tin nhắn chưa tồn tại, thêm mới
                             else {
-                                console.log("Adding new message:", newMessage);
                                 setLocalMessages((prev) => [
                                     ...prev,
                                     newMessage,
                                 ]);
+                            }
+
+                            // Kiểm tra xem tin nhắn có được ghim hay không
+                            if (newMessage.pinned) {
+                                setPinnedMessages((prev) => {
+                                    const updatedPinned = prev.filter(
+                                        (msg) =>
+                                            String(msg.id || msg._id) !==
+                                            String(
+                                                newMessage.id || newMessage._id
+                                            )
+                                    );
+                                    return [...updatedPinned, newMessage];
+                                });
+                            }
+                            // Nếu tin nhắn không được ghim, xóa nó khỏi danh sách pinnedMessages
+                            else {
+                                setPinnedMessages((prev) =>
+                                    prev.filter(
+                                        (msg) =>
+                                            String(msg.id || msg._id) !==
+                                            String(
+                                                newMessage.id || newMessage._id
+                                            )
+                                    )
+                                );
                             }
                         }
 
@@ -272,7 +371,12 @@ const Conservation = ({
                 client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
             }
         };
-    }, [selectedConversation?.id, currentUser.id]);
+    }, [
+        selectedConversation?.id,
+        localMessages,
+        currentUser.id,
+        refetchMessages,
+    ]);
 
     //Handle sending GIF or Sticker
     const handleSendGifOrSticker = (url, type) => {
@@ -338,9 +442,9 @@ const Conservation = ({
     // Toggle message actions visibility
     const toggleMessageActions = (messageId) => {
         if (showActionsFor === messageId) {
-            setShowActionsFor(null); // Hide if already showing
+            setShowActionsFor(null);
         } else {
-            setShowActionsFor(messageId); // Show for this message
+            setShowActionsFor(messageId);
         }
     };
 
@@ -385,10 +489,8 @@ const Conservation = ({
             toast.error("Vui lòng chọn cuộc trò chuyện trước");
             return;
         }
-        // Then after uploading
-        console.log("File to upload:");
-        console.log(file);
 
+        // Then after uploading
         const tempId = `temp-${Date.now()}`;
         const tempUrl = URL.createObjectURL(file);
         const tempMsg = {
@@ -413,17 +515,15 @@ const Conservation = ({
             };
 
             const result = await uploadFile(file, chatMessageRequest);
-            console.log("Upload result:", result);
-
             const updatedRequest = {
                 ...chatMessageRequest,
                 fileUrl: result.fileUrl,
             };
-
             client.current.publish({
                 destination: "/app/chat/send",
                 body: JSON.stringify(updatedRequest),
             });
+
             setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
         } catch (error) {
             toast.error(`Lỗi khi gửi hình ảnh: ${error.message}`);
@@ -740,7 +840,6 @@ const Conservation = ({
                                 : selectedConversation?.name}
                         </h6>
                         <small className="text-muted">
-                            {" "}
                             {!selectedConversation?.is_group && !isFriend
                                 ? "Người lạ"
                                 : ""}{" "}
@@ -759,8 +858,8 @@ const Conservation = ({
                         <i
                             className={`bi ${
                                 showDetail
-                                    ? "bi bi-arrow-bar-right"
-                                    : "bi bi-arrow-bar-left"
+                                    ? "bi-arrow-bar-right"
+                                    : "bi-arrow-bar-left"
                             } me-2`}
                         ></i>
                     </button>
@@ -773,7 +872,6 @@ const Conservation = ({
                         <i className="bi bi-person-plus-fill mx-2"></i>
                         <span>Gửi yêu cầu kết bạn tới người này</span>
                     </div>
-
                     {isSuccessSent[userReceiver?.id] ? (
                         <button
                             className="btn btn-outline-secondary btn-sm"
@@ -786,7 +884,7 @@ const Conservation = ({
                             className="btn btn-outline-secondary btn-sm"
                             onClick={() => {
                                 sendRequest(userReceiver.id);
-                                dispatch(setIsSuccessSent(userReceiver.id)); // Cập nhật trạng thái gửi lời mời kết bạn thành công
+                                dispatch(setIsSuccessSent(userReceiver.id));
                             }}
                         >
                             Gửi kết bạn
@@ -795,11 +893,78 @@ const Conservation = ({
                 </div>
             )}
 
+            {/* Pin messages */}
+            {pinnedMessages.length > 0 && (
+                <div
+                    className="card-body bg-light"
+                    style={{
+                        borderBottom: "1px solid #ddd",
+                        padding: "10px",
+                        backgroundColor: "#f8f9fa",
+                    }}
+                >
+                    <h6 className="text-muted mb-2">Tin nhắn đã ghim</h6>
+                    {pinnedMessages.map((msg) => {
+                        const messageId = msg?.id || msg?._id;
+                        const isSentByMe = msg.senderId === currentUser.id;
+                        const senderInfo = getSenderInfo(msg);
+                        return (
+                            <div
+                                key={`pinned-${messageId}`}
+                                className="d-flex align-items-center p-2 rounded bg-white mb-2 shadow-sm"
+                                style={{ cursor: "pointer" }}
+                                onClick={() => handleJumpToMessage(messageId)}
+                            >
+                                {!isSentByMe && (
+                                    <img
+                                        src={senderInfo.avatar}
+                                        alt={senderInfo.name}
+                                        className="rounded-circle me-2"
+                                        width={30}
+                                        height={30}
+                                        style={{ objectFit: "cover" }}
+                                    />
+                                )}
+                                <div className="flex-grow-1">
+                                    <small className="text-muted">
+                                        {isSentByMe ? "Bạn" : senderInfo.name}:{" "}
+                                        {msg.messageType === "TEXT"
+                                            ? msg.content
+                                            : msg.messageType === "IMAGE"
+                                            ? "[Hình ảnh]"
+                                            : msg.messageType === "FILE"
+                                            ? "[Tệp đính kèm]"
+                                            : "[Sticker/GIF]"}
+                                    </small>
+                                </div>
+                                <button
+                                    className="btn btn-sm btn-light ms-2"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleUnpinMessage({
+                                            messageId,
+                                            userId: currentUser.id,
+                                            conversationId:
+                                                selectedConversation.id,
+                                        });
+                                    }}
+                                >
+                                    <i className="bi bi-pin-angle-fill text-danger"></i>
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* Chat Messages */}
             <div
                 className="card-body bg-light"
                 style={{
-                    height: "calc(100vh - 230px)",
+                    height:
+                        pinnedMessages.length > 0
+                            ? "calc(100vh - 300px)"
+                            : "calc(100vh - 230px)",
                     overflowY: "auto",
                     padding: "10px",
                 }}
@@ -824,6 +989,7 @@ const Conservation = ({
                         return (
                             <div
                                 key={messageId}
+                                id={`message-${messageId}`}
                                 className={`mb-2 d-flex position-relative message-container ${
                                     isSentByMe
                                         ? "justify-content-end"
@@ -874,10 +1040,10 @@ const Conservation = ({
                                         opacity: isRecalled ? 0.7 : 1,
                                     }}
                                     ref={(el) =>
-                                        (messageRefs.current[msg?.id] = el)
+                                        (messageRefs.current[messageId] = el)
                                     }
                                     onClick={() =>
-                                        toggleMessageActions(msg?.id)
+                                        toggleMessageActions(messageId)
                                     }
                                 >
                                     {isRecalled ? (
@@ -1066,7 +1232,7 @@ const Conservation = ({
                                             right: isSentByMe
                                                 ? `${
                                                       messageRefs.current[
-                                                          msg?.id
+                                                          messageId
                                                       ]?.offsetWidth + 10
                                                   }px`
                                                 : "auto",
@@ -1146,6 +1312,9 @@ const Conservation = ({
                                             }
                                             currentUserId={currentUser.id}
                                             isRecalled={isRecalled}
+                                            onPinMessage={handlePinMessage}
+                                            onUnpinMessage={handleUnpinMessage}
+                                            isPinned={msg.pinned}
                                         />
                                     </div>
                                 )}

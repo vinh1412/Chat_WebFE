@@ -9,6 +9,11 @@ const MessageActionsDropdown = ({
   currentUserId,
   isRecalled = false, // Thêm prop mới để kiểm tra tin nhắn đã thu hồi chưa
   onDeleteForUser,
+  onPinMessage, // Thêm prop
+  onUnpinMessage, // Thêm prop
+  isPinned, // Thêm prop
+
+  
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -78,6 +83,47 @@ const MessageActionsDropdown = ({
     }
     setShowDropdown(false);
   };
+
+  const handlePinMessageAction = async () => {
+    try {
+      await onPinMessage({ messageId, userId: currentUserId, conversationId });
+      toast.success("Đã ghim tin nhắn", {
+        position: "top-center",
+        autoClose: 1000,
+      });
+    } catch (error) {
+      console.error("Error pinning message:", error);
+      toast.error(
+        "Không thể ghim tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+        {
+          position: "top-center",
+          autoClose: 2000,
+        }
+      );
+    }
+    setShowDropdown(false);
+  };
+
+  const handleUnpinMessageAction = async () => {
+    try {
+      await onUnpinMessage({ messageId, userId: currentUserId, conversationId });
+      toast.success("Đã bỏ ghim tin nhắn", {
+        position: "top-center",
+        autoClose: 1000,
+      });
+    } catch (error) {
+      console.error("Error unpinning message:", error);
+      toast.error(
+        "Không thể bỏ ghim tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+        {
+          position: "top-center",
+          autoClose: 2000,
+        }
+      );
+    }
+    setShowDropdown(false);
+  };
+
 
   return (
     <div
@@ -162,7 +208,7 @@ const MessageActionsDropdown = ({
                   </div>
                   <div
                     className="action-item"
-                    onClick={() => handleAction("Ghim tin nhắn")}
+                    onClick={isPinned ? handleUnpinMessageAction : handlePinMessageAction}
                     style={actionItemStyle}
                   >
                     <i className="bi bi-pin" style={iconStyle}></i>
