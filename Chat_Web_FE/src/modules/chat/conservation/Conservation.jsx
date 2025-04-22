@@ -53,6 +53,7 @@ const Conservation = ({
     const { sendRequest } = useFriend();
     const { isSuccessSent } = useSelector((state) => state.friend);
     const [pinnedMessages, setPinnedMessages] = useState([]);
+    const [showLimitWarning, setShowLimitWarning] = useState(false);
 
     // show reaction emoji modal và các emoji mặc định
     const [showReactionModal, setShowReactionModal] = useState(false);
@@ -167,6 +168,16 @@ const Conservation = ({
     //hàm ghim tin nhắn
     const handlePinMessage = async ({ messageId, userId, conversationId }) => {
         try {
+            // Kiểm tra giới hạn 3 tin nhắn ghim
+            if (pinnedMessages.length >= 3) {
+                setShowLimitWarning(true);
+                toast.warn("Bạn chỉ có thể ghim tối đa 3 tin nhắn. Vui lòng bỏ ghim một tin nhắn để ghim tin mới.", {
+                    position: "top-center",
+                    autoClose: 3000,
+                });
+                return false;
+            }
+
             if (!client.current || !client.current.connected) {
                 toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
                     position: "top-center",
@@ -186,11 +197,16 @@ const Conservation = ({
                 body: JSON.stringify(request),
             });
 
+            setShowLimitWarning(false); // Ẩn thông báo nếu ghim thành công
             return true;
         } catch (error) {
             console.error("Error pinning message:", error);
             toast.error(
-                "Không thể ghim tin nhắn: " + (error.message || "Đã xảy ra lỗi")
+                "Không thể ghim tin nhắn: " + (error.message || "Đã xảy ra lỗi"),
+                {
+                    position: "top-center",
+                    autoClose: 2000,
+                }
             );
             return false;
         }
@@ -227,7 +243,7 @@ const Conservation = ({
             console.error("Error unpinning message:", error);
             toast.error(
                 "Không thể bỏ ghim tin nhắn: " +
-                    (error.message || "Đã xảy ra lỗi")
+                (error.message || "Đã xảy ra lỗi")
             );
             return false;
         }
@@ -293,10 +309,10 @@ const Conservation = ({
                                     (msg) =>
                                         (msg?.id &&
                                             String(msg?.id) ===
-                                                String(messageId)) ||
+                                            String(messageId)) ||
                                         (msg?._id &&
                                             String(msg?._id) ===
-                                                String(messageId))
+                                            String(messageId))
                                 );
 
                             //Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
@@ -711,7 +727,7 @@ const Conservation = ({
             console.error("Error recalling message:", error);
             toast.error(
                 "Không thể thu hồi tin nhắn: " +
-                    (error.message || "Đã xảy ra lỗi"),
+                (error.message || "Đã xảy ra lỗi"),
                 {
                     position: "top-center",
                     autoClose: 2000,
@@ -822,8 +838,8 @@ const Conservation = ({
                         src={
                             !selectedConversation?.is_group
                                 ? selectedConversation?.members.find(
-                                      (member) => member?.id !== currentUser?.id
-                                  ).avatar
+                                    (member) => member?.id !== currentUser?.id
+                                ).avatar
                                 : selectedConversation?.avatar
                         }
                         alt="avatar"
@@ -835,8 +851,8 @@ const Conservation = ({
                         <h6 className="mb-0">
                             {!selectedConversation?.is_group
                                 ? selectedConversation?.members.find(
-                                      (member) => member?.id !== currentUser?.id
-                                  ).display_name
+                                    (member) => member?.id !== currentUser?.id
+                                ).display_name
                                 : selectedConversation?.name}
                         </h6>
                         <small className="text-muted">
@@ -856,11 +872,10 @@ const Conservation = ({
                         onClick={showDetail ? onHideDetail : onShowDetail}
                     >
                         <i
-                            className={`bi ${
-                                showDetail
+                            className={`bi ${showDetail
                                     ? "bi-arrow-bar-right"
                                     : "bi-arrow-bar-left"
-                            } me-2`}
+                                } me-2`}
                         ></i>
                     </button>
                 </div>
@@ -893,14 +908,35 @@ const Conservation = ({
                 </div>
             )}
 
-            {/* Pin messages */}
-            {pinnedMessages.length > 0 && (
+
+            {/* Hiển thị thông báo nếu vượt quá giới hạn (tùy chọn, có thể bỏ nếu chỉ dùng toast) */}
+
+            {showLimitWarning && (
+                <div
+                    className="alert alert-warning alert-dismissible fade show mb-2"
+                    role="alert"
+                    style={{ fontSize: "14px", padding: "8px" }}
+                >
+                    Bạn chỉ có thể ghim tối đa 3 tin nhắn. Vui lòng bỏ ghim một tin nhắn để ghim tin mới.
+                    <button
+                        type="button"
+                        className="btn-close"
+                        onClick={() => setShowLimitWarning(false)}
+                        style={{ fontSize: "12px" }}
+                    ></button>
+                </div>
+            )}
+
+            {/* Hộp chứa danh sách tin nhắn ghim */}
+            {pinnedMessages.length > 0 ? (
                 <div
                     className="card-body bg-light"
                     style={{
                         borderBottom: "1px solid #ddd",
                         padding: "10px",
                         backgroundColor: "#f8f9fa",
+                        maxHeight: "120px",
+                        overflowY: "auto",
                     }}
                 >
                     <h6 className="text-muted mb-2">Tin nhắn đã ghim</h6>
@@ -929,12 +965,14 @@ const Conservation = ({
                                     <small className="text-muted">
                                         {isSentByMe ? "Bạn" : senderInfo.name}:{" "}
                                         {msg.messageType === "TEXT"
-                                            ? msg.content
+                                            ? msg.content.length > 50
+                                                ? msg.content.substring(0, 50) + "..."
+                                                : msg.content
                                             : msg.messageType === "IMAGE"
-                                            ? "[Hình ảnh]"
-                                            : msg.messageType === "FILE"
-                                            ? "[Tệp đính kèm]"
-                                            : "[Sticker/GIF]"}
+                                                ? "[Hình ảnh]"
+                                                : msg.messageType === "FILE"
+                                                    ? "[Tệp đính kèm]"
+                                                    : "[Sticker/GIF]"}
                                     </small>
                                 </div>
                                 <button
@@ -944,9 +982,9 @@ const Conservation = ({
                                         handleUnpinMessage({
                                             messageId,
                                             userId: currentUser.id,
-                                            conversationId:
-                                                selectedConversation.id,
+                                            conversationId: selectedConversation.id,
                                         });
+                                        setShowLimitWarning(false); // Ẩn thông báo khi bỏ ghim
                                     }}
                                 >
                                     <i className="bi bi-pin-angle-fill text-danger"></i>
@@ -955,7 +993,7 @@ const Conservation = ({
                         );
                     })}
                 </div>
-            )}
+            ): null}
 
             {/* Chat Messages */}
             <div
@@ -990,11 +1028,10 @@ const Conservation = ({
                             <div
                                 key={messageId}
                                 id={`message-${messageId}`}
-                                className={`mb-2 d-flex position-relative message-container ${
-                                    isSentByMe
+                                className={`mb-2 d-flex position-relative message-container ${isSentByMe
                                         ? "justify-content-end"
                                         : "justify-content-start"
-                                }`}
+                                    }`}
                                 onMouseEnter={() =>
                                     setHoveredMessageId(messageId)
                                 }
@@ -1024,11 +1061,10 @@ const Conservation = ({
                                     </div>
                                 )}
                                 <div
-                                    className={`p-2 rounded shadow-sm message-bubble ${
-                                        isSentByMe
+                                    className={`p-2 rounded shadow-sm message-bubble ${isSentByMe
                                             ? "text-black message-sent"
                                             : "bg-light border message-received"
-                                    } ${isRecalled ? "message-recalled" : ""}`}
+                                        } ${isRecalled ? "message-recalled" : ""}`}
                                     style={{
                                         maxWidth: "70%",
                                         backgroundColor: isSentByMe
@@ -1052,7 +1088,7 @@ const Conservation = ({
                                             Tin nhắn đã bị thu hồi
                                         </span>
                                     ) : msg?.messageType === "GIF" ||
-                                      msg?.messageType === "STICKER" ? (
+                                        msg?.messageType === "STICKER" ? (
                                         <img
                                             src={msg?.fileUrl}
                                             alt={msg?.messageType}
@@ -1064,7 +1100,7 @@ const Conservation = ({
                                             }}
                                         />
                                     ) : msg?.messageType === "IMAGE" ||
-                                      msg?.type === "IMAGE" ? (
+                                        msg?.type === "IMAGE" ? (
                                         msg.uploading ? (
                                             <div className="d-flex align-items-center">
                                                 <div
@@ -1215,7 +1251,7 @@ const Conservation = ({
                                         <small className="text-muted d-block">
                                             {formatTime(
                                                 msg?.created_at ||
-                                                    msg?.timestamp
+                                                msg?.timestamp
                                             )}
                                         </small>
                                     </div>
@@ -1224,100 +1260,98 @@ const Conservation = ({
                                 {/* Show message actions on hover OR when clicked */}
                                 {(hoveredMessageId === messageId ||
                                     showActionsFor === messageId) && (
-                                    <div
-                                        className="message-actions"
-                                        style={{
-                                            position: "absolute",
-                                            top: "15px",
-                                            right: isSentByMe
-                                                ? `${
-                                                      messageRefs.current[
-                                                          messageId
-                                                      ]?.offsetWidth + 10
-                                                  }px`
-                                                : "auto",
-                                            left: !isSentByMe
-                                                ? `${
-                                                      messageRefs.current[
-                                                          msg?.id
-                                                      ]?.offsetWidth + 65
-                                                  }px`
-                                                : "auto",
-                                            backgroundColor:
-                                                "rgba(255, 255, 255, 0.9)",
-                                            borderRadius: "20px",
-                                            padding: "5px 10px",
-                                            boxShadow:
-                                                "0 2px 5px rgba(0,0,0,0.1)",
-                                            display: "flex",
-                                            gap: "12px",
-                                            zIndex: 100,
-                                        }}
-                                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
-                                    >
-                                        <i
-                                            className="bi bi-chat-quote action-icon"
-                                            onClick={() =>
-                                                handleReaction(msg?.id, "smile")
-                                            }
+                                        <div
+                                            className="message-actions"
                                             style={{
-                                                cursor: "pointer",
-                                                color: "#666",
+                                                position: "absolute",
+                                                top: "15px",
+                                                right: isSentByMe
+                                                    ? `${messageRefs.current[
+                                                        messageId
+                                                    ]?.offsetWidth + 10
+                                                    }px`
+                                                    : "auto",
+                                                left: !isSentByMe
+                                                    ? `${messageRefs.current[
+                                                        msg?.id
+                                                    ]?.offsetWidth + 65
+                                                    }px`
+                                                    : "auto",
+                                                backgroundColor:
+                                                    "rgba(255, 255, 255, 0.9)",
+                                                borderRadius: "20px",
+                                                padding: "5px 10px",
+                                                boxShadow:
+                                                    "0 2px 5px rgba(0,0,0,0.1)",
+                                                display: "flex",
+                                                gap: "12px",
+                                                zIndex: 100,
                                             }}
-                                            title="Trả lời"
-                                        ></i>
-                                        {isSentByMe ? (
+                                            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
+                                        >
                                             <i
-                                                className="bi bi-reply action-icon"
+                                                className="bi bi-chat-quote action-icon"
                                                 onClick={() =>
-                                                    handleForwardMessage(msg)
+                                                    handleReaction(msg?.id, "smile")
                                                 }
                                                 style={{
                                                     cursor: "pointer",
                                                     color: "#666",
                                                 }}
-                                                title="Chuyển tiếp"
+                                                title="Trả lời"
                                             ></i>
-                                        ) : (
-                                            <i
-                                                className="bi bi-reply action-icon"
-                                                onClick={() =>
-                                                    handleForwardMessage(msg)
-                                                }
-                                                style={{
-                                                    cursor: "pointer",
-                                                    color: "#666",
-                                                    transform: "scaleX(-1)",
-                                                }}
-                                                title="Chuyển tiếp"
-                                            ></i>
-                                        )}
-                                        {/* <i
+                                            {isSentByMe ? (
+                                                <i
+                                                    className="bi bi-reply action-icon"
+                                                    onClick={() =>
+                                                        handleForwardMessage(msg)
+                                                    }
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        color: "#666",
+                                                    }}
+                                                    title="Chuyển tiếp"
+                                                ></i>
+                                            ) : (
+                                                <i
+                                                    className="bi bi-reply action-icon"
+                                                    onClick={() =>
+                                                        handleForwardMessage(msg)
+                                                    }
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        color: "#666",
+                                                        transform: "scaleX(-1)",
+                                                    }}
+                                                    title="Chuyển tiếp"
+                                                ></i>
+                                            )}
+                                            {/* <i
                       className="bi bi-three-dots action-icon"
                       onClick={() => handleOpenAddModel(msg?.id)}
                       style={{ cursor: "pointer", color: "#666" }}
                       title="Thêm"
                     ></i> */}
-                                        <MessageActionsDropdown
-                                            messageId={messageId}
-                                            senderId={msg?.senderId}
-                                            conversationId={
-                                                selectedConversation?.id
-                                            }
-                                            onRecallMessage={
-                                                handleRecallMessage
-                                            }
-                                            onDeleteForUser={
-                                                handleDeleteForUser
-                                            }
-                                            currentUserId={currentUser.id}
-                                            isRecalled={isRecalled}
-                                            onPinMessage={handlePinMessage}
-                                            onUnpinMessage={handleUnpinMessage}
-                                            isPinned={msg.pinned}
-                                        />
-                                    </div>
-                                )}
+                                            <MessageActionsDropdown
+                                                messageId={messageId}
+                                                senderId={msg?.senderId}
+                                                conversationId={
+                                                    selectedConversation?.id
+                                                }
+                                                onRecallMessage={
+                                                    handleRecallMessage
+                                                }
+                                                onDeleteForUser={
+                                                    handleDeleteForUser
+                                                }
+                                                currentUserId={currentUser.id}
+                                                isRecalled={isRecalled}
+                                                onPinMessage={handlePinMessage}
+                                                onUnpinMessage={handleUnpinMessage}
+                                                isPinned={msg.pinned}
+                                            />
+                                        </div>
+                                    )}
                             </div>
                         );
                     })
@@ -1432,11 +1466,10 @@ const Conservation = ({
                         onClick={handleSendMessage}
                     >
                         <i
-                            className={`bi ${
-                                newMessage.trim()
+                            className={`bi ${newMessage.trim()
                                     ? "bi-send-fill text-primary"
                                     : "bi-emoji-smile"
-                            }`}
+                                }`}
                         ></i>
                     </button>
                     <button
