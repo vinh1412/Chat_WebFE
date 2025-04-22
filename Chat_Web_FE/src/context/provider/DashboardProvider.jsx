@@ -68,6 +68,10 @@ const DashboardProvider = ({ children }) => {
   const [showForwardMessageModal, setShowForwardMessageModal] = useState(false);
   const forwardMessageModalRef = useRef(null);
 
+  // Modal: Tạo nhóm
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const createGroupModalRef = useRef(null);
+
   console.log("DashboardProvider", showAddFriendModal);
 
   const contextValue = {
@@ -103,6 +107,10 @@ const DashboardProvider = ({ children }) => {
     showForwardMessageModal,
     setShowForwardMessageModal,
     forwardMessageModalRef,
+
+    showCreateGroupModal,
+    setShowCreateGroupModal,
+    createGroupModalRef,
   };
 
   return (

@@ -59,3 +59,21 @@ export const findOrCreateConversationService = async (senderId, receiverId) => {
   }
 };
 
+export const createGroupConversationService = async (data) => {
+  try {
+    const response = await axiosInstance.post(
+      "/conversations/createConversationGroup",
+      data
+    );
+    console.log("Created group conversation:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error creating group conversation:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi tạo hội thoại nhóm"
+    );
+  }
+};
