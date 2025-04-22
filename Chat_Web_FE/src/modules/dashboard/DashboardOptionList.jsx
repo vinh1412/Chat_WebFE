@@ -16,7 +16,8 @@ const DashboardOptionList = () => {
   const dispatch = useDispatch();
   const currentTab = useSelector((state) => state.chat.currentTab);
   const showSearch = useSelector((state) => state.common.showSearch);
-  const { setShowAddFriendModal } = useDashboardContext();
+  const { setShowAddFriendModal, setShowCreateGroupModal } =
+    useDashboardContext();
   const { conversations, isLoadingAllConversations } = useConversation(); // Lấy danh sách cuộc trò chuyện từ hook useConversation
   console.log("conversations", conversations);
 
@@ -61,7 +62,14 @@ const DashboardOptionList = () => {
                 />
               </Col>
               <Col className="">
-                <AiOutlineUsergroupAdd role="button" size={24} />
+                <AiOutlineUsergroupAdd
+                  role="button"
+                  size={24}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Ngăn chặn sự kiện lan rộng
+                    setShowCreateGroupModal(true);
+                  }}
+                />
               </Col>
             </Row>
           </Container>
