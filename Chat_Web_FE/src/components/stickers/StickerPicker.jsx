@@ -6,40 +6,33 @@ const StickerPicker = ({ onStickerSelect }) => {
     const [activeTab, setActiveTab] = useState("Sticker");
     const [searchTerm, setSearchTerm] = useState("");
     const [gifs, setGifs] = useState([]);
+    const [stickers, setStickers] = useState([]);
 
-    // Danh sách sticker (thay bằng URL thực tế từ CDN hoặc local assets)
-    const stickerList = [
-        {
-            id: 1,
-            url: "https://via.placeholder.com/100?text=Cat1",
-            category: "Mèo",
-        },
-        {
-            id: 2,
-            url: "https://via.placeholder.com/100?text=Cat2",
-            category: "Mèo",
-        },
-        {
-            id: 3,
-            url: "https://via.placeholder.com/100?text=Birthday1",
-            category: "Sinh nhật",
-        },
-        {
-            id: 4,
-            url: "https://via.placeholder.com/100?text=Birthday2",
-            category: "Sinh nhật",
-        },
-        {
-            id: 5,
-            url: "https://via.placeholder.com/100?text=Expression1",
-            category: "Biểu cảm",
-        },
-        {
-            id: 6,
-            url: "https://via.placeholder.com/100?text=Expression2",
-            category: "Biểu cảm",
-        },
-    ];
+    // Lấy Sticker từ GIPHY API
+    useEffect(() => {
+        const fetchStickers = async () => {
+            try {
+                const response = await axios.get(
+                    `https://api.giphy.com/v1/stickers/search`,
+                    {
+                        params: {
+                            q: searchTerm || "funny", // Uncommented search term
+                            api_key: import.meta.env.VITE_GIPHY_API_KEY,
+                            limit: 20,
+                        },
+                    }
+                );
+                setStickers(response.data.data);
+            } catch (err) {
+                console.error("Lỗi khi lấy sticker:", err);
+                setStickers([]);
+            }
+        };
+        if (activeTab === "Sticker" && import.meta.env.VITE_GIPHY_API_KEY) {
+            // Fixed case
+            fetchStickers();
+        }
+    }, [searchTerm, activeTab]);
 
     // Lấy GIF từ GIPHY API
     useEffect(() => {
@@ -65,6 +58,7 @@ const StickerPicker = ({ onStickerSelect }) => {
             fetchGifs();
         }
     }, [searchTerm, activeTab]);
+
     return (
         <div
             style={{
@@ -113,7 +107,7 @@ const StickerPicker = ({ onStickerSelect }) => {
                 <div style={{ padding: "10px" }}>
                     <input
                         type="text"
-                        placeholder="Tìm kiếm sticker"
+                        placeholder={`Tìm kiếm ${activeTab.toLowerCase()}`}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
@@ -137,16 +131,6 @@ const StickerPicker = ({ onStickerSelect }) => {
                     padding: "10px",
                 }}
             >
-                {activeTab === "Sticker" && (
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(4, 1fr)",
-                            gap: "10px",
-                        }}
-                    ></div>
-                )}
-
                 {activeTab === "Emoji" && (
                     <div>
                         <Picker
@@ -196,36 +180,41 @@ const StickerPicker = ({ onStickerSelect }) => {
                         )}
                     </div>
                 )}
-            </div>
 
-            {/* Danh sách bộ sticker */}
-            <div
-                style={{
-                    display: "flex",
-                    gap: "5px",
-                    padding: "10px",
-                    borderTop: "1px solid #ddd",
-                    overflowX: "auto",
-                }}
-            >
-                {["Mèo", "Sinh nhật", "Biểu cảm", "Hoạt hình"].map(
-                    (category) => (
-                        <button
-                            key={category}
-                            style={{
-                                background: "#f9f9f9",
-                                border: "1px solid #ddd",
-                                borderRadius: "5px",
-                                padding: "5px 10px",
-                                color: "#000",
-                                cursor: "pointer",
-                                fontSize: "12px",
-                            }}
-                            onClick={() => setSearchTerm(category)}
-                        >
-                            {category}
-                        </button>
-                    )
+                {activeTab === "Sticker" && (
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(4, 1fr)",
+                            gap: "10px",
+                        }}
+                    >
+                        {stickers.length > 0 ? (
+                            stickers.map((sticker) => (
+                                <img
+                                    key={sticker.id}
+                                    src={sticker.images.fixed_height.url}
+                                    alt={sticker.title}
+                                    style={{
+                                        width: "70px",
+                                        height: "70px",
+                                        objectFit: "cover",
+                                        cursor: "pointer",
+                                        borderRadius: "5px",
+                                    }}
+                                    onClick={() =>
+                                        onStickerSelect(
+                                            sticker.images.fixed_height.url
+                                        )
+                                    }
+                                />
+                            ))
+                        ) : (
+                            <p style={{ color: "#aaa", textAlign: "center" }}>
+                                Không tìm thấy sticker
+                            </p>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

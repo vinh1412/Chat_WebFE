@@ -18,6 +18,7 @@ import { forwardMessageService } from "../../../services/MessageService";
 import ReactionEmojiModal from "../../../components/modal/ReactionEmojiModal";
 import { uploadFile } from "../../../services/FileService";
 import "../../../assets/css/UploadFile.css";
+import "../../../assets/css/StickerGif.css";
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
 
@@ -1028,16 +1029,31 @@ const Conservation = ({
                                         isSentByMe
                                             ? "text-black message-sent"
                                             : "bg-light border message-received"
-                                    } ${isRecalled ? "message-recalled" : ""}`}
+                                    } ${isRecalled ? "message-recalled" : ""} ${
+                                        msg?.messageType === "STICKER" ||
+                                        msg?.messageType === "GIF"
+                                            ? "sticker-message"
+                                            : ""
+                                    }`}
                                     style={{
                                         maxWidth: "70%",
                                         backgroundColor: isSentByMe
                                             ? isRecalled
                                                 ? "#f0f0f0"
+                                                : msg?.messageType === "STICKER"
+                                                ? "transparent"
                                                 : "#dcf8c6"
+                                            : msg?.messageType === "STICKER"
+                                            ? "transparent"
                                             : "#ffffff",
                                         position: "relative",
                                         opacity: isRecalled ? 0.7 : 1,
+                                        ...(msg?.messageType === "STICKER"
+                                            ? {
+                                                  boxShadow: "none",
+                                                  border: "none",
+                                              }
+                                            : {}),
                                     }}
                                     ref={(el) =>
                                         (messageRefs.current[messageId] = el)
@@ -1056,12 +1072,6 @@ const Conservation = ({
                                         <img
                                             src={msg?.fileUrl}
                                             alt={msg?.messageType}
-                                            className="img-fluid rounded"
-                                            style={{
-                                                maxWidth: "300px",
-                                                maxHeight: "300px",
-                                                objectFit: "contain",
-                                            }}
                                         />
                                     ) : msg?.messageType === "IMAGE" ||
                                       msg?.type === "IMAGE" ? (
