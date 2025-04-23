@@ -12,8 +12,18 @@ const ConversationDetail = ({ conversationInfor }) => {
       className="card shadow-sm h-100 "
       style={{ width: "100%", overflowY: "auto", height: "100%" }}
     >
+      {conversationInfor.dissolved && (
+        <div className="alert alert-warning mb-3 text-center">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          Nhóm này đã bị giải tán
+        </div>
+      )}
+
       {showGroupSettings ? (
-        <GroupSettingsForm onBack={() => setShowGroupSettings(false)} />
+        <GroupSettingsForm
+          onBack={() => setShowGroupSettings(false)}
+          conversationId={conversationInfor?.id}
+        />
       ) : (
         <>
           <div className=" card-header text-center">
