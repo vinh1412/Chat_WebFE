@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useDashboardContext } from "../../../context/Dashboard_context";
 import "bootstrap-icons/font/bootstrap-icons.css"; // Import Bootstrap Icons
 import GroupSettingsForm from "./GroupSettingsForm";
+import AddMemberGroupModal from "../../../../src/components/modal/AddMemberGroupModal"
 
 const ConversationDetail = ({ conversationInfor }) => {
   console.log("conversationInfor: ", conversationInfor);
-  const { currentUser } = useDashboardContext();
+  const { currentUser,setShowAddMemberGroupModal } = useDashboardContext();
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   return (
     <div
@@ -78,11 +79,14 @@ const ConversationDetail = ({ conversationInfor }) => {
               </small>
             </div>
 
+            {/* gọi AddMemberGroupModal */}
+            
+
             {conversationInfor.is_group ? (
-              <div className="d-flex flex-column align-items-center">
+              <div className="d-flex flex-column align-items-center" onClick={() => setShowAddMemberGroupModal(true)} style={{ cursor: "pointer" }}>
                 <i className="bi bi-person-plus fs-6"></i>
                 <small className="text-center" style={{ fontSize: "13px" }}>
-                  Tạo nhóm trò chuyện
+                  Thêm thành viên
                 </small>
               </div>
             ) : null}
