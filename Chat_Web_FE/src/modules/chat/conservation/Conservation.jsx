@@ -815,19 +815,60 @@ const Conservation = ({
       {/* Header */}
       <div className="card-header d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center">
-          <img
-            src={
-              !selectedConversation?.is_group
-                ? selectedConversation?.members.find(
-                    (member) => member?.id !== currentUser?.id
-                  ).avatar
-                : selectedConversation?.avatar
-            }
-            alt="avatar"
-            width={50}
-            height={50}
-            className="rounded-circle me-3"
-          />
+          {selectedConversation?.is_group ? (
+            selectedConversation?.avatar ? (
+              <img
+                src={selectedConversation.avatar}
+                alt="avatar group"
+                width={50}
+                height={50}
+                className="rounded-circle me-3"
+              />
+            ) : (
+              <div
+                className="d-flex flex-wrap align-items-center me-3"
+                style={{
+                  width: 50,
+                  height: 50,
+                }}
+              >
+                {selectedConversation.members
+                  .slice(0, 4)
+                  .map((member, index) => (
+                    <div
+                      key={member.id}
+                      style={{
+                        width: "50%",
+                        height: "50%",
+                      }}
+                    >
+                      <img
+                        src={member.avatar}
+                        alt={`member-${index}`}
+                        className="rounded-circle w-100 h-100"
+                        style={{
+                          objectFit: "cover",
+                          border: "1px solid white",
+                        }}
+                      />
+                    </div>
+                  ))}
+              </div>
+            )
+          ) : (
+            <img
+              src={
+                selectedConversation?.members.find(
+                  (member) => member?.id !== currentUser?.id
+                )?.avatar
+              }
+              alt="avatar"
+              width={50}
+              height={50}
+              className="rounded-circle me-3"
+            />
+          )}
+
           <div className="flex-grow-1">
             <h6 className="mb-0">
               {!selectedConversation?.is_group
