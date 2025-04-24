@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Form, InputGroup, Button } from "react-bootstrap";
 import { BsSearch } from "react-icons/bs";
+import { toast } from "react-toastify";
 import useFriend from "../../hooks/useFriend";
 import { useDashboardContext } from "../../context/Dashboard_context";
 
-const AddMemberGroupModal = ({ isOpen, onClose }) => {
+const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -14,20 +15,23 @@ const AddMemberGroupModal = ({ isOpen, onClose }) => {
   const { friendList, isLoadingFriends } = useFriend();
 
   useEffect(() => {
-    console.log("Selected members (updated):", selectedMembers);
-  }, [selectedMembers]);
+    console.log("conversationInfor:", conversationInfor);
+    console.log("Group ID:", conversationInfor?.id);
+    console.log("Members:", conversationInfor?.members);
+    console.log("selectedMembers:", selectedMembers);
+  }, [conversationInfor, selectedMembers]);
 
   const friends = useMemo(() => {
     if (isLoadingFriends) return [];
     return friendList?.response || [];
   }, [isLoadingFriends, friendList]);
 
-const filteredFriends = useMemo(() => {
-  if (!searchTerm) return friends;
-  return friends.filter((friend) =>
-    friend.displayName && friend.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-}, [friends, searchTerm]);
+  const filteredFriends = useMemo(() => {
+    if (!searchTerm) return friends;
+    return friends.filter((friend) =>
+      friend.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [friends, searchTerm]);
 
   const toggleMember = (userId) => {
     setSelectedMembers((prevSelected) =>
@@ -37,10 +41,42 @@ const filteredFriends = useMemo(() => {
     );
   };
 
+  if (!conversationInfor) {
+    return (
+      <div className="create-group-modal" style={{ display: isOpen ? "block" : "none" }}>
+        <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
+          <h5 className="modal-title mb-0">Lỗi: Không có thông tin nhóm</h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={onClose}
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="create-group-modal">
+    <div className="create-group-modal" style={{ display: isOpen ? "block" : "none" }}>
       <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
-        <h5 className="modal-title mb-0">Thêm thành viên</h5>
+        <div>
+          <h5 className="modal-title mb-0">Thêm thành viên vào nhóm</h5>
+          <span className="text-muted small">
+            ID nhóm: {conversationInfor?.id || "Không có ID nhóm"}
+          </span>
+          {conversationInfor?.name && (
+            <div className="text-muted small">
+              Tên nhóm: {conversationInfor?.name}
+            </div>
+          )}
+          {conversationInfor?.members?.length > 0 && (
+            <div className="text-muted small">
+              ID thành viên đã có trong nhóm:{" "}
+              {conversationInfor.members.map((member) => member.id).join(", ")}
+            </div>
+          )}
+        </div>
         <button
           type="button"
           className="btn-close"
@@ -53,17 +89,13 @@ const filteredFriends = useMemo(() => {
         <Form>
           <InputGroup className="mb-3">
             <InputGroup.Text
-              className={`bg-white border-end-0 rounded-start-pill ${
-                isFocused ? "border-primary" : ""
-              }`}
+              className={`bg-white border-end-0 rounded-start-pill ${isFocused ? "border-primary" : ""}`}
             >
               <BsSearch />
             </InputGroup.Text>
             <Form.Control
               placeholder="Nhập tên, số điện thoại, hoặc danh sách số điện thoại"
-              className={`border-start-0 rounded-end-pill ${
-                isFocused ? "border-primary" : ""
-              }`}
+              className={`border-start-0 rounded-end-pill ${isFocused ? "border-primary" : ""}`}
               style={{ outline: "none", boxShadow: "none" }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -94,39 +126,71 @@ const filteredFriends = useMemo(() => {
             </div>
           )}
 
+          {selectedMembers.length > 0 && (
+            <div className="px-3 py-1 text-muted small">
+              Đang chọn các ID: {selectedMembers.join(", ")}
+            </div>
+          )}
+
           <div className="friends-list">
             <strong className="d-block mb-2">Danh sách bạn bè</strong>
             <div className="overflow-auto" style={{ maxHeight: "300px" }}>
-              {filteredFriends.map((user) => (
-                <div
-                  key={user.userId}
-                  className="d-flex align-items-center py-2 border-bottom"
-                >
-                  <div className="me-2" onClick={(e) => e.stopPropagation()}>
-                    <Form.Check
-                      type="checkbox"
-                      id={`check-${user.userId}`}
-                      checked={selectedMembers.includes(user.userId)}
-                      onChange={() => toggleMember(user.userId)}
-                      className="me-2 px-2"
-                    />
-                  </div>
+              {filteredFriends.map((user) => {
+                const isAlreadyMember = conversationInfor?.members?.some(
+                  (m) => m.id === user.userId
+                );
+
+                return (
                   <div
-                    className="d-flex align-items-center flex-grow-1"
-                    onClick={() => toggleMember(user.userId)}
-                    style={{ cursor: "pointer" }}
+                    key={user.userId}
+                    className="d-flex align-items-center py-2 border-bottom"
+                    style={{ opacity: isAlreadyMember ? 0.5 : 1 }}
                   >
-                    <img
-                      src={user.avatar}
-                      alt={user.displayName}
-                      className="rounded-circle me-2"
-                      style={{ width: "32px", height: "32px" }}
-                    />
-                    <span>{user.displayName}</span>
-                    {user.emoji && <span className="ms-2">{user.emoji}</span>}
+                    <div className="me-2" onClick={(e) => e.stopPropagation()}>
+                      <Form.Check
+                        type="checkbox"
+                        id={`check-${user.userId}`}
+                        checked={selectedMembers.includes(user.userId)}
+                        disabled={isAlreadyMember}
+                        onChange={() => {
+                          if (!isAlreadyMember) {
+                            console.log("Toggle (checkbox):", user.userId);
+                            toggleMember(user.userId);
+                          }
+                        }}
+                        className="me-2 px-2"
+                      />
+                    </div>
+                    <div
+                      className="d-flex align-items-center flex-grow-1"
+                      onClick={() => {
+                        if (!isAlreadyMember) {
+                          console.log("Toggle (row):", user.userId);
+                          toggleMember(user.userId);
+                        }
+                      }}
+                      style={{
+                        cursor: isAlreadyMember ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      <img
+                        src={user.avatar}
+                        alt={user.displayName}
+                        className="rounded-circle me-2"
+                        style={{ width: "32px", height: "32px" }}
+                      />
+                      <span
+                        style={{
+                          textDecoration: isAlreadyMember ? "line-through" : "none",
+                        }}
+                      >
+                        {user.displayName}
+                      </span>
+                      {user.emoji && <span className="ms-2">{user.emoji}</span>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </Form>
