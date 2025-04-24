@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDashboardContext } from "../../../context/Dashboard_context";
-import "bootstrap-icons/font/bootstrap-icons.css"; // Import Bootstrap Icons
+import "bootstrap-icons/font/bootstrap-icons.css";
 import GroupSettingsForm from "./GroupSettingsForm";
 import AddMemberGroupModal from "../../../../src/components/modal/AddMemberGroupModal";
 import { leaveGroup } from "../../../services/ConversationService";
@@ -8,8 +8,9 @@ import { setShowConversation } from "../../../redux/slice/commonSlice";
 import { useDispatch } from "react-redux";
 
 const ConversationDetail = ({ conversationInfor }) => {
-  console.log("conversationInfor: ", conversationInfor);
-  const { currentUser, setShowAddMemberGroupModal } = useDashboardContext();
+  console.log("conversationInfor: 0 -------------------", conversationInfor);
+  const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
+    useDashboardContext();
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [showGroupBulletin, setShowGroupBulletin] = useState(true);
   const dispatch = useDispatch();
@@ -94,8 +95,7 @@ const ConversationDetail = ({ conversationInfor }) => {
                     (member) => member.id !== currentUser.id
                   ).display_name
                 : conversationInfor.name}
-            </h6>{" "}
-            {/* Add name below the avatar */}
+            </h6>
           </div>
 
           <div className="d-flex justify-content-center gap-3 my-2">
@@ -113,20 +113,27 @@ const ConversationDetail = ({ conversationInfor }) => {
               </small>
             </div>
 
-            {/* gọi AddMemberGroupModal */}
-
-            {conversationInfor.is_group ? (
+            {conversationInfor.is_group && (
               <div
                 className="d-flex flex-column align-items-center"
-                onClick={() => setShowAddMemberGroupModal(true)}
+                onClick={() => {
+                  console.log(
+                    "-------------------------------conversationInfor.members----------------------1:",
+                    conversationInfor?.members
+                  );
+                  setShowAddMemberGroupModal(true);
+                  setConversationInfor(conversationInfor); // Sửa tên hàm
+                  console.log(
+                    "conversationInfor: 2 -------------------",
+                    conversationInfor
+                  );
+                }}
                 style={{ cursor: "pointer" }}
               >
                 <i className="bi bi-person-plus fs-6"></i>
-                <small className="text-center" style={{ fontSize: "13px" }}>
-                  Thêm thành viên
-                </small>
+                <small style={{ fontSize: "13px" }}>Thêm thành viên</small>
               </div>
-            ) : null}
+            )}
 
             {!conversationInfor.is_group ? (
               <div className="d-flex flex-column align-items-center">

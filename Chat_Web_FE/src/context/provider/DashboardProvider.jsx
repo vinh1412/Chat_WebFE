@@ -165,6 +165,11 @@ const DashboardProvider = ({ children }) => {
 
   console.log("DashboardProvider", showAddFriendModal);
 
+
+  // THÊM STATE CHO CÁC MODAL LƯU CONVERSATION
+  const [conversationInfor, setConversationInfor] = useState(null);
+  
+  
   const contextValue = {
     currentUser,
     setCurrentUser,
@@ -206,6 +211,12 @@ const DashboardProvider = ({ children }) => {
     showAddMemberGroupModal,
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
+
+    // Thêm conversationInfor và setConversationInfor vào context
+    conversationInfor,
+    setConversationInfor,
+
+
   };
 
   return (
