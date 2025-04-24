@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createGroupConversationService,
+  dissolveConversationService,
   findOrCreateConversationService,
   getAllConversationsByUserIdService,
 } from "../services/ConversationService";
@@ -42,6 +43,31 @@ const useConversation = (conservationId) => {
     },
   });
 
+  const {
+    mutate: dissolveConversation,
+    isPending: isDissolvingConversation,
+    error: dissolveConversationError,
+  } = useMutation({
+    mutationFn: (conversationId) => dissolveConversationService(conversationId),
+    onSuccess: (data) => {
+      // Cập nhật lại danh sách hội thoại sau khi giải tán nhóm
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+
+  const fetchConversations = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      return await queryClient.fetchQuery({
+        queryKey: ["conversations"],
+        queryFn: getAllConversationsByUserIdService,
+      });
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      throw error;
+    }
+  };
+
   return {
     conversations,
     isLoadingAllConversations,
@@ -51,6 +77,10 @@ const useConversation = (conservationId) => {
     createGroupConversation, // Thêm vào để sử dụng khi tạo nhóm
     isCreatingGroupConversation,
     createGroupConversationError,
+    dissolveConversation,
+    isDissolvingConversation,
+    dissolveConversationError,
+    fetchConversations,
   };
 };
 
