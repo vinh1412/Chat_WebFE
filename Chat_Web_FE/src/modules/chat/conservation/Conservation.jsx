@@ -23,6 +23,9 @@ import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
 import { setSelectedConversation } from "../../../redux/slice/commonSlice";
 import useConversation from "../../../hooks/useConversation";
+
+import VideoCallModal from "../../../components/modal/VideoCallModal";
+import IncomingCallModal from "../../../components/modal/IncomingCallModal";
 const Conservation = ({
   onShowDetail,
   onHideDetail,
@@ -81,6 +84,8 @@ const Conservation = ({
 
   // show reaction emoji modal và các emoji mặc định
   const [showReactionModal, setShowReactionModal] = useState(false);
+
+  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
   const [defaultReactionEmoji, setDefaultReactionEmoji] = useState({
     id: "thumbs-up",
     icon: "👍",
@@ -97,6 +102,17 @@ const Conservation = ({
     setDefaultReactionEmoji(emoji);
     setShowReactionModal(false);
     // Optionally show a success message
+  };
+
+  const handleCloseVideoCallModal = () => {
+    setShowVideoCallModal(false);
+  };
+  const handleOpenAudioCallModal = () => {
+    setShowVideoCallModal(true);
+  };
+
+  const handleOpenVideoCallModal = () => {
+    setShowVideoCallModal(true);
   };
 
   const messageRefs = useRef({});
@@ -908,18 +924,17 @@ const Conservation = ({
           </div>
         </div>
         <div className="d-flex gap-2">
+          <button className="btn btn-sm" onClick={handleOpenAudioCallModal}>
+            <i class="bi bi-telephone"></i>
+          </button>
+          <button className="btn btn-sm" onClick={handleOpenVideoCallModal}>
+            <i className="bi bi-camera-video"></i>
+          </button>
           <button className="btn btn-sm">
             <i className="bi bi-search"></i>
           </button>
-          <button
-            className="btn btn-sm"
-            onClick={showDetail ? onHideDetail : onShowDetail}
-          >
-            <i
-              className={`bi ${
-                showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"
-              } me-2`}
-            ></i>
+          <button className="btn btn-sm" onClick={showDetail ? onHideDetail : onShowDetail}>
+            <i className={`bi ${showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"} me-2`}></i>
           </button>
         </div>
       </div>
@@ -1513,6 +1528,16 @@ const Conservation = ({
         selectedReceivers={selectedReceivers}
         setSelectedReceivers={setSelectedReceivers}
       />
+
+      <VideoCallModal
+        isOpen={showVideoCallModal}
+        onClose={handleCloseVideoCallModal}
+        recipientId={userReceiver?.id}
+        recipientName={userReceiver?.display_name}
+        conversationId={selectedConversation?.id}
+        callType="video"
+      />
+      <IncomingCallModal />
     </div>
   );
 };
