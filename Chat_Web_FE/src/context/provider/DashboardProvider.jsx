@@ -159,6 +159,13 @@ const DashboardProvider = ({ children }) => {
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const createGroupModalRef = useRef(null);
 
+  // Modal: Call video
+  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
+  const videoCallModalRef = useRef(null);
+
+  const [showIncomingCallModal, setShowIncomingCallModal] =useState(false);
+  const incomingCallModalRef = useRef(null);
+
   // Modal: Thêm bạn bè AddMemberGroupModal
   const [showAddMemberGroupModal, setShowAddMemberGroupModal] = useState(false);
   const addMemberGroupModalRef = useRef(null);
@@ -208,6 +215,15 @@ const DashboardProvider = ({ children }) => {
     setShowCreateGroupModal,
     createGroupModalRef,
 
+    showVideoCallModal,
+    setShowVideoCallModal,
+    videoCallModalRef,
+
+    showIncomingCallModal,
+    setShowIncomingCallModal,
+    incomingCallModalRef,
+
+    
     showAddMemberGroupModal,
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
