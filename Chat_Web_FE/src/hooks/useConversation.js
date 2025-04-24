@@ -1,4 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient
+} from "@tanstack/react-query";
 import {
   createGroupConversationService,
   dissolveConversationService,
@@ -9,25 +13,33 @@ import {
 const useConversation = (conservationId) => {
   const queryClient = useQueryClient();
 
-  const { data: conversations, isLoading: isLoadingAllConversations } =
-    useQuery({
-      queryKey: ["conversations"],
-      queryFn: getAllConversationsByUserIdService,
-      retry: 1,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    });
+  const {
+    data: conversations,
+    isLoading: isLoadingAllConversations
+  } =
+  useQuery({
+    queryKey: ["conversations"],
+    queryFn: getAllConversationsByUserIdService,
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   const {
     mutate: findOrCreateConversation,
     isPending: isCreatingConversation,
     error: createConversationError,
   } = useMutation({
-    mutationFn: ({ senderId, receiverId }) =>
+    mutationFn: ({
+        senderId,
+        receiverId
+      }) =>
       findOrCreateConversationService(senderId, receiverId),
     onSuccess: (newConversation) => {
       // Cập nhật lại danh sách hội thoại
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"]
+      });
     },
   });
 
@@ -39,7 +51,9 @@ const useConversation = (conservationId) => {
     mutationFn: (data) => createGroupConversationService(data),
     onSuccess: (newGroupConversation) => {
       // Cập nhật lại danh sách hội thoại sau khi tạo nhóm
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"]
+      });
     },
   });
 
@@ -51,13 +65,17 @@ const useConversation = (conservationId) => {
     mutationFn: (conversationId) => dissolveConversationService(conversationId),
     onSuccess: (data) => {
       // Cập nhật lại danh sách hội thoại sau khi giải tán nhóm
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"]
+      });
     },
   });
 
   const fetchConversations = async () => {
     try {
-      await queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations"]
+      });
       return await queryClient.fetchQuery({
         queryKey: ["conversations"],
         queryFn: getAllConversationsByUserIdService,
@@ -67,6 +85,7 @@ const useConversation = (conservationId) => {
       throw error;
     }
   };
+
 
   return {
     conversations,
