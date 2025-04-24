@@ -77,3 +77,19 @@ export const createGroupConversationService = async (data) => {
     );
   }
 };
+
+export const dissolveConversationService = async (conversationId) => {
+  try {
+    const response = await axiosInstance.delete(
+      `/conversations/dissolve/${conversationId}`
+    );
+    console.log("Dissolved conversation:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error dissolving conversation:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Lỗi khi xóa hội thoại");
+  }
+};
