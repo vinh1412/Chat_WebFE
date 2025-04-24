@@ -8,6 +8,7 @@ import SettingsModal from "./SettingsModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import ForwardMessageModal from "./ForwardMessageModal";
 import CreateGroupModal from "./CreateGroupModal";
+import AddMemberGroupModal from "./AddMemberGroupModal";
 
 const Modal = () => {
   const {
@@ -25,6 +26,9 @@ const Modal = () => {
     setShowForwardMessageModal,
     showCreateGroupModal,
     setShowCreateGroupModal,
+    showAddMemberGroupModal,
+    setShowAddMemberGroupModal,
+    addMemberGroupModalRef,
   } = useDashboardContext();
 
   return (
@@ -105,6 +109,31 @@ const Modal = () => {
           onClose={() => setShowCreateGroupModal(false)}
         />
       </ReactModal>
+
+
+      {/* them thanh vien vao gr sau khi tao xong */}
+      <ReactModal
+       isOpen={showAddMemberGroupModal}
+        onRequestClose={() => setShowAddMemberGroupModal(false)}
+        contentLabel="Add Member Group Modal"
+        style={{
+          content: {
+            width: "600px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+      >
+        <AddMemberGroupModal
+          isOpen={showAddMemberGroupModal}
+          onClose={() => setShowAddMemberGroupModal(false)}
+          addMemberGroupModalRef={addMemberGroupModalRef}
+        />  
+      </ReactModal>
+
+
     </>
   );
 };

@@ -2,23 +2,16 @@ import React, { useMemo, useState, useEffect } from "react";
 import { Form, InputGroup, Button } from "react-bootstrap";
 import { BsSearch } from "react-icons/bs";
 import useFriend from "../../hooks/useFriend";
-import useConversation from "../../hooks/useConversation";
 import { useDashboardContext } from "../../context/Dashboard_context";
-import { toast } from "react-toastify";
 
-const CreateGroupModal = ({ isOpen, onClose }) => {
-  const [groupName, setGroupName] = useState("");
+const AddMemberGroupModal = ({ isOpen, onClose }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const { currentUser } = useDashboardContext();
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedTag, setSelectedTag] = useState("Tất cả");
 
+  const { currentUser } = useDashboardContext();
   const { friendList, isLoadingFriends } = useFriend();
-
-  const { createGroupConversation, isCreatingGroupConversation } =
-    useConversation();
 
   useEffect(() => {
     console.log("Selected members (updated):", selectedMembers);
@@ -29,7 +22,6 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
     return friendList?.response || [];
   }, [isLoadingFriends, friendList]);
 
-  // Lọc danh sách bạn bè dựa trên từ khóa tìm kiếm
 const filteredFriends = useMemo(() => {
   if (!searchTerm) return friends;
   return friends.filter((friend) =>
@@ -38,40 +30,17 @@ const filteredFriends = useMemo(() => {
 }, [friends, searchTerm]);
 
   const toggleMember = (userId) => {
-    setSelectedMembers((prevSelected) => {
-      // Nếu userId đã được chọn, bỏ chọn nó; nếu chưa được chọn, thêm vào danh sách đã chọn
-      if (prevSelected.includes(userId)) {
-        return prevSelected.filter((id) => id !== userId);
-      } else {
-        return [...prevSelected, userId];
-      }
-    });
-  };
-
-  const handleCreateGroup = () => {
-    if (!groupName || selectedMembers.length === 0) return;
-    const groupData = {
-      name: groupName,
-      member_id: selectedMembers.filter((id) => id !== currentUser.id),
-    };
-
-    // Gọi API tạo nhóm với dữ liệu đã chọn
-    createGroupConversation(groupData, {
-      onSuccess: (data) => {
-        toast.success("Tạo nhóm thành công!");
-        onClose(); // Close modal on success
-      },
-      onError: (error) => {
-        toast.error(error.message || "Có lỗi xảy ra khi tạo nhóm");
-      },
-    });
+    setSelectedMembers((prevSelected) =>
+      prevSelected.includes(userId)
+        ? prevSelected.filter((id) => id !== userId)
+        : [...prevSelected, userId]
+    );
   };
 
   return (
     <div className="create-group-modal">
-      {/* Header */}
       <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
-        <h5 className="modal-title mb-0">Tạo nhóm</h5>
+        <h5 className="modal-title mb-0">Thêm thành viên</h5>
         <button
           type="button"
           className="btn-close"
@@ -80,42 +49,8 @@ const filteredFriends = useMemo(() => {
         ></button>
       </div>
 
-      {/* Body */}
       <div className="modal-body p-3">
         <Form>
-          {/* Nhập tên nhóm */}
-          <div className="d-flex align-items-center gap-3 mb-3">
-            <div
-              className="d-flex align-items-center justify-content-center object-fit-cover rounded-circle"
-              style={{
-                width: "50px",
-                height: "50px",
-                backgroundColor: "#f0f0f0",
-                cursor: "pointer",
-              }}
-            >
-              <i
-                className="bi bi-camera"
-                style={{ fontSize: "20px", color: "#4e5d78" }}
-              ></i>
-            </div>
-            <Form.Control
-              placeholder="Nhập tên nhóm..."
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              className="border-start-0"
-              style={{
-                borderLeft: "none",
-                borderTop: "none",
-                borderRight: "none",
-                outline: "none",
-                boxShadow: "none",
-                borderRadius: "0",
-              }}
-            />
-          </div>
-
-          {/* Thanh tìm kiếm */}
           <InputGroup className="mb-3">
             <InputGroup.Text
               className={`bg-white border-end-0 rounded-start-pill ${
@@ -129,10 +64,7 @@ const filteredFriends = useMemo(() => {
               className={`border-start-0 rounded-end-pill ${
                 isFocused ? "border-primary" : ""
               }`}
-              style={{
-                outline: "none",
-                boxShadow: "none",
-              }}
+              style={{ outline: "none", boxShadow: "none" }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setIsFocused(true)}
@@ -140,7 +72,6 @@ const filteredFriends = useMemo(() => {
             />
           </InputGroup>
 
-          {/* Bộ lọc */}
           <div className="d-flex flex-wrap gap-2 mb-3">
             {["Tất cả", "Bạn bè", "Trả lời sau"].map((tag, index) => (
               <Button
@@ -155,22 +86,14 @@ const filteredFriends = useMemo(() => {
             ))}
           </div>
 
-          {/* Số lượng thành viên đã chọn */}
           {selectedMembers.length > 0 && (
             <div className="selected-count mb-2">
               <span className="badge bg-primary rounded-pill">
                 Đã chọn: {selectedMembers.length} thành viên
               </span>
-              {selectedMembers.filter((id) => id !== currentUser.id).length <
-                2 && (
-                <div className="text-danger small mt-1">
-                  Cần chọn ít nhất 2 thành viên khác ngoài bạn
-                </div>
-              )}
             </div>
           )}
 
-          {/* Danh sách bạn bè */}
           <div className="friends-list">
             <strong className="d-block mb-2">Danh sách bạn bè</strong>
             <div className="overflow-auto" style={{ maxHeight: "300px" }}>
@@ -209,7 +132,6 @@ const filteredFriends = useMemo(() => {
         </Form>
       </div>
 
-      {/* Footer */}
       <div className="modal-footer d-flex justify-content-end p-3 border-top">
         <Button
           variant="outline-secondary"
@@ -220,19 +142,14 @@ const filteredFriends = useMemo(() => {
         </Button>
         <Button
           variant="primary"
-          onClick={handleCreateGroup}
-          disabled={
-            !groupName ||
-            selectedMembers.length === 0 ||
-            isCreatingGroupConversation
-          }
+          disabled={selectedMembers.length === 0}
           className="rounded-pill"
         >
-          {isCreatingGroupConversation ? "Đang tạo..." : "Tạo nhóm"}
+          Thêm thành viên
         </Button>
       </div>
     </div>
   );
 };
 
-export default CreateGroupModal;
+export default AddMemberGroupModal;

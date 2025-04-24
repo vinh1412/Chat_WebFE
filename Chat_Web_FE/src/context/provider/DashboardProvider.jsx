@@ -159,6 +159,10 @@ const DashboardProvider = ({ children }) => {
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const createGroupModalRef = useRef(null);
 
+  // Modal: Thêm bạn bè AddMemberGroupModal
+  const [showAddMemberGroupModal, setShowAddMemberGroupModal] = useState(false);
+  const addMemberGroupModalRef = useRef(null);
+
   console.log("DashboardProvider", showAddFriendModal);
 
   const contextValue = {
@@ -198,6 +202,12 @@ const DashboardProvider = ({ children }) => {
     showCreateGroupModal,
     setShowCreateGroupModal,
     createGroupModalRef,
+
+    showAddMemberGroupModal,
+    setShowAddMemberGroupModal,
+    addMemberGroupModalRef,
+
+
   };
 
   return (
