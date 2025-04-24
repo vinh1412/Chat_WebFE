@@ -6,13 +6,17 @@ import AddMemberGroupModal from "../../../../src/components/modal/AddMemberGroup
 import { leaveGroup } from "../../../services/ConversationService";
 import { setShowConversation } from "../../../redux/slice/commonSlice";
 import { useDispatch } from "react-redux";
+import { Toast } from "react-bootstrap";
+import { toast } from "react-toastify";
+import { setIsSuccessSent } from "../../../redux/friendSlice";
 
 const ConversationDetail = ({ conversationInfor }) => {
-  console.log("conversationInfor: 0 -------------------", conversationInfor);
+  console.log("conversationInfor:", conversationInfor);
   const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
     useDashboardContext();
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [showGroupBulletin, setShowGroupBulletin] = useState(true);
+  const [showMemberGroup, setShowMemberGroup] = useState(true);
   const dispatch = useDispatch();
 
   // Handle out group
@@ -24,13 +28,26 @@ const ConversationDetail = ({ conversationInfor }) => {
       try {
         const response = await leaveGroup(conversationId);
         console.log("Response leaveGroup data:", response.data);
-        alert("Bạn đã rời nhóm thành công!");
+        toast.success("Bạn đã rời nhóm thành công!");
         dispatch(setShowConversation(false));
       } catch (error) {
         console.error("Error leaving group:", error.message);
         alert("Lỗi khi rời nhóm. Vui lòng thử lại.");
       }
     }
+  };
+
+  // Copy link group
+  const copyToClipboard = (text) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        toast.success("Đã sao chép liên kết vào clipboard!");
+      })
+      .catch((err) => {
+        console.error("Copy failed: ", err);
+        toast.error("Không thể sao chép liên kết!");
+      });
   };
 
   return (
@@ -117,16 +134,8 @@ const ConversationDetail = ({ conversationInfor }) => {
               <div
                 className="d-flex flex-column align-items-center"
                 onClick={() => {
-                  console.log(
-                    "-------------------------------conversationInfor.members----------------------1:",
-                    conversationInfor?.members
-                  );
                   setShowAddMemberGroupModal(true);
                   setConversationInfor(conversationInfor); // Sửa tên hàm
-                  console.log(
-                    "conversationInfor: 2 -------------------",
-                    conversationInfor
-                  );
                 }}
                 style={{ cursor: "pointer" }}
               >
@@ -157,6 +166,60 @@ const ConversationDetail = ({ conversationInfor }) => {
           </div>
 
           <div className="card-body">
+            {/* Dropdown thành viên nhóm */}
+            {conversationInfor.is_group && (
+              <div className="mb-3">
+                <div
+                  className="d-flex align-items-center justify-content-between mb-2"
+                  onClick={() => setShowMemberGroup(!showMemberGroup)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <h6 className="mb-0">Thành viên nhóm</h6>
+                  <i
+                    className={`bi bi-chevron-${
+                      showMemberGroup ? "up" : "down"
+                    }`}
+                  ></i>
+                </div>
+                {showMemberGroup && (
+                  <>
+                    <div className="d-flex align-items-center mb-3 mt-2">
+                      <i className="bi bi bi-people me-2"></i>
+                      <span>{conversationInfor.members.length} Thành viên</span>
+                    </div>
+                    <div className="d-flex align-items-center mb-3 bg-light rounded">
+                      <i className="bi bi-link-45deg fs-5 me-2"></i>
+                      <div className="d-flex justify-content-between w-100">
+                        <div className="d-flex flex-column">
+                          <span>Link tham gia nhóm</span>
+                          <span className="text-primary">
+                            zalo.me/g/{conversationInfor.id?.substring(0, 10)}
+                          </span>
+                        </div>
+                        <div className="ms-2">
+                          <button
+                            className="btn btn-sm p-0 me-2"
+                            onClick={() =>
+                              copyToClipboard(
+                                `zalo.me/g/${conversationInfor.id?.substring(
+                                  0,
+                                  10
+                                )}`
+                              )
+                            }
+                          >
+                            <i className="bi bi-clipboard fs-5"></i>
+                          </button>
+                          <button className="btn btn-sm p-0">
+                            <i className="bi bi-share fs-5"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             {/* dropdown bảng tin nhóm */}
             {conversationInfor.is_group && (
               <div className="mb-3">
