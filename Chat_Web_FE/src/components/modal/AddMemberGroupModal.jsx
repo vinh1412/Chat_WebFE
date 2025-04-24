@@ -4,6 +4,8 @@ import { BsSearch } from "react-icons/bs";
 import { toast } from "react-toastify";
 import useFriend from "../../hooks/useFriend";
 import { useDashboardContext } from "../../context/Dashboard_context";
+// import useConversation from "../../hooks/useConversation";
+import { addMemberToGroupService } from "../../services/ConversationService";
 
 const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -57,6 +59,23 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
     );
   }
 
+  // xử lý thêm thành viên vào nhóm
+  const handleAddMembers = async () => {
+    try {
+      const groupId = conversationInfor?.id;
+      for (const userId of selectedMembers) {
+        await addMemberToGroupService(groupId, userId);
+      }
+      toast.success("Thêm thành viên thành công!");
+      onClose();
+    } catch (error) {
+      console.error("Lỗi khi thêm thành viên:", error);
+      toast.error(error.message || "Không thể thêm thành viên.");
+    }
+  };
+  
+  
+  
   return (
     <div className="create-group-modal" style={{ display: isOpen ? "block" : "none" }}>
       <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
@@ -206,10 +225,11 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
         </Button>
         <Button
           variant="primary"
-          disabled={selectedMembers.length === 0}
+          onClick={handleAddMembers}
           className="rounded-pill"
+          disabled={selectedMembers.length === 0} 
         >
-          Thêm thành viên
+          Thêm thành viên   
         </Button>
       </div>
     </div>
