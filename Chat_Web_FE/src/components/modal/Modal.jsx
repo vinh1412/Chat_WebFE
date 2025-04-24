@@ -8,6 +8,8 @@ import SettingsModal from "./SettingsModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import ForwardMessageModal from "./ForwardMessageModal";
 import CreateGroupModal from "./CreateGroupModal";
+import VideoCallModal from "./VideoCallModal";
+import IncomingCallModal from "./IncomingCallModal";
 
 const Modal = () => {
   const {
@@ -25,6 +27,11 @@ const Modal = () => {
     setShowForwardMessageModal,
     showCreateGroupModal,
     setShowCreateGroupModal,
+    showVideoCallModal,
+    setShowVideoCallModal,
+    showIncomingCallModal,
+    setShowIncomingCallModal,
+
   } = useDashboardContext();
 
   return (
@@ -103,6 +110,48 @@ const Modal = () => {
         <CreateGroupModal
           isOpen={showCreateGroupModal}
           onClose={() => setShowCreateGroupModal(false)}
+        />
+      </ReactModal>
+        
+        {/* Modal cuộc gọi video */}
+      <ReactModal
+        isOpen={showVideoCallModal}
+        onRequestClose={() => setShowVideoCallModal(false)}
+        contentLabel="Video Call Modal"
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+        style={{
+          content: {
+            width: "600px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+      >
+        <VideoCallModal
+          isOpen={showVideoCallModal}
+          onClose={() => setShowVideoCallModal(false)}
+        />
+      </ReactModal>
+
+      {/* Modal cuộc gọi đến */}
+      <ReactModal
+        isOpen={showIncomingCallModal}
+        onRequestClose={() => setShowIncomingCallModal(false)}
+        contentLabel="Incoming Call Modal"
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+        style={{
+          content: {
+            width: "400px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+      >
+        <IncomingCallModal
+          isOpen={showIncomingCallModal}
+          onClose={() => setShowIncomingCallModal(false)}
         />
       </ReactModal>
     </>

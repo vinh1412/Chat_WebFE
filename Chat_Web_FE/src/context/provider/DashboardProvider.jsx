@@ -135,6 +135,14 @@ const DashboardProvider = ({ children }) => {
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const createGroupModalRef = useRef(null);
 
+  // Modal: Call video
+  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
+  const videoCallModalRef = useRef(null);
+
+  const [showIncomingCallModal, setShowIncomingCallModal] =useState(false);
+  const incomingCallModalRef = useRef(null);
+
+
   console.log("DashboardProvider", showAddFriendModal);
 
   const contextValue = {
@@ -174,6 +182,17 @@ const DashboardProvider = ({ children }) => {
     showCreateGroupModal,
     setShowCreateGroupModal,
     createGroupModalRef,
+
+    showVideoCallModal,
+    setShowVideoCallModal,
+    videoCallModalRef,
+
+    showIncomingCallModal,
+    setShowIncomingCallModal,
+    incomingCallModalRef,
+
+    
+
   };
 
   return (

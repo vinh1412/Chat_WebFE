@@ -21,6 +21,8 @@ import "../../../assets/css/UploadFile.css";
 import "../../../assets/css/StickerGif.css";
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
+import VideoCallModal from "../../../components/modal/VideoCallModal";
+import IncomingCallModal from "../../../components/modal/IncomingCallModal";
 
 const Conservation = ({
   onShowDetail,
@@ -55,6 +57,8 @@ const Conservation = ({
   const { isSuccessSent } = useSelector((state) => state.friend);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
+  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
+
 
   // show reaction emoji modal và các emoji mặc định
   const [showReactionModal, setShowReactionModal] = useState(false);
@@ -74,6 +78,17 @@ const Conservation = ({
     setDefaultReactionEmoji(emoji);
     setShowReactionModal(false);
     // Optionally show a success message
+  };
+
+  const handleCloseVideoCallModal = () => {
+    setShowVideoCallModal(false);
+  };
+  const handleOpenAudioCallModal = () => {
+    setShowVideoCallModal(true);
+  };
+
+  const handleOpenVideoCallModal = () => {
+    setShowVideoCallModal(true);
   };
 
   const messageRefs = useRef({});
@@ -873,8 +888,8 @@ const Conservation = ({
             <h6 className="mb-0">
               {!selectedConversation?.is_group
                 ? selectedConversation?.members.find(
-                    (member) => member?.id !== currentUser?.id
-                  ).display_name
+                  (member) => member?.id !== currentUser?.id
+                ).display_name
                 : selectedConversation?.name}
             </h6>
             <small className="text-muted">
@@ -884,18 +899,17 @@ const Conservation = ({
           </div>
         </div>
         <div className="d-flex gap-2">
+          <button className="btn btn-sm" onClick={handleOpenAudioCallModal}>
+            <i class="bi bi-telephone"></i>
+          </button>
+          <button className="btn btn-sm" onClick={handleOpenVideoCallModal}>
+            <i className="bi bi-camera-video"></i>
+          </button>
           <button className="btn btn-sm">
             <i className="bi bi-search"></i>
           </button>
-          <button
-            className="btn btn-sm"
-            onClick={showDetail ? onHideDetail : onShowDetail}
-          >
-            <i
-              className={`bi ${
-                showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"
-              } me-2`}
-            ></i>
+          <button className="btn btn-sm" onClick={showDetail ? onHideDetail : onShowDetail}>
+            <i className={`bi ${showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"} me-2`}></i>
           </button>
         </div>
       </div>
@@ -985,10 +999,10 @@ const Conservation = ({
                         ? msg.content.substring(0, 50) + "..."
                         : msg.content
                       : msg.messageType === "IMAGE"
-                      ? "[Hình ảnh]"
-                      : msg.messageType === "FILE"
-                      ? "[Tệp đính kèm]"
-                      : "[Sticker/GIF]"}
+                        ? "[Hình ảnh]"
+                        : msg.messageType === "FILE"
+                          ? "[Tệp đính kèm]"
+                          : "[Sticker/GIF]"}
                   </small>
                 </div>
                 <button
@@ -1038,9 +1052,8 @@ const Conservation = ({
               <div
                 key={messageId}
                 id={`message-${messageId}`}
-                className={`mb-2 d-flex position-relative message-container ${
-                  isSentByMe ? "justify-content-end" : "justify-content-start"
-                }`}
+                className={`mb-2 d-flex position-relative message-container ${isSentByMe ? "justify-content-end" : "justify-content-start"
+                  }`}
                 onMouseEnter={() => setHoveredMessageId(messageId)}
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
@@ -1066,33 +1079,31 @@ const Conservation = ({
                   </div>
                 )}
                 <div
-                  className={`p-2 rounded shadow-sm message-bubble ${
-                    isSentByMe
-                      ? "text-black message-sent"
-                      : "bg-light border message-received"
-                  } ${isRecalled ? "message-recalled" : ""} ${
-                    msg?.messageType === "STICKER" || msg?.messageType === "GIF"
+                  className={`p-2 rounded shadow-sm message-bubble ${isSentByMe
+                    ? "text-black message-sent"
+                    : "bg-light border message-received"
+                    } ${isRecalled ? "message-recalled" : ""} ${msg?.messageType === "STICKER" || msg?.messageType === "GIF"
                       ? "sticker-message"
                       : ""
-                  }`}
+                    }`}
                   style={{
                     maxWidth: "70%",
                     backgroundColor: isSentByMe
                       ? isRecalled
                         ? "#f0f0f0"
                         : msg?.messageType === "STICKER"
-                        ? "transparent"
-                        : "#dcf8c6"
+                          ? "transparent"
+                          : "#dcf8c6"
                       : msg?.messageType === "STICKER"
-                      ? "transparent"
-                      : "#ffffff",
+                        ? "transparent"
+                        : "#ffffff",
                     position: "relative",
                     opacity: isRecalled ? 0.7 : 1,
                     ...(msg?.messageType === "STICKER"
                       ? {
-                          boxShadow: "none",
-                          border: "none",
-                        }
+                        boxShadow: "none",
+                        border: "none",
+                      }
                       : {}),
                   }}
                   ref={(el) => (messageRefs.current[messageId] = el)}
@@ -1231,80 +1242,79 @@ const Conservation = ({
                 {/* Show message actions on hover OR when clicked */}
                 {(hoveredMessageId === messageId ||
                   showActionsFor === messageId) && (
-                  <div
-                    className="message-actions"
-                    style={{
-                      position: "absolute",
-                      top: "15px",
-                      right: isSentByMe
-                        ? `${
-                            messageRefs.current[messageId]?.offsetWidth + 10
-                          }px`
-                        : "auto",
-                      left: !isSentByMe
-                        ? `${messageRefs.current[msg?.id]?.offsetWidth + 65}px`
-                        : "auto",
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      borderRadius: "20px",
-                      padding: "5px 10px",
-                      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                      display: "flex",
-                      gap: "12px",
-                      zIndex: 100,
-                    }}
-                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
-                  >
-                    <i
-                      className="bi bi-chat-quote action-icon"
-                      onClick={() => handleReaction(msg?.id, "smile")}
+                    <div
+                      className="message-actions"
                       style={{
-                        cursor: "pointer",
-                        color: "#666",
+                        position: "absolute",
+                        top: "15px",
+                        right: isSentByMe
+                          ? `${messageRefs.current[messageId]?.offsetWidth + 10
+                          }px`
+                          : "auto",
+                        left: !isSentByMe
+                          ? `${messageRefs.current[msg?.id]?.offsetWidth + 65}px`
+                          : "auto",
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        borderRadius: "20px",
+                        padding: "5px 10px",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                        display: "flex",
+                        gap: "12px",
+                        zIndex: 100,
                       }}
-                      title="Trả lời"
-                    ></i>
-                    {isSentByMe ? (
+                      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
+                    >
                       <i
-                        className="bi bi-reply action-icon"
-                        onClick={() => handleForwardMessage(msg)}
+                        className="bi bi-chat-quote action-icon"
+                        onClick={() => handleReaction(msg?.id, "smile")}
                         style={{
                           cursor: "pointer",
                           color: "#666",
                         }}
-                        title="Chuyển tiếp"
+                        title="Trả lời"
                       ></i>
-                    ) : (
-                      <i
-                        className="bi bi-reply action-icon"
-                        onClick={() => handleForwardMessage(msg)}
-                        style={{
-                          cursor: "pointer",
-                          color: "#666",
-                          transform: "scaleX(-1)",
-                        }}
-                        title="Chuyển tiếp"
-                      ></i>
-                    )}
-                    {/* <i
+                      {isSentByMe ? (
+                        <i
+                          className="bi bi-reply action-icon"
+                          onClick={() => handleForwardMessage(msg)}
+                          style={{
+                            cursor: "pointer",
+                            color: "#666",
+                          }}
+                          title="Chuyển tiếp"
+                        ></i>
+                      ) : (
+                        <i
+                          className="bi bi-reply action-icon"
+                          onClick={() => handleForwardMessage(msg)}
+                          style={{
+                            cursor: "pointer",
+                            color: "#666",
+                            transform: "scaleX(-1)",
+                          }}
+                          title="Chuyển tiếp"
+                        ></i>
+                      )}
+                      {/* <i
                       className="bi bi-three-dots action-icon"
                       onClick={() => handleOpenAddModel(msg?.id)}
                       style={{ cursor: "pointer", color: "#666" }}
                       title="Thêm"
                     ></i> */}
-                    <MessageActionsDropdown
-                      messageId={messageId}
-                      senderId={msg?.senderId}
-                      conversationId={selectedConversation?.id}
-                      onRecallMessage={handleRecallMessage}
-                      onDeleteForUser={handleDeleteForUser}
-                      currentUserId={currentUser.id}
-                      isRecalled={isRecalled}
-                      onPinMessage={handlePinMessage}
-                      onUnpinMessage={handleUnpinMessage}
-                      isPinned={msg.pinned}
-                    />
-                  </div>
-                )}
+                      <MessageActionsDropdown
+                        messageId={messageId}
+                        senderId={msg?.senderId}
+                        conversationId={selectedConversation?.id}
+                        onRecallMessage={handleRecallMessage}
+                        onDeleteForUser={handleDeleteForUser}
+                        currentUserId={currentUser.id}
+                        isRecalled={isRecalled}
+                        onPinMessage={handlePinMessage}
+                        onUnpinMessage={handleUnpinMessage}
+                        isPinned={msg.pinned}
+                      />
+                    </div>
+                  )}
               </div>
             );
           })
@@ -1408,11 +1418,10 @@ const Conservation = ({
             onClick={handleSendMessage}
           >
             <i
-              className={`bi ${
-                newMessage.trim()
-                  ? "bi-send-fill text-primary"
-                  : "bi-emoji-smile"
-              }`}
+              className={`bi ${newMessage.trim()
+                ? "bi-send-fill text-primary"
+                : "bi-emoji-smile"
+                }`}
             ></i>
           </button>
           <button
@@ -1451,6 +1460,16 @@ const Conservation = ({
         selectedReceivers={selectedReceivers}
         setSelectedReceivers={setSelectedReceivers}
       />
+
+      <VideoCallModal
+        isOpen={showVideoCallModal}
+        onClose={handleCloseVideoCallModal}
+        recipientId={userReceiver?.id}
+        recipientName={userReceiver?.display_name}
+        conversationId={selectedConversation?.id}
+        callType="video"
+      />
+      <IncomingCallModal />
     </div>
   );
 };
