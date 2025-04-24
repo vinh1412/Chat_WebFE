@@ -25,6 +25,7 @@
     "firebase": "^11.6.0",
     "gif-picker-react": "^1.4.0",
     "lucide-react": "^0.503.0",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",
     "react-bootstrap-icons": "^1.11.5",
