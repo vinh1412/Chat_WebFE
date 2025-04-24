@@ -10,6 +10,7 @@ import ForwardMessageModal from "./ForwardMessageModal";
 import CreateGroupModal from "./CreateGroupModal";
 import VideoCallModal from "./VideoCallModal";
 import IncomingCallModal from "./IncomingCallModal";
+import AddMemberGroupModal from "./AddMemberGroupModal";
 
 const Modal = () => {
   const {
@@ -32,6 +33,11 @@ const Modal = () => {
     showIncomingCallModal,
     setShowIncomingCallModal,
 
+    showAddMemberGroupModal,
+    setShowAddMemberGroupModal,
+    addMemberGroupModalRef,
+    setCurrentConversationInfor,
+    conversationInfor, // Lấy conversationInfor từ context
   } = useDashboardContext();
 
   return (
@@ -112,28 +118,20 @@ const Modal = () => {
           onClose={() => setShowCreateGroupModal(false)}
         />
       </ReactModal>
-        
-        {/* Modal cuộc gọi video */}
+
+      {/* Modal cuộc gọi video */}
       <ReactModal
         isOpen={showVideoCallModal}
         onRequestClose={() => setShowVideoCallModal(false)}
         contentLabel="Video Call Modal"
         className="modal-content bg-white rounded border-0 p-2 position-relative"
         overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
-        style={{
-          content: {
-            width: "600px",
-            maxWidth: "90%",
-            margin: "auto",
-          },
-        }}
       >
         <VideoCallModal
           isOpen={showVideoCallModal}
           onClose={() => setShowVideoCallModal(false)}
         />
       </ReactModal>
-
       {/* Modal cuộc gọi đến */}
       <ReactModal
         isOpen={showIncomingCallModal}
@@ -154,6 +152,31 @@ const Modal = () => {
           onClose={() => setShowIncomingCallModal(false)}
         />
       </ReactModal>
+
+      {/* them thanh vien vao gr sau khi tao xong */}
+      <ReactModal
+        isOpen={showAddMemberGroupModal}
+        onRequestClose={() => setShowAddMemberGroupModal(false)}
+        contentLabel="Add Member Group Modal"
+        style={{
+          content: {
+            width: "600px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+      >
+        <AddMemberGroupModal
+        isOpen={showAddMemberGroupModal}
+        onClose={() => setShowAddMemberGroupModal(false)}
+        addMemberGroupModalRef={addMemberGroupModalRef}
+        setCurrentConversationInfor={setCurrentConversationInfor}
+        conversationInfor={conversationInfor} // Truyền conversationInfor
+      />
+    </ReactModal >
+
     </>
   );
 };

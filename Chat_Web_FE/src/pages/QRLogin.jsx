@@ -42,6 +42,20 @@ const QRLogin = () => {
                 <div className="text-center">
                     <img src={qrCode} alt="QR Code" className="mb-4" />
                     <p className="text-lg">Scan the QR code with your mobile app</p>
+                    <div className="">
+                        <p><strong>Session ID:</strong> {sessionId}</p>
+                        <p>
+                            <strong>QR Code URL:</strong><br />
+                            {qrCode &&
+                                qrCode.match(/.{1,100}/g).map((chunk, index) => (
+                                <span key={index}>
+                                    {chunk}
+                                    <br />
+                                </span>
+                                ))}
+                            </p>    
+                    </div>
+
                 </div>
             )}
             {status === "APPROVED" && (

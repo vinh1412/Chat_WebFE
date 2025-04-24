@@ -21,9 +21,11 @@ import "../../../assets/css/UploadFile.css";
 import "../../../assets/css/StickerGif.css";
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
+import { setSelectedConversation } from "../../../redux/slice/commonSlice";
+import useConversation from "../../../hooks/useConversation";
+
 import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
-
 const Conservation = ({
   onShowDetail,
   onHideDetail,
@@ -33,6 +35,26 @@ const Conservation = ({
   // console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
   const bottomRef = React.useRef(null);
+
+  const { conversations } = useConversation();
+
+  useEffect(() => {
+    if (selectedConversation && conversations?.length) {
+      // Tìm cuộc trò chuyện đã cập nhật trong danh sách
+      const updatedConversation = conversations.find(
+        (conv) => conv.id === selectedConversation.id
+      );
+
+      // Nếu có sự thay đổi về trạng thái (dissolved) của cuộc trò chuyện, cập nhật lại state
+      if (
+        updatedConversation &&
+        updatedConversation.dissolved !== selectedConversation.dissolved
+      ) {
+        dispatch(setSelectedConversation(updatedConversation));
+      }
+    }
+  }, [conversations, selectedConversation?.id]);
+
   // lấy danh sách tin nhắn theo conversationId
   const {
     messages,
@@ -41,6 +63,8 @@ const Conservation = ({
     deleteForUserMessage,
     refetchMessages,
   } = useMessage(selectedConversation?.id);
+
+  console.log("Conservation selectedConversation----", selectedConversation);
 
   const { currentUser } = useDashboardContext();
 
@@ -57,11 +81,11 @@ const Conservation = ({
   const { isSuccessSent } = useSelector((state) => state.friend);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
-  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
-
 
   // show reaction emoji modal và các emoji mặc định
   const [showReactionModal, setShowReactionModal] = useState(false);
+
+  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
   const [defaultReactionEmoji, setDefaultReactionEmoji] = useState({
     id: "thumbs-up",
     icon: "👍",
@@ -104,6 +128,7 @@ const Conservation = ({
   // console.log("User receiver updated:", userReceiver);
   // console.log("isSuccessSent:", isSuccessSent[userReceiver?.id]);
 
+  console.log("Selected conversation:", selectedConversation);
   // check xem có phải là bạn bè không
   useEffect(() => {
     const checkFriendStatus = async () => {
@@ -888,8 +913,8 @@ const Conservation = ({
             <h6 className="mb-0">
               {!selectedConversation?.is_group
                 ? selectedConversation?.members.find(
-                  (member) => member?.id !== currentUser?.id
-                ).display_name
+                    (member) => member?.id !== currentUser?.id
+                  ).display_name
                 : selectedConversation?.name}
             </h6>
             <small className="text-muted">
@@ -913,6 +938,13 @@ const Conservation = ({
           </button>
         </div>
       </div>
+
+      {selectedConversation?.dissolved && (
+        <div className="alert alert-warning mb-0 text-center">
+          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+          Nhóm này đã bị giải tán. Không thể gửi tin nhắn mới.
+        </div>
+      )}
       {/* Notification */}
       {!selectedConversation?.is_group && !isFriend && (
         <div className="card-body d-flex align-items-center justify-content-between">
@@ -999,10 +1031,10 @@ const Conservation = ({
                         ? msg.content.substring(0, 50) + "..."
                         : msg.content
                       : msg.messageType === "IMAGE"
-                        ? "[Hình ảnh]"
-                        : msg.messageType === "FILE"
-                          ? "[Tệp đính kèm]"
-                          : "[Sticker/GIF]"}
+                      ? "[Hình ảnh]"
+                      : msg.messageType === "FILE"
+                      ? "[Tệp đính kèm]"
+                      : "[Sticker/GIF]"}
                   </small>
                 </div>
                 <button
@@ -1040,7 +1072,27 @@ const Conservation = ({
         {isLoadingAllMessages ? (
           <p className="text-muted text-center">Đang tải tin nhắn...</p>
         ) : localMessages.length === 0 ? (
-          <p className="text-muted text-center">Chưa có tin nhắn...</p>
+          selectedConversation?.dissolved ? (
+            <div className="text-center my-5">
+              <div className="alert alert-warning d-inline-block p-4 shadow-sm">
+                <i className="bi bi-x-circle-fill text-danger me-2 fs-4"></i>
+                <div className="mt-2">
+                  <h5>Nhóm đã bị giải tán</h5>
+                  <p className="mb-0 text-muted">
+                    Nhóm này đã bị giải tán bởi trưởng nhóm.
+                  </p>
+                  {selectedConversation.dissolvedAt && (
+                    <small className="text-muted d-block mt-2">
+                      Thời gian giải tán:{" "}
+                      {formatTime(selectedConversation.dissolvedAt)}
+                    </small>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted text-center">Chưa có tin nhắn...</p>
+          )
         ) : (
           localMessages.map((msg, index) => {
             const messageId = msg?.id || msg?._id || `temp-${index}`;
@@ -1052,8 +1104,9 @@ const Conservation = ({
               <div
                 key={messageId}
                 id={`message-${messageId}`}
-                className={`mb-2 d-flex position-relative message-container ${isSentByMe ? "justify-content-end" : "justify-content-start"
-                  }`}
+                className={`mb-2 d-flex position-relative message-container ${
+                  isSentByMe ? "justify-content-end" : "justify-content-start"
+                }`}
                 onMouseEnter={() => setHoveredMessageId(messageId)}
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
@@ -1079,31 +1132,33 @@ const Conservation = ({
                   </div>
                 )}
                 <div
-                  className={`p-2 rounded shadow-sm message-bubble ${isSentByMe
-                    ? "text-black message-sent"
-                    : "bg-light border message-received"
-                    } ${isRecalled ? "message-recalled" : ""} ${msg?.messageType === "STICKER" || msg?.messageType === "GIF"
+                  className={`p-2 rounded shadow-sm message-bubble ${
+                    isSentByMe
+                      ? "text-black message-sent"
+                      : "bg-light border message-received"
+                  } ${isRecalled ? "message-recalled" : ""} ${
+                    msg?.messageType === "STICKER" || msg?.messageType === "GIF"
                       ? "sticker-message"
                       : ""
-                    }`}
+                  }`}
                   style={{
                     maxWidth: "70%",
                     backgroundColor: isSentByMe
                       ? isRecalled
                         ? "#f0f0f0"
                         : msg?.messageType === "STICKER"
-                          ? "transparent"
-                          : "#dcf8c6"
-                      : msg?.messageType === "STICKER"
                         ? "transparent"
-                        : "#ffffff",
+                        : "#dcf8c6"
+                      : msg?.messageType === "STICKER"
+                      ? "transparent"
+                      : "#ffffff",
                     position: "relative",
                     opacity: isRecalled ? 0.7 : 1,
                     ...(msg?.messageType === "STICKER"
                       ? {
-                        boxShadow: "none",
-                        border: "none",
-                      }
+                          boxShadow: "none",
+                          border: "none",
+                        }
                       : {}),
                   }}
                   ref={(el) => (messageRefs.current[messageId] = el)}
@@ -1242,79 +1297,80 @@ const Conservation = ({
                 {/* Show message actions on hover OR when clicked */}
                 {(hoveredMessageId === messageId ||
                   showActionsFor === messageId) && (
-                    <div
-                      className="message-actions"
-                      style={{
-                        position: "absolute",
-                        top: "15px",
-                        right: isSentByMe
-                          ? `${messageRefs.current[messageId]?.offsetWidth + 10
+                  <div
+                    className="message-actions"
+                    style={{
+                      position: "absolute",
+                      top: "15px",
+                      right: isSentByMe
+                        ? `${
+                            messageRefs.current[messageId]?.offsetWidth + 10
                           }px`
-                          : "auto",
-                        left: !isSentByMe
-                          ? `${messageRefs.current[msg?.id]?.offsetWidth + 65}px`
-                          : "auto",
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        borderRadius: "20px",
-                        padding: "5px 10px",
-                        boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                        display: "flex",
-                        gap: "12px",
-                        zIndex: 100,
+                        : "auto",
+                      left: !isSentByMe
+                        ? `${messageRefs.current[msg?.id]?.offsetWidth + 65}px`
+                        : "auto",
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      borderRadius: "20px",
+                      padding: "5px 10px",
+                      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                      display: "flex",
+                      gap: "12px",
+                      zIndex: 100,
+                    }}
+                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
+                  >
+                    <i
+                      className="bi bi-chat-quote action-icon"
+                      onClick={() => handleReaction(msg?.id, "smile")}
+                      style={{
+                        cursor: "pointer",
+                        color: "#666",
                       }}
-                      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on actions
-                    >
+                      title="Trả lời"
+                    ></i>
+                    {isSentByMe ? (
                       <i
-                        className="bi bi-chat-quote action-icon"
-                        onClick={() => handleReaction(msg?.id, "smile")}
+                        className="bi bi-reply action-icon"
+                        onClick={() => handleForwardMessage(msg)}
                         style={{
                           cursor: "pointer",
                           color: "#666",
                         }}
-                        title="Trả lời"
+                        title="Chuyển tiếp"
                       ></i>
-                      {isSentByMe ? (
-                        <i
-                          className="bi bi-reply action-icon"
-                          onClick={() => handleForwardMessage(msg)}
-                          style={{
-                            cursor: "pointer",
-                            color: "#666",
-                          }}
-                          title="Chuyển tiếp"
-                        ></i>
-                      ) : (
-                        <i
-                          className="bi bi-reply action-icon"
-                          onClick={() => handleForwardMessage(msg)}
-                          style={{
-                            cursor: "pointer",
-                            color: "#666",
-                            transform: "scaleX(-1)",
-                          }}
-                          title="Chuyển tiếp"
-                        ></i>
-                      )}
-                      {/* <i
+                    ) : (
+                      <i
+                        className="bi bi-reply action-icon"
+                        onClick={() => handleForwardMessage(msg)}
+                        style={{
+                          cursor: "pointer",
+                          color: "#666",
+                          transform: "scaleX(-1)",
+                        }}
+                        title="Chuyển tiếp"
+                      ></i>
+                    )}
+                    {/* <i
                       className="bi bi-three-dots action-icon"
                       onClick={() => handleOpenAddModel(msg?.id)}
                       style={{ cursor: "pointer", color: "#666" }}
                       title="Thêm"
                     ></i> */}
-                      <MessageActionsDropdown
-                        messageId={messageId}
-                        senderId={msg?.senderId}
-                        conversationId={selectedConversation?.id}
-                        onRecallMessage={handleRecallMessage}
-                        onDeleteForUser={handleDeleteForUser}
-                        currentUserId={currentUser.id}
-                        isRecalled={isRecalled}
-                        onPinMessage={handlePinMessage}
-                        onUnpinMessage={handleUnpinMessage}
-                        isPinned={msg.pinned}
-                      />
-                    </div>
-                  )}
+                    <MessageActionsDropdown
+                      messageId={messageId}
+                      senderId={msg?.senderId}
+                      conversationId={selectedConversation?.id}
+                      onRecallMessage={handleRecallMessage}
+                      onDeleteForUser={handleDeleteForUser}
+                      currentUserId={currentUser.id}
+                      isRecalled={isRecalled}
+                      onPinMessage={handlePinMessage}
+                      onUnpinMessage={handleUnpinMessage}
+                      isPinned={msg.pinned}
+                    />
+                  </div>
+                )}
               </div>
             );
           })
@@ -1324,131 +1380,143 @@ const Conservation = ({
 
       {/* Input Section */}
       <div className="card-footer">
-        <div className="d-flex align-items-center gap-2 mb-2">
-          <button className="btn btn-light" onClick={toggleStickerPicker}>
-            <i className="bi bi-emoji-smile"></i>
-          </button>
-          <label className="btn btn-light mb-0" htmlFor="image-upload">
-            <i className="bi bi-image"></i>
-          </label>
-          <input
-            type="file"
-            id="image-upload"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) handleSendImage(file);
-            }}
-          />
-          <label className="btn btn-light mb-0" htmlFor="file-upload">
-            <i className="bi bi-paperclip"></i>
-          </label>
-          <input
-            type="file"
-            id="file-upload"
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) handleSendFile(file);
-            }}
-          />
-          <input
-            type="file"
-            id="video-upload"
-            accept="video/*" // Chỉ chấp nhận file video
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) handleSendVideo(file); // Hàm xử lý gửi video
-            }}
-          />
-          <label className="btn btn-light mb-0" htmlFor="video-upload">
-            <i class="bi bi-file-earmark-play-fill"></i>
-          </label>
-          <button
-            className="btn btn-light"
-            onClick={() => alert("Tính năng ghi âm đang được phát triển...")}
-          >
-            <i className="bi bi-mic"></i>
-          </button>
-          <button className="btn btn-light">
-            <i className="bi bi-lightning"></i>
-          </button>
-          <button className="btn btn-light">
-            <i className="bi bi-three-dots"></i>
-          </button>
-        </div>
-        {/* form sticker/ emoji / gif */}
-        {showStickerPicker && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "100px",
-              left: "10px",
-              zIndex: 1000,
-            }}
-          >
-            <StickerPicker
-              onStickerSelect={(url) => {
-                const type = url.startsWith("http")
-                  ? url.includes("giphy.com")
-                    ? "GIF"
-                    : "STICKER"
-                  : "EMOJI";
-                handleSendGifOrSticker(url, type);
-              }}
-            />
+        {selectedConversation?.dissolved ? (
+          <div className="alert alert-warning mb-0 text-center">
+            <i className="bi bi-lock-fill me-2"></i>
+            Nhóm đã bị giải tán. Không thể gửi tin nhắn mới.
           </div>
-        )}
-
-        <div className="d-flex align-items-center gap-2">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Nhập tin nhắn..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSendMessage();
-            }}
-          />
-          <button
-            className="btn btn-light d-flex align-items-center"
-            onClick={handleSendMessage}
-          >
-            <i
-              className={`bi ${newMessage.trim()
-                ? "bi-send-fill text-primary"
-                : "bi-emoji-smile"
-                }`}
-            ></i>
-          </button>
-          <button
-            className="btn btn-light d-flex align-items-center"
-            onClick={handleQuickReaction} // Left click sends the reaction
-            onContextMenu={(e) => {
-              e.preventDefault(); // Prevent default context menu
-              handleOpenReactionModal(); // Show custom modal on right click
-              return false;
-            }}
-          >
-            {defaultReactionEmoji.id === "thumbs-up" ? (
-              <i className="bi bi-hand-thumbs-up-fill text-warning"></i>
-            ) : (
-              <span style={{ fontSize: "1.2rem" }}>
-                {defaultReactionEmoji.icon}
-              </span>
+        ) : (
+          <>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <button className="btn btn-light" onClick={toggleStickerPicker}>
+                <i className="bi bi-emoji-smile"></i>
+              </button>
+              <label className="btn btn-light mb-0" htmlFor="image-upload">
+                <i className="bi bi-image"></i>
+              </label>
+              <input
+                type="file"
+                id="image-upload"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) handleSendImage(file);
+                }}
+              />
+              <label className="btn btn-light mb-0" htmlFor="file-upload">
+                <i className="bi bi-paperclip"></i>
+              </label>
+              <input
+                type="file"
+                id="file-upload"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) handleSendFile(file);
+                }}
+              />
+              <input
+                type="file"
+                id="video-upload"
+                accept="video/*" // Chỉ chấp nhận file video
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) handleSendVideo(file); // Hàm xử lý gửi video
+                }}
+              />
+              <label className="btn btn-light mb-0" htmlFor="video-upload">
+                <i class="bi bi-file-earmark-play-fill"></i>
+              </label>
+              <button
+                className="btn btn-light"
+                onClick={() =>
+                  alert("Tính năng ghi âm đang được phát triển...")
+                }
+              >
+                <i className="bi bi-mic"></i>
+              </button>
+              <button className="btn btn-light">
+                <i className="bi bi-lightning"></i>
+              </button>
+              <button className="btn btn-light">
+                <i className="bi bi-three-dots"></i>
+              </button>
+            </div>
+            {/* form sticker/ emoji / gif */}
+            {showStickerPicker && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "100px",
+                  left: "10px",
+                  zIndex: 1000,
+                }}
+              >
+                <StickerPicker
+                  onStickerSelect={(url) => {
+                    const type = url.startsWith("http")
+                      ? url.includes("giphy.com")
+                        ? "GIF"
+                        : "STICKER"
+                      : "EMOJI";
+                    handleSendGifOrSticker(url, type);
+                  }}
+                />
+              </div>
             )}
-          </button>
-          {/* Form Reaction EmojiModal */}
-          <ReactionEmojiModal
-            show={showReactionModal}
-            onClose={handleCloseReactionModal}
-            onSelect={handleSelectDefaultEmoji}
-            selectedEmoji={defaultReactionEmoji}
-          />
-        </div>
+
+            <div className="d-flex align-items-center gap-2">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Nhập tin nhắn..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSendMessage();
+                }}
+              />
+              <button
+                className="btn btn-light d-flex align-items-center"
+                onClick={handleSendMessage}
+              >
+                <i
+                  className={`bi ${
+                    newMessage.trim()
+                      ? "bi-send-fill text-primary"
+                      : "bi-emoji-smile"
+                  }`}
+                ></i>
+              </button>
+              <button
+                className="btn btn-light d-flex align-items-center"
+                onClick={handleQuickReaction} // Left click sends the reaction
+                onContextMenu={(e) => {
+                  e.preventDefault(); // Prevent default context menu
+                  handleOpenReactionModal(); // Show custom modal on right click
+                  return false;
+                }}
+              >
+                {defaultReactionEmoji.id === "thumbs-up" ? (
+                  <i className="bi bi-hand-thumbs-up-fill text-warning"></i>
+                ) : (
+                  <span style={{ fontSize: "1.2rem" }}>
+                    {defaultReactionEmoji.icon}
+                  </span>
+                )}
+              </button>
+              {/* Form Reaction EmojiModal */}
+              <ReactionEmojiModal
+                show={showReactionModal}
+                onClose={handleCloseReactionModal}
+                onSelect={handleSelectDefaultEmoji}
+                selectedEmoji={defaultReactionEmoji}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <ForwardMessageModal

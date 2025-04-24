@@ -1,10 +1,70 @@
-import React from "react";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import {
+  setSelectedConversation,
+  setShowConversation,
+} from "../../../redux/slice/commonSlice";
+import { Modal, Button } from "react-bootstrap";
+import useConversation from "../../../hooks/useConversation";
+import useMember from "../../../hooks/useMember";
 
-const GroupSettingsForm = ({ onBack }) => {
+const GroupSettingsForm = ({ onBack, conversationId }) => {
+  const [showDissolveModal, setShowDissolveModal] = useState(false);
+  const { dissolveConversation, isDissolvingConversation } = useConversation();
+  const dispatch = useDispatch();
+  const { userRole, isLoadingUserRole } = useMember(conversationId);
+
+  // Kiểm tra người dùng có quyền admin không
+  console.log("userRole: ", userRole);
+  const isAdmin = userRole?.role === "ADMIN";
+
+  const handleDissolveClick = () => {
+    setShowDissolveModal(true);
+  };
+
+  // Hàm xử lý khi người dùng xác nhận giải tán nhóm
+  const handleConfirmDissolve = () => {
+    if (!isAdmin) return;
+    dissolveConversation(conversationId, {
+      onSuccess: async (data) => {
+        toast.success("Nhóm đã được giải tán thành công");
+        setShowDissolveModal(false);
+
+        dispatch(setSelectedConversation(null));
+        dispatch(setShowConversation(false));
+
+        // Đóng màn hình quản lý nhóm
+        onBack();
+      },
+      onError: (error) => {
+        toast.error(error.message || "Có lỗi xảy ra khi giải tán nhóm");
+        setShowDissolveModal(false);
+      },
+    });
+  };
+
+  if (isLoadingUserRole) {
+    return (
+      <div
+        className="card p-3 d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Đang tải...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="card p-3"
-      style={{ height: "100vh", overflowY: "auto", overflowX: "hidden" }}
+      style={{
+        height: "100vh",
+        overflowY: "auto",
+        overflowX: "hidden",
+      }}
     >
       <div className="d-flex align-items-center gap-2 mb-3 justify-content-between">
         <span style={{ cursor: "pointer" }} onClick={onBack}>
@@ -15,145 +75,203 @@ const GroupSettingsForm = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Các checkbox quyền */}
-      <div className="form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="changeName"
-        />
-        <label className="form-check-label" htmlFor="changeName">
-          Thay đổi tên & ảnh đại diện của nhóm
-        </label>
-      </div>
+      <div
+        style={{
+          opacity: isAdmin ? 1 : 0.7,
+          pointerEvents: isAdmin ? "auto" : "none",
+        }}
+      >
+        {!isAdmin && (
+          <div className="bg-secondary text-center mb-2 text-white rounded-2 p-2">
+            <i class="bi bi-file-earmark-lock2"></i> Tính năng này chỉ dành quản
+            trị viên nhóm.
+          </div>
+        )}
 
-      <div className="form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="pinMessages"
-        />
-        <label className="form-check-label" htmlFor="pinMessages">
-          Ghim tin nhắn, ghi chú, bình chọn lên đầu hội thoại
-        </label>
-      </div>
+        {/* Các checkbox quyền */}
+        <div className="form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="changeName"
+          />
+          <label className="form-check-label" htmlFor="changeName">
+            Thay đổi tên & ảnh đại diện của nhóm
+          </label>
+        </div>
 
-      <div className="form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="newNote"
-        />
-        <label className="form-check-label" htmlFor="newNote">
-          Tạo mới ghi chú, nhắc hẹn
-        </label>
-      </div>
+        <div className="form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="pinMessages"
+          />
+          <label className="form-check-label" htmlFor="pinMessages">
+            Ghim tin nhắn, ghi chú, bình chọn lên đầu hội thoại
+          </label>
+        </div>
 
-      <div className="form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="createPoll"
-        />
-        <label className="form-check-label" htmlFor="createPoll">
-          Tạo mới bình chọn
-        </label>
-      </div>
+        <div className="form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="newNote"
+          />
+          <label className="form-check-label" htmlFor="newNote">
+            Tạo mới ghi chú, nhắc hẹn
+          </label>
+        </div>
 
-      <div className="form-check mb-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="sendMessage"
-        />
-        <label className="form-check-label" htmlFor="sendMessage">
-          Gửi tin nhắn
-        </label>
-      </div>
+        <div className="form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="createPoll"
+          />
+          <label className="form-check-label" htmlFor="createPoll">
+            Tạo mới bình chọn
+          </label>
+        </div>
 
-      <hr className="border-5 rounded-1" />
+        <div className="form-check mb-3">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="sendMessage"
+          />
+          <label className="form-check-label" htmlFor="sendMessage">
+            Gửi tin nhắn
+          </label>
+        </div>
 
-      {/* Các switch */}
-      <div className="form-switch form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="requireApproval"
-        />
-        <label className="form-check-label" htmlFor="requireApproval">
-          Chế độ phê duyệt thành viên mới
-        </label>
-      </div>
+        <hr className="border-5 rounded-1" />
 
-      <div className="form-switch form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="markLeaderMessages"
-        />
-        <label className="form-check-label" htmlFor="markLeaderMessages">
-          Đánh dấu tin nhắn từ trưởng/phó nhóm
-        </label>
-      </div>
+        {/* Các switch */}
+        <div className="form-switch form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="requireApproval"
+          />
+          <label className="form-check-label" htmlFor="requireApproval">
+            Chế độ phê duyệt thành viên mới
+          </label>
+        </div>
 
-      <div className="form-switch form-check mb-2">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="newMemberAccess"
-        />
-        <label className="form-check-label" htmlFor="newMemberAccess">
-          Cho phép thành viên mới đọc tin nhắn gần nhất
-        </label>
-      </div>
+        <div className="form-switch form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="markLeaderMessages"
+          />
+          <label className="form-check-label" htmlFor="markLeaderMessages">
+            Đánh dấu tin nhắn từ trưởng/phó nhóm
+          </label>
+        </div>
 
-      <div className="form-switch form-check mb-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          defaultChecked
-          id="linkJoin"
-        />
-        <label className="form-check-label" htmlFor="linkJoin">
-          Cho phép dùng link tham gia nhóm
-        </label>
-      </div>
+        <div className="form-switch form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            defaultChecked
+            id="newMemberAccess"
+          />
+          <label className="form-check-label" htmlFor="newMemberAccess">
+            Cho phép thành viên mới đọc tin nhắn gần nhất
+          </label>
+        </div>
 
-      {/* Link tham gia nhóm */}
-      <div className="input-group mb-3">
-        <input
-          type="text"
-          className="form-control"
-          readOnly
-          value="zalo.me/g/hcdimo839"
-        />
-        <button className="btn btn-outline-secondary">Sao chép</button>
-      </div>
+        {/* Chỉ  hiển thị nếu là admin */}
+        {isAdmin && (
+          <div>
+            <div className="form-switch form-check mb-3">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                defaultChecked
+                id="linkJoin"
+              />
+              <label className="form-check-label" htmlFor="linkJoin">
+                Cho phép dùng link tham gia nhóm
+              </label>
+            </div>
 
-      <hr className="border-5 rounded-1" />
+            {/* Link tham gia nhóm */}
+            <div className="input-group mb-3">
+              <input
+                type="text"
+                className="form-control"
+                readOnly
+                value="zalo.me/g/hcdimo839"
+              />
+              <button className="btn btn-outline-secondary">Sao chép</button>
+            </div>
 
-      <div className="mb-3">
-        <button className="btn btn-light w-100 text-start mb-2 fs-6">
-          <i className="bi bi-person-x me-2"></i> Chặn khỏi nhóm
-        </button>
-        <button className="btn btn-light w-100 text-start fs-6">
-          <i className="bi bi-key me-2"></i> Trưởng & phó nhóm
-        </button>
-      </div>
+            <hr className="border-5 rounded-1" />
 
-      <hr className="border-5 rounded-1" />
+            <div className="mb-3">
+              <button className="btn btn-light w-100 text-start mb-2 fs-6">
+                <i className="bi bi-person-x me-2"></i> Chặn khỏi nhóm
+              </button>
+              <button className="btn btn-light w-100 text-start fs-6">
+                <i className="bi bi-key me-2"></i> Trưởng & phó nhóm
+              </button>
+            </div>
+          </div>
+        )}
 
-      <div style={{ backgroundColor: "#f8d7da" }} className="rounded-2">
-        <button className="btn btn-outline-danger w-100 fs-6">
-          Giải tán nhóm
-        </button>
+        {/* Chỉ hiển thị nút giải tán nhóm nếu là admin */}
+        {isAdmin && (
+          <>
+            <hr className="border-5 rounded-1" />
+            <div style={{ backgroundColor: "#f8d7da" }} className="rounded-2">
+              <button
+                className="btn btn-outline-danger w-100 fs-6"
+                onClick={handleDissolveClick}
+              >
+                Giải tán nhóm
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Modal xác nhận giải tán nhóm */}
+        <Modal
+          show={showDissolveModal}
+          onHide={() => setShowDissolveModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Giải tán nhóm</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>
+              Mời tất cả mọi người rời nhóm và xóa tin nhắn? Nhóm đã giải tán sẽ
+              KHÔNG THỂ khôi phục.
+            </p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDissolveModal(false)}
+            >
+              Không
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmDissolve}
+              disabled={isDissolvingConversation}
+            >
+              {isDissolvingConversation ? "Đang xử lý..." : "Giải tán nhóm"}
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );

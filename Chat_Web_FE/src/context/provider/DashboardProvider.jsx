@@ -59,6 +59,30 @@ const DashboardProvider = ({ children }) => {
             }
           }
         );
+
+        // Đăng ký lắng nghe giải tán nhóm
+        stompClient.current.subscribe(
+          `/chat/dissolve/group/${currentUser.id}`,
+          (message) => {
+            try {
+              const notificationData = JSON.parse(message.body);
+              console.log("Group dissolved:", notificationData);
+              const conversationName = notificationData.conversationName;
+              console.log("Conversation name:", conversationName);
+
+              // Cập nhật lại danh sách hội thoại
+              queryClient.invalidateQueries(["conversations"]);
+
+              // Thông báo cho người dùng về việc nhóm đã bị giải tán
+              toast.info(`Nhóm với tên "${conversationName}" đã bị giải tán.`);
+            } catch (error) {
+              console.error(
+                "Error processing group dissolution message:",
+                error
+              );
+            }
+          }
+        );
       },
       onStompError: (frame) => {
         console.error("Broker reported error: " + frame.headers["message"]);
@@ -142,9 +166,17 @@ const DashboardProvider = ({ children }) => {
   const [showIncomingCallModal, setShowIncomingCallModal] =useState(false);
   const incomingCallModalRef = useRef(null);
 
+  // Modal: Thêm bạn bè AddMemberGroupModal
+  const [showAddMemberGroupModal, setShowAddMemberGroupModal] = useState(false);
+  const addMemberGroupModalRef = useRef(null);
 
   console.log("DashboardProvider", showAddFriendModal);
 
+
+  // THÊM STATE CHO CÁC MODAL LƯU CONVERSATION
+  const [conversationInfor, setConversationInfor] = useState(null);
+  
+  
   const contextValue = {
     currentUser,
     setCurrentUser,
@@ -192,6 +224,14 @@ const DashboardProvider = ({ children }) => {
     incomingCallModalRef,
 
     
+    showAddMemberGroupModal,
+    setShowAddMemberGroupModal,
+    addMemberGroupModalRef,
+
+    // Thêm conversationInfor và setConversationInfor vào context
+    conversationInfor,
+    setConversationInfor,
+
 
   };
 

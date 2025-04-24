@@ -1,27 +1,27 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const commonSlice = createSlice({
-    name: "common",
-    initialState: {
-        showConversation: false,
-        showSearch: false,
-        selectedConversation: null,
+  name: "common",
+  initialState: {
+    showConversation: false,
+    showSearch: false,
+    selectedConversation: null,
+  },
+  reducers: {
+    setShowConversation: (state, action) => ({
+      ...state,
+      showConversation: action.payload,
+    }),
+    setSelectedConversation: (state, action) => {
+      state.selectedConversation = action.payload; // Directly update the property
     },
-    reducers: {
-        setShowConversation: (state, action) => ({
-            ...state,
-            showConversation: action.payload,
-        }),
-        setSelectedConversation: (state, action) => {
-            state.selectedConversation = action.payload; // Directly update the property
-        },
-        setShowSearch: (state, action) => ({
-            ...state,
-            showSearch: action.payload,
-        }),
-    },
+    setShowSearch: (state, action) => ({
+      ...state,
+      showSearch: action.payload,
+    }),
+  },
 });
 
 export const { setShowConversation, setShowSearch, setSelectedConversation } =
-    commonSlice.actions;
+  commonSlice.actions;
 export default commonSlice.reducer;

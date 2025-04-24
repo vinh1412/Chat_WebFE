@@ -30,12 +30,12 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
   }, [isLoadingFriends, friendList]);
 
   // Lọc danh sách bạn bè dựa trên từ khóa tìm kiếm
-  const filteredFriends = useMemo(() => {
-    if (!searchTerm) return friends;
-    return friends.filter((friend) =>
-      friend.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [friends, searchTerm]);
+const filteredFriends = useMemo(() => {
+  if (!searchTerm) return friends;
+  return friends.filter((friend) =>
+    friend.displayName && friend.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+}, [friends, searchTerm]);
 
   const toggleMember = (userId) => {
     setSelectedMembers((prevSelected) => {
