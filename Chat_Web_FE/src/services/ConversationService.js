@@ -93,3 +93,20 @@ export const dissolveConversationService = async (conversationId) => {
     throw new Error(error.response?.data?.message || "Lỗi khi xóa hội thoại");
   }
 };
+
+export const leaveGroup = async (conversationId) => {
+  try {
+    const response = await axiosInstance.delete(
+      `/conversations/leave/${conversationId}`
+    );
+    console.log("Response leaveGroup data:");
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error leaving group:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Lỗi khi rời nhóm");
+  }
+};
