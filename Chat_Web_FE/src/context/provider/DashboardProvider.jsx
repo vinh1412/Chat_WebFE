@@ -206,8 +206,6 @@ const DashboardProvider = ({ children }) => {
     showAddMemberGroupModal,
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
-
-
   };
 
   return (

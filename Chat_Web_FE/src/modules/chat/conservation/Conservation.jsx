@@ -21,7 +21,8 @@ import "../../../assets/css/UploadFile.css";
 import "../../../assets/css/StickerGif.css";
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
-
+import { setSelectedConversation } from "../../../redux/slice/commonSlice";
+import useConversation from "../../../hooks/useConversation";
 const Conservation = ({
   onShowDetail,
   onHideDetail,
@@ -31,6 +32,26 @@ const Conservation = ({
   // console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
   const bottomRef = React.useRef(null);
+
+  const { conversations } = useConversation();
+
+  useEffect(() => {
+    if (selectedConversation && conversations?.length) {
+      // Tìm cuộc trò chuyện đã cập nhật trong danh sách
+      const updatedConversation = conversations.find(
+        (conv) => conv.id === selectedConversation.id
+      );
+
+      // Nếu có sự thay đổi về trạng thái (dissolved) của cuộc trò chuyện, cập nhật lại state
+      if (
+        updatedConversation &&
+        updatedConversation.dissolved !== selectedConversation.dissolved
+      ) {
+        dispatch(setSelectedConversation(updatedConversation));
+      }
+    }
+  }, [conversations, selectedConversation?.id]);
+
   // lấy danh sách tin nhắn theo conversationId
   const {
     messages,
@@ -39,6 +60,8 @@ const Conservation = ({
     deleteForUserMessage,
     refetchMessages,
   } = useMessage(selectedConversation?.id);
+
+  console.log("Conservation selectedConversation----", selectedConversation);
 
   const { currentUser } = useDashboardContext();
 
