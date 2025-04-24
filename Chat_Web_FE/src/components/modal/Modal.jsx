@@ -29,6 +29,8 @@ const Modal = () => {
     showAddMemberGroupModal,
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
+    setCurrentConversationInfor,
+    conversationInfor, // Lấy conversationInfor từ context
   } = useDashboardContext();
 
   return (
@@ -130,6 +132,8 @@ const Modal = () => {
           isOpen={showAddMemberGroupModal}
           onClose={() => setShowAddMemberGroupModal(false)}
           addMemberGroupModalRef={addMemberGroupModalRef}
+          setCurrentConversationInfor={setCurrentConversationInfor}
+          conversationInfor={conversationInfor} // Truyền conversationInfor
         />  
       </ReactModal>
 
