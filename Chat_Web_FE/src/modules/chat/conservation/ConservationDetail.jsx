@@ -3,6 +3,7 @@ import { useDashboardContext } from "../../../context/Dashboard_context";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import GroupSettingsForm from "./GroupSettingsForm";
 import AddMemberGroupModal from "../../../../src/components/modal/AddMemberGroupModal";
+import MemberListView from "./MemberListView";
 import { leaveGroup } from "../../../services/ConversationService";
 import { setShowConversation } from "../../../redux/slice/commonSlice";
 import { useDispatch } from "react-redux";
@@ -17,7 +18,18 @@ const ConversationDetail = ({ conversationInfor }) => {
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [showGroupBulletin, setShowGroupBulletin] = useState(true);
   const [showMemberGroup, setShowMemberGroup] = useState(true);
+  const [showMemberList, setShowMemberList] = useState(false);
   const dispatch = useDispatch();
+
+  //Show view member group
+  if (showMemberList) {
+    return (
+      <MemberListView
+        conversationInfor={conversationInfor}
+        onBack={() => setShowMemberList(false)}
+      />
+    );
+  }
 
   // Handle out group
   const handleLeaveGroup = async (conversationId) => {
@@ -115,7 +127,7 @@ const ConversationDetail = ({ conversationInfor }) => {
             </h6>
           </div>
 
-          <div className="d-flex justify-content-center gap-3 my-2">
+          <div className="d-flex justify-content-center gap-3 my-2 align-items-center">
             <div className="d-flex flex-column align-items-center">
               <i className="bi bi-bell-slash"></i>
               <small className="text-center" style={{ fontSize: "13px" }}>
@@ -140,7 +152,9 @@ const ConversationDetail = ({ conversationInfor }) => {
                 style={{ cursor: "pointer" }}
               >
                 <i className="bi bi-person-plus fs-6"></i>
-                <small style={{ fontSize: "13px" }}>Thêm thành viên</small>
+                <small className="text-center" style={{ fontSize: "13px" }}>
+                  Thêm thành viên
+                </small>
               </div>
             )}
 
@@ -183,7 +197,11 @@ const ConversationDetail = ({ conversationInfor }) => {
                 </div>
                 {showMemberGroup && (
                   <>
-                    <div className="d-flex align-items-center mb-3 mt-2">
+                    <div
+                      className="d-flex align-items-center mb-3 mt-2"
+                      onClick={() => setShowMemberList(true)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <i className="bi bi bi-people me-2"></i>
                       <span>{conversationInfor.members.length} Thành viên</span>
                     </div>
