@@ -94,16 +94,39 @@ export const dissolveConversationService = async (conversationId) => {
   }
 };
 
-
-// thêm thành viên vào nhóm 
+// thêm thành viên vào nhóm
 
 export const addMemberToGroupService = async (conversationId, userId) => {
   try {
-    const response = await axiosInstance.post(`/conversations/add-member/${conversationId}?id=${userId}`);
+    const response = await axiosInstance.post(
+      `/conversations/add-member/${conversationId}?id=${userId}`
+    );
     console.log("Added member to group conversation:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Error adding member to group conversation:", error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || "Lỗi khi thêm thành viên vào nhóm");
+    console.error(
+      "Error adding member to group conversation:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi thêm thành viên vào nhóm"
+    );
+  }
+};
+
+export const leaveGroup = async (conversationId) => {
+  try {
+    const response = await axiosInstance.delete(
+      `/conversations/leave/${conversationId}`
+    );
+    console.log("Response leaveGroup data:");
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error leaving group:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Lỗi khi rời nhóm");
   }
 };

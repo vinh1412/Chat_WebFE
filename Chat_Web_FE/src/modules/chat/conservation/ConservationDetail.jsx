@@ -3,12 +3,35 @@ import { useDashboardContext } from "../../../context/Dashboard_context";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import GroupSettingsForm from "./GroupSettingsForm";
 import AddMemberGroupModal from "../../../../src/components/modal/AddMemberGroupModal";
+import { leaveGroup } from "../../../services/ConversationService";
+import { setShowConversation } from "../../../redux/slice/commonSlice";
 import { useDispatch } from "react-redux";
 
 const ConversationDetail = ({ conversationInfor }) => {
   console.log("conversationInfor: 0 -------------------", conversationInfor);
-  const { currentUser, setShowAddMemberGroupModal, setConversationInfor } = useDashboardContext();
+  const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
+    useDashboardContext();
   const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [showGroupBulletin, setShowGroupBulletin] = useState(true);
+  const dispatch = useDispatch();
+
+  // Handle out group
+  const handleLeaveGroup = async (conversationId) => {
+    const isConfirmed = window.confirm(
+      "Bạn có chắc chắn muốn rời nhóm này không?"
+    );
+    if (isConfirmed) {
+      try {
+        const response = await leaveGroup(conversationId);
+        console.log("Response leaveGroup data:", response.data);
+        alert("Bạn đã rời nhóm thành công!");
+        dispatch(setShowConversation(false));
+      } catch (error) {
+        console.error("Error leaving group:", error.message);
+        alert("Lỗi khi rời nhóm. Vui lòng thử lại.");
+      }
+    }
+  };
 
   return (
     <div
@@ -94,10 +117,16 @@ const ConversationDetail = ({ conversationInfor }) => {
               <div
                 className="d-flex flex-column align-items-center"
                 onClick={() => {
-                  console.log("-------------------------------conversationInfor.members----------------------1:", conversationInfor?.members);
+                  console.log(
+                    "-------------------------------conversationInfor.members----------------------1:",
+                    conversationInfor?.members
+                  );
                   setShowAddMemberGroupModal(true);
                   setConversationInfor(conversationInfor); // Sửa tên hàm
-                  console.log("conversationInfor: 2 -------------------", conversationInfor);
+                  console.log(
+                    "conversationInfor: 2 -------------------",
+                    conversationInfor
+                  );
                 }}
                 style={{ cursor: "pointer" }}
               >
@@ -128,10 +157,41 @@ const ConversationDetail = ({ conversationInfor }) => {
           </div>
 
           <div className="card-body">
-            <div className="d-flex align-items-center mb-3">
-              <i className="bi bi-clock me-2"></i>
-              <span>Danh sách nhắc hẹn</span>
-            </div>
+            {/* dropdown bảng tin nhóm */}
+            {conversationInfor.is_group && (
+              <div className="mb-3">
+                <div
+                  className="d-flex align-items-center justify-content-between mb-2"
+                  onClick={() => setShowGroupBulletin(!showGroupBulletin)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <h6 className="mb-0">Bảng tin nhóm</h6>
+                  <i
+                    className={`bi bi-chevron-${
+                      showGroupBulletin ? "up" : "down"
+                    }`}
+                  ></i>
+                </div>
+                {showGroupBulletin && (
+                  <>
+                    <div className="d-flex align-items-center mb-3 mt-2">
+                      <i className="bi bi-clock me-2"></i>
+                      <span>Danh sách nhắc hẹn</span>
+                    </div>
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="bi bi-file-earmark me-2"></i>
+                      <span>Ghi chú, ghim, bình chọn</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {!conversationInfor.is_group && (
+              <div className="d-flex align-items-center mb-3">
+                <i className="bi bi-clock me-2"></i>
+                <span>Danh sách nhắc hẹn</span>
+              </div>
+            )}
             <hr />
             <div className="mb-3">
               <div
@@ -217,10 +277,24 @@ const ConversationDetail = ({ conversationInfor }) => {
               ></i>
               <span>Báo xấu</span>
             </div>
-            <div className="d-flex align-items-center">
+            {/* Xoá lịch sử trò chuyện */}
+            <button className="btn p-0 d-flex align-items-left mt-2 w-100 fs-6 text-normal text-danger">
               <i className="bi bi-trash3 me-2" style={{ color: "red" }}></i>
               <span>Xóa lịch sử trò chuyện</span>
-            </div>
+            </button>
+            {/* Rời nhóm */}
+            {conversationInfor.is_group && (
+              <button
+                className="btn p-0 d-flex align-items-left mt-2 w-100 fs-6 text-normal text-danger"
+                onClick={() => handleLeaveGroup(conversationInfor.id)}
+              >
+                <i
+                  className="bi bi-box-arrow-right me-2"
+                  style={{ color: "red" }}
+                ></i>
+                <span>Rời nhóm</span>
+              </button>
+            )}
           </div>
         </>
       )}
