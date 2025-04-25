@@ -33,7 +33,6 @@ const RegisterStepInfo = React.lazy(() =>
   import("./pages/Register/RegisterStepInfo.jsx")
 );
 
-// router
 const router = createBrowserRouter([
   {
     element: (

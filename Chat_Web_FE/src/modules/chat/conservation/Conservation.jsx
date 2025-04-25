@@ -31,6 +31,7 @@ const Conservation = ({
   onHideDetail,
   showDetail,
   selectedConversation,
+  client,
 }) => {
   // console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
@@ -184,7 +185,7 @@ const Conservation = ({
     }
   }, [localMessages]);
 
-  const client = React.useRef(null);
+const stompClient = React.useRef(null); 
 
   const handleSelectReceiver = async (receiver) => {
     try {
@@ -414,6 +415,7 @@ const Conservation = ({
     localMessages,
     currentUser.id,
     refetchMessages,
+    client,
   ]);
 
   //Handle sending GIF or Sticker
@@ -1549,6 +1551,7 @@ const App = () => {
   const selectedConversation = useSelector(
     (state) => state.common.selectedConversation
   );
+  const { refetch: refetchConversation } = useConversation();
 
   const handleShowDetail = () => {
     setShowDetail(true);
@@ -1574,7 +1577,9 @@ const App = () => {
           onHideDetail={handleHideDetail}
           showDetail={showDetail}
           selectedConversation={selectedConversation}
-        />
+          client={Client} 
+          refetchConversation={refetchConversation}
+          />
       </div>
       {showDetail && (
         <div
@@ -1584,7 +1589,11 @@ const App = () => {
             height: "100vh",
           }}
         >
-          <ConversationDetail conversationInfor={selectedConversation} />
+          <ConversationDetail
+            conversationInfor={selectedConversation}
+            client={Client} // Pass WebSocket client
+            refetchConversation={refetchConversation} // Pass refetch function
+          />
         </div>
       )}
     </div>

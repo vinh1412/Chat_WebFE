@@ -8,12 +8,16 @@ import {
 import { Modal, Button } from "react-bootstrap";
 import useConversation from "../../../hooks/useConversation";
 import useMember from "../../../hooks/useMember";
+import LeaderManagementForm from "./LeaderManagementForm";
 
 const GroupSettingsForm = ({ onBack, conversationId }) => {
   const [showDissolveModal, setShowDissolveModal] = useState(false);
   const { dissolveConversation, isDissolvingConversation } = useConversation();
   const dispatch = useDispatch();
-  const { userRole, isLoadingUserRole } = useMember(conversationId);
+  const { userRole, isLoadingUserRole,members } = useMember(conversationId);
+
+  const [showLeaderForm, setShowLeaderForm] = useState(false);
+
 
   // Kiểm tra người dùng có quyền admin không
   console.log("userRole: ", userRole);
@@ -54,6 +58,24 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
           <span className="visually-hidden">Đang tải...</span>
         </div>
       </div>
+    );
+  }
+
+  const handleLeaderClick = () => {
+    setShowLeaderForm(true); // Show the LeaderManagementForm
+  };
+
+  const handleBackFromLeaderForm = () => {
+    setShowLeaderForm(false); // Go back to GroupSettingsForm
+  };
+
+  if (showLeaderForm) {
+    return (
+      <LeaderManagementForm
+        onBack={handleBackFromLeaderForm}
+        conversationId={conversationId}
+        members={members}
+      />
     );
   }
 
@@ -219,7 +241,7 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
               <button className="btn btn-light w-100 text-start mb-2 fs-6">
                 <i className="bi bi-person-x me-2"></i> Chặn khỏi nhóm
               </button>
-              <button className="btn btn-light w-100 text-start fs-6">
+              <button className="btn btn-light w-100 text-start fs-6"  onClick={handleLeaderClick}>
                 <i className="bi bi-key me-2"></i> Trưởng & phó nhóm
               </button>
             </div>
