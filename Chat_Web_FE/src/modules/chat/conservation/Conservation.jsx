@@ -29,7 +29,7 @@ import useConversation from "../../../hooks/useConversation";
 
 import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
-import { deleteConversationForUserService } from "../../../services/ConversationService";
+
 const Conservation = ({
   onShowDetail,
   onHideDetail,
@@ -40,7 +40,7 @@ const Conservation = ({
   const dispatch = useDispatch();
   const bottomRef = React.useRef(null);
 
-  const { conversations } = useConversation();
+  const { conversations, deleteConversationForUser } = useConversation();
 
   useEffect(() => {
     if (selectedConversation && conversations?.length) {
@@ -1412,7 +1412,7 @@ const Conservation = ({
                   "Bạn có chắc muốn xóa cuộc trò chuyện này khỏi danh sách?"
                 );
                 if (confirmed) {
-                  deleteConversationForUserService(selectedConversation.id);
+                  deleteConversationForUser(selectedConversation.id);
                 }
               }}
             >
