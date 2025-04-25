@@ -6,7 +6,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { toast } from "react-toastify";
-
+import { getAllConversationsByUserIdService } from "../../services/ConversationService";
+import store from "../../redux/store";
+import {
+  setSelectedConversation,
+  setShowConversation,
+} from "../../redux/slice/commonSlice";
 const DashboardProvider = ({ children }) => {
   // Trạng thái hiển thị của modal thêm bạn bè
   const [showAddFriendModal, setShowAddFriendModal] = useState(false);
@@ -66,8 +71,8 @@ const DashboardProvider = ({ children }) => {
           (message) => {
             try {
               const notificationData = JSON.parse(message.body);
-              console.log("Group dissolved:", notificationData);
-              const conversationName = notificationData.conversationName;
+              console.log("Dissolve Group dissolved:", notificationData);
+              const conversationName = notificationData.name;
               console.log("Conversation name:", conversationName);
 
               // Cập nhật lại danh sách hội thoại
@@ -93,6 +98,15 @@ const DashboardProvider = ({ children }) => {
 
               // Update the conversations list
               queryClient.invalidateQueries(["conversations"]);
+
+              const currentSelectedConversationId =
+                store.getState().common.selectedConversation?.id;
+
+              if (deletedConversation.id === currentSelectedConversationId) {
+                // Nếu đang xem cuộc trò chuyện bị xóa, quay về màn hình chính
+                store.dispatch(setSelectedConversation(null));
+                store.dispatch(setShowConversation(false));
+              }
 
               // Notify the user about the deletion
               const conversationName =
