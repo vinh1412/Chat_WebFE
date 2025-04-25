@@ -199,7 +199,7 @@ const Conservation = ({
     }
   }, [localMessages]);
 
-const stompClient = React.useRef(null); 
+  const stompClient = React.useRef(null);
 
   const handleSelectReceiver = async (receiver) => {
     try {
@@ -827,6 +827,7 @@ const stompClient = React.useRef(null);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showActionsFor]);
+
   // Function to find sender info
   const getSenderInfo = (msg) => {
     const isSentByMe = msg.sender === "me" || msg.senderId === currentUser.id;
@@ -1128,13 +1129,22 @@ const stompClient = React.useRef(null);
                 key={messageId}
                 id={`message-${messageId}`}
                 className={`mb-2 d-flex position-relative message-container ${
-                  isSentByMe ? "justify-content-end" : "justify-content-start"
+                  msg?.messageType === "SYSTEM"
+                    ? "justify-content-center"
+                    : isSentByMe
+                    ? "justify-content-end"
+                    : "justify-content-start"
                 }`}
-                onMouseEnter={() => setHoveredMessageId(messageId)}
-                onMouseLeave={() => setHoveredMessageId(null)}
+                onMouseEnter={() =>
+                  msg?.messageType !== "SYSTEM" &&
+                  setHoveredMessageId(messageId)
+                }
+                onMouseLeave={() =>
+                  msg?.messageType !== "SYSTEM" && setHoveredMessageId(null)
+                }
               >
-                {/* Show avatar for messages from other users */}
-                {!isSentByMe && (
+                {/* Show avatar for messages from other users (hide for system messages) */}
+                {!isSentByMe && msg?.messageType !== "SYSTEM" && (
                   <div className="me-2 d-flex flex-column align-items-center justify-content-center">
                     <img
                       src={senderInfo.avatar}
@@ -1156,7 +1166,9 @@ const stompClient = React.useRef(null);
                 )}
                 <div
                   className={`p-2 rounded shadow-sm message-bubble ${
-                    isSentByMe
+                    msg?.messageType === "SYSTEM"
+                      ? "text-center bg-light system-message rounded-pill"
+                      : isSentByMe
                       ? "text-black message-sent"
                       : "bg-light border message-received"
                   } ${isRecalled ? "message-recalled" : ""} ${
@@ -1165,16 +1177,19 @@ const stompClient = React.useRef(null);
                       : ""
                   }`}
                   style={{
-                    maxWidth: "70%",
-                    backgroundColor: isSentByMe
-                      ? isRecalled
-                        ? "#f0f0f0"
+                    maxWidth: msg?.messageType === "SYSTEM" ? "70%" : "70%",
+                    backgroundColor:
+                      msg?.messageType === "SYSTEM"
+                        ? "#f8f9fa"
+                        : isSentByMe
+                        ? isRecalled
+                          ? "#f0f0f0"
+                          : msg?.messageType === "STICKER"
+                          ? "transparent"
+                          : "#dcf8c6"
                         : msg?.messageType === "STICKER"
                         ? "transparent"
-                        : "#dcf8c6"
-                      : msg?.messageType === "STICKER"
-                      ? "transparent"
-                      : "#ffffff",
+                        : "#ffffff",
                     position: "relative",
                     opacity: isRecalled ? 0.7 : 1,
                     ...(msg?.messageType === "STICKER"
@@ -1183,9 +1198,19 @@ const stompClient = React.useRef(null);
                           border: "none",
                         }
                       : {}),
+                    ...(msg?.messageType === "SYSTEM"
+                      ? {
+                          border: "1px dashed #ddd",
+                          fontSize: "0.9rem",
+                          color: "#666",
+                        }
+                      : {}),
                   }}
                   ref={(el) => (messageRefs.current[messageId] = el)}
-                  onClick={() => toggleMessageActions(messageId)}
+                  onClick={() =>
+                    msg?.messageType !== "SYSTEM" &&
+                    toggleMessageActions(messageId)
+                  }
                 >
                   {isRecalled ? (
                     <span className="text-muted">
@@ -1310,11 +1335,14 @@ const stompClient = React.useRef(null);
                   ) : (
                     <span>{msg?.content || msg?.text}</span>
                   )}
-                  <div>
-                    <small className="text-muted d-block">
-                      {formatTime(msg?.created_at || msg?.timestamp)}
-                    </small>
-                  </div>
+                  {/* Only show timestamp for non-system messages */}
+                  {msg?.messageType !== "SYSTEM" && (
+                    <div>
+                      <small className="text-muted d-block">
+                        {formatTime(msg?.created_at || msg?.timestamp)}
+                      </small>
+                    </div>
+                  )}
                 </div>
 
                 {/* Show message actions on hover OR when clicked */}
@@ -1612,9 +1640,9 @@ const App = () => {
           onHideDetail={handleHideDetail}
           showDetail={showDetail}
           selectedConversation={selectedConversation}
-          client={Client} 
+          client={Client}
           refetchConversation={refetchConversation}
-          />
+        />
       </div>
       {showDetail && (
         <div
