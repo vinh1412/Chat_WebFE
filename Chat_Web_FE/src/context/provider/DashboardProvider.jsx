@@ -211,6 +211,16 @@ const DashboardProvider = ({ children }) => {
 
   console.log("DashboardProvider", showAddFriendModal);
 
+  //Modal: Thêm phó nhóm
+  const [showDeputyModal, setShowDeputyModal] = useState(false);
+  const deputyModalRef = useRef(null);
+
+  //  // Modal: Chuyển quyền trưởng nhóm
+  const [showLeaderTransferModal, setShowLeaderTransferModal] = useState(false);
+  const leaderTransferModalRef = useRef(null);
+
+
+
   // THÊM STATE CHO CÁC MODAL LƯU CONVERSATION
   const [conversationInfor, setConversationInfor] = useState(null);
 
@@ -267,6 +277,15 @@ const DashboardProvider = ({ children }) => {
     // Thêm conversationInfor và setConversationInfor vào context
     conversationInfor,
     setConversationInfor,
+
+    showDeputyModal,
+    setShowDeputyModal,
+    deputyModalRef,
+
+    showLeaderTransferModal,
+    setShowLeaderTransferModal,
+    leaderTransferModalRef,
+
   };
 
   return (

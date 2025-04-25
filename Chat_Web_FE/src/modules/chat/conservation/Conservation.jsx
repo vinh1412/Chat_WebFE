@@ -35,6 +35,7 @@ const Conservation = ({
   onHideDetail,
   showDetail,
   selectedConversation,
+  client,
 }) => {
   console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
@@ -199,7 +200,7 @@ const Conservation = ({
     }
   }, [localMessages]);
 
-  const client = React.useRef(null);
+  const stompClient = React.useRef(null);
 
   const handleSelectReceiver = async (receiver) => {
     try {
@@ -429,6 +430,7 @@ const Conservation = ({
     localMessages,
     currentUser.id,
     refetchMessages,
+    client,
   ]);
 
   //Handle sending GIF or Sticker
@@ -826,6 +828,7 @@ const Conservation = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showActionsFor]);
+
   // Function to find sender info
   const getSenderInfo = (msg) => {
     const isSentByMe = msg.sender === "me" || msg.senderId === currentUser.id;
@@ -1127,13 +1130,22 @@ const Conservation = ({
                 key={messageId}
                 id={`message-${messageId}`}
                 className={`mb-2 d-flex position-relative message-container ${
-                  isSentByMe ? "justify-content-end" : "justify-content-start"
+                  msg?.messageType === "SYSTEM"
+                    ? "justify-content-center"
+                    : isSentByMe
+                    ? "justify-content-end"
+                    : "justify-content-start"
                 }`}
-                onMouseEnter={() => setHoveredMessageId(messageId)}
-                onMouseLeave={() => setHoveredMessageId(null)}
+                onMouseEnter={() =>
+                  msg?.messageType !== "SYSTEM" &&
+                  setHoveredMessageId(messageId)
+                }
+                onMouseLeave={() =>
+                  msg?.messageType !== "SYSTEM" && setHoveredMessageId(null)
+                }
               >
-                {/* Show avatar for messages from other users */}
-                {!isSentByMe && (
+                {/* Show avatar for messages from other users (hide for system messages) */}
+                {!isSentByMe && msg?.messageType !== "SYSTEM" && (
                   <div className="me-2 d-flex flex-column align-items-center justify-content-center">
                     <img
                       src={senderInfo.avatar}
@@ -1155,7 +1167,9 @@ const Conservation = ({
                 )}
                 <div
                   className={`p-2 rounded shadow-sm message-bubble ${
-                    isSentByMe
+                    msg?.messageType === "SYSTEM"
+                      ? "text-center bg-light system-message rounded-pill"
+                      : isSentByMe
                       ? "text-black message-sent"
                       : "bg-light border message-received"
                   } ${isRecalled ? "message-recalled" : ""} ${
@@ -1164,16 +1178,19 @@ const Conservation = ({
                       : ""
                   }`}
                   style={{
-                    maxWidth: "70%",
-                    backgroundColor: isSentByMe
-                      ? isRecalled
-                        ? "#f0f0f0"
+                    maxWidth: msg?.messageType === "SYSTEM" ? "70%" : "70%",
+                    backgroundColor:
+                      msg?.messageType === "SYSTEM"
+                        ? "#f8f9fa"
+                        : isSentByMe
+                        ? isRecalled
+                          ? "#f0f0f0"
+                          : msg?.messageType === "STICKER"
+                          ? "transparent"
+                          : "#dcf8c6"
                         : msg?.messageType === "STICKER"
                         ? "transparent"
-                        : "#dcf8c6"
-                      : msg?.messageType === "STICKER"
-                      ? "transparent"
-                      : "#ffffff",
+                        : "#ffffff",
                     position: "relative",
                     opacity: isRecalled ? 0.7 : 1,
                     ...(msg?.messageType === "STICKER"
@@ -1182,9 +1199,19 @@ const Conservation = ({
                           border: "none",
                         }
                       : {}),
+                    ...(msg?.messageType === "SYSTEM"
+                      ? {
+                          border: "1px dashed #ddd",
+                          fontSize: "0.9rem",
+                          color: "#666",
+                        }
+                      : {}),
                   }}
                   ref={(el) => (messageRefs.current[messageId] = el)}
-                  onClick={() => toggleMessageActions(messageId)}
+                  onClick={() =>
+                    msg?.messageType !== "SYSTEM" &&
+                    toggleMessageActions(messageId)
+                  }
                 >
                   {isRecalled ? (
                     <span className="text-muted">
@@ -1309,11 +1336,14 @@ const Conservation = ({
                   ) : (
                     <span>{msg?.content || msg?.text}</span>
                   )}
-                  <div>
-                    <small className="text-muted d-block">
-                      {formatTime(msg?.created_at || msg?.timestamp)}
-                    </small>
-                  </div>
+                  {/* Only show timestamp for non-system messages */}
+                  {msg?.messageType !== "SYSTEM" && (
+                    <div>
+                      <small className="text-muted d-block">
+                        {formatTime(msg?.created_at || msg?.timestamp)}
+                      </small>
+                    </div>
+                  )}
                 </div>
 
                 {/* Show message actions on hover OR when clicked */}
@@ -1587,6 +1617,7 @@ const App = () => {
   const selectedConversation = useSelector(
     (state) => state.common.selectedConversation
   );
+  const { refetch: refetchConversation } = useConversation();
 
   const handleShowDetail = () => {
     setShowDetail(true);
@@ -1612,6 +1643,8 @@ const App = () => {
           onHideDetail={handleHideDetail}
           showDetail={showDetail}
           selectedConversation={selectedConversation}
+          client={Client}
+          refetchConversation={refetchConversation}
         />
       </div>
       {showDetail && (
@@ -1622,7 +1655,11 @@ const App = () => {
             height: "100vh",
           }}
         >
-          <ConversationDetail conversationInfor={selectedConversation} />
+          <ConversationDetail
+            conversationInfor={selectedConversation}
+            client={Client} // Pass WebSocket client
+            refetchConversation={refetchConversation} // Pass refetch function
+          />
         </div>
       )}
     </div>
