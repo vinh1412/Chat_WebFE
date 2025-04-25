@@ -12,6 +12,9 @@ import VideoCallModal from "./VideoCallModal";
 import IncomingCallModal from "./IncomingCallModal";
 import AddMemberGroupModal from "./AddMemberGroupModal";
 
+import DeputyModal from "./DeputyModal";
+import LeaderTransferModal from "./LeaderTransferModal";
+
 const Modal = () => {
   const {
     showAddFriendModal,
@@ -37,7 +40,13 @@ const Modal = () => {
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
     setCurrentConversationInfor,
-    conversationInfor, // Lấy conversationInfor từ context
+    conversationInfor, 
+    showDeputyModal,
+    setShowDeputyModal,
+    showLeaderTransferModal,
+    setShowLeaderTransferModal,
+
+    
   } = useDashboardContext();
 
   return (
@@ -177,6 +186,55 @@ const Modal = () => {
       />
     </ReactModal >
 
+        {/* Modal: Chọn phó nhóm */}
+    
+      <ReactModal
+        isOpen={showDeputyModal}
+        onRequestClose={() => setShowDeputyModal(false)}
+        contentLabel="Deputy Modal"
+        style={{
+          content: {
+            width: "600px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+      >
+        <DeputyModal
+          isOpen={showDeputyModal}
+          onClose={() => setShowDeputyModal(false)}
+          conversationId={conversationInfor?.id}
+          setCurrentConversationInfor={setCurrentConversationInfor}
+          conversationInfor={conversationInfor} // Truyền conversationInfor
+        />
+      </ReactModal>
+
+      {/* Modal: Chuyển quyền trưởng nhóm */}
+      <ReactModal
+        isOpen={showLeaderTransferModal}
+        onRequestClose={() => setShowLeaderTransferModal(false)}
+        contentLabel="Leader Transfer Modal"
+        style={{
+          content: {
+            width: "600px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"q
+      >
+        <LeaderTransferModal
+          isOpen={showLeaderTransferModal}
+          onClose={() => setShowLeaderTransferModal(false)}
+          conversationId={conversationInfor?.id}
+          setCurrentConversationInfor={setCurrentConversationInfor}
+          conversationInfor={conversationInfor} // Truyền conversationInfor
+        />
+      </ReactModal>
+      
     </>
   );
 };

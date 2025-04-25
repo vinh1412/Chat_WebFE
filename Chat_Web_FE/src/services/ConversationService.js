@@ -131,6 +131,26 @@ export const leaveGroup = async (conversationId) => {
   }
 };
 
+export const transferLeader = async (conversationId, memberId, requestingUserId) => {
+  try {
+      const response = await axiosInstance.put('/conversations/update-role', {
+          conversationId,
+          memberId,
+          role: 'ADMIN',
+          requestingUserId,
+      });
+      console.log('Response transferLeader data:', response.data);
+      return response.data;
+  } catch (error) {
+      console.error(
+        "Error transferring leader:",
+        error.response?.data || error.message
+      );
+      throw new Error(
+        error.response?.data?.message || "Lỗi khi chuyển quyền trưởng nhóm"
+      );
+  }
+};
 export const removeMember = async (conversationId, userId) => {
   try {
     const response = await axiosInstance.delete(
