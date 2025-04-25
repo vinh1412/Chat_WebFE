@@ -148,3 +148,21 @@ export const removeMember = async (conversationId, userId) => {
     );
   }
 };
+
+export const deleteConversationForUserService = async (conversationId) => {
+  try {
+    const response = await axiosInstance.post(
+      `/conversations/delete-for-user/${conversationId}`
+    );
+    console.log("Response deleteConversationForUser:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error deleting conversation for user:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi xóa cuộc trò chuyện"
+    );
+  }
+};
