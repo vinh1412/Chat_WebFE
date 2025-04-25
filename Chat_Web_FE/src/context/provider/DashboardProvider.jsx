@@ -83,6 +83,31 @@ const DashboardProvider = ({ children }) => {
             }
           }
         );
+
+        stompClient.current.subscribe(
+          `/chat/delete/${currentUser.id}`,
+          (message) => {
+            try {
+              const deletedConversation = JSON.parse(message.body);
+              console.log("Conversation deleted:", deletedConversation);
+
+              // Update the conversations list
+              queryClient.invalidateQueries(["conversations"]);
+
+              // Notify the user about the deletion
+              const conversationName =
+                deletedConversation.name || "Cuộc trò chuyện";
+              toast.info(
+                `"${conversationName}" đã bị xóa khỏi danh sách cuộc trò chuyện của bạn.`
+              );
+            } catch (error) {
+              console.error(
+                "Error processing conversation deletion message:",
+                error
+              );
+            }
+          }
+        );
       },
       onStompError: (frame) => {
         console.error("Broker reported error: " + frame.headers["message"]);
@@ -163,7 +188,7 @@ const DashboardProvider = ({ children }) => {
   const [showVideoCallModal, setShowVideoCallModal] = useState(false);
   const videoCallModalRef = useRef(null);
 
-  const [showIncomingCallModal, setShowIncomingCallModal] =useState(false);
+  const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const incomingCallModalRef = useRef(null);
 
   // Modal: Thêm bạn bè AddMemberGroupModal
@@ -172,11 +197,9 @@ const DashboardProvider = ({ children }) => {
 
   console.log("DashboardProvider", showAddFriendModal);
 
-
   // THÊM STATE CHO CÁC MODAL LƯU CONVERSATION
   const [conversationInfor, setConversationInfor] = useState(null);
-  
-  
+
   const contextValue = {
     currentUser,
     setCurrentUser,
@@ -223,7 +246,6 @@ const DashboardProvider = ({ children }) => {
     setShowIncomingCallModal,
     incomingCallModalRef,
 
-    
     showAddMemberGroupModal,
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
@@ -231,8 +253,6 @@ const DashboardProvider = ({ children }) => {
     // Thêm conversationInfor và setConversationInfor vào context
     conversationInfor,
     setConversationInfor,
-
-
   };
 
   return (
