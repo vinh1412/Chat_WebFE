@@ -35,8 +35,8 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
         toast.success("Nhóm đã được giải tán thành công");
         setShowDissolveModal(false);
 
-        dispatch(setSelectedConversation(null));
-        dispatch(setShowConversation(false));
+        // dispatch(setSelectedConversation(null));
+        // dispatch(setShowConversation(false));
 
         // Đóng màn hình quản lý nhóm
         onBack();

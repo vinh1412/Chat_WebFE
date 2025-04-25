@@ -37,12 +37,13 @@ const Conservation = ({
   selectedConversation,
   client,
 }) => {
-  // console.log("Conservation selectedConversation----", selectedConversation);
+  console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
   const bottomRef = React.useRef(null);
 
   const { conversations, deleteConversationForUser } = useConversation();
 
+  console.log("conversations", conversations);
   useEffect(() => {
     if (selectedConversation && conversations?.length) {
       // Tìm cuộc trò chuyện đã cập nhật trong danh sách
@@ -1443,6 +1444,8 @@ const Conservation = ({
                 );
                 if (confirmed) {
                   deleteConversationForUser(selectedConversation.id);
+                  dispatch(setSelectedConversation(null));
+                  dispatch(setShowConversation(false));
                 }
               }}
             >
