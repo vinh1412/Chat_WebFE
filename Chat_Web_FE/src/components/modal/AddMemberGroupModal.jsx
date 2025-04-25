@@ -45,7 +45,10 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
 
   if (!conversationInfor) {
     return (
-      <div className="create-group-modal" style={{ display: isOpen ? "block" : "none" }}>
+      <div
+        className="create-group-modal"
+        style={{ display: isOpen ? "block" : "none" }}
+      >
         <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
           <h5 className="modal-title mb-0">Lỗi: Không có thông tin nhóm</h5>
           <button
@@ -73,26 +76,18 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
       toast.error(error.message || "Không thể thêm thành viên.");
     }
   };
-  
-  
-  
+
   return (
-    <div className="create-group-modal" style={{ display: isOpen ? "block" : "none" }}>
+    <div
+      className="create-group-modal"
+      style={{ display: isOpen ? "block" : "none" }}
+    >
       <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
         <div>
           <h5 className="modal-title mb-0">Thêm thành viên vào nhóm</h5>
-          <span className="text-muted small">
-            ID nhóm: {conversationInfor?.id || "Không có ID nhóm"}
-          </span>
           {conversationInfor?.name && (
             <div className="text-muted small">
               Tên nhóm: {conversationInfor?.name}
-            </div>
-          )}
-          {conversationInfor?.members?.length > 0 && (
-            <div className="text-muted small">
-              ID thành viên đã có trong nhóm:{" "}
-              {conversationInfor.members.map((member) => member.id).join(", ")}
             </div>
           )}
         </div>
@@ -108,13 +103,17 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
         <Form>
           <InputGroup className="mb-3">
             <InputGroup.Text
-              className={`bg-white border-end-0 rounded-start-pill ${isFocused ? "border-primary" : ""}`}
+              className={`bg-white border-end-0 rounded-start-pill ${
+                isFocused ? "border-primary" : ""
+              }`}
             >
               <BsSearch />
             </InputGroup.Text>
             <Form.Control
               placeholder="Nhập tên, số điện thoại, hoặc danh sách số điện thoại"
-              className={`border-start-0 rounded-end-pill ${isFocused ? "border-primary" : ""}`}
+              className={`border-start-0 rounded-end-pill ${
+                isFocused ? "border-primary" : ""
+              }`}
               style={{ outline: "none", boxShadow: "none" }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -200,7 +199,9 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
                       />
                       <span
                         style={{
-                          textDecoration: isAlreadyMember ? "line-through" : "none",
+                          textDecoration: isAlreadyMember
+                            ? "line-through"
+                            : "none",
                         }}
                       >
                         {user.displayName}
@@ -227,9 +228,9 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
           variant="primary"
           onClick={handleAddMembers}
           className="rounded-pill"
-          disabled={selectedMembers.length === 0} 
+          disabled={selectedMembers.length === 0}
         >
-          Thêm thành viên   
+          Thêm thành viên
         </Button>
       </div>
     </div>

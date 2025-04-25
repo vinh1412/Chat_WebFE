@@ -151,3 +151,38 @@ export const transferLeader = async (conversationId, memberId, requestingUserId)
       );
   }
 };
+export const removeMember = async (conversationId, userId) => {
+  try {
+    const response = await axiosInstance.delete(
+      `/conversations/leave/${conversationId}/member/${userId}`
+    );
+    console.log("Removed member from group conversation:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error removing member from group conversation:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi xóa thành viên khỏi nhóm"
+    );
+  }
+};
+
+export const deleteConversationForUserService = async (conversationId) => {
+  try {
+    const response = await axiosInstance.post(
+      `/conversations/delete-for-user/${conversationId}`
+    );
+    console.log("Response deleteConversationForUser:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error deleting conversation for user:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi xóa cuộc trò chuyện"
+    );
+  }
+};

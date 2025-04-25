@@ -21,11 +21,15 @@ import "../../../assets/css/UploadFile.css";
 import "../../../assets/css/StickerGif.css";
 import StickerPicker from "../../../components/stickers/StickerPicker";
 import { getFileIcon } from "../../../utils/FormatIconFile";
-import { setSelectedConversation } from "../../../redux/slice/commonSlice";
+import {
+  setSelectedConversation,
+  setShowConversation,
+} from "../../../redux/slice/commonSlice";
 import useConversation from "../../../hooks/useConversation";
 
 import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
+
 const Conservation = ({
   onShowDetail,
   onHideDetail,
@@ -37,7 +41,7 @@ const Conservation = ({
   const dispatch = useDispatch();
   const bottomRef = React.useRef(null);
 
-  const { conversations } = useConversation();
+  const { conversations, deleteConversationForUser } = useConversation();
 
   useEffect(() => {
     if (selectedConversation && conversations?.length) {
@@ -45,6 +49,16 @@ const Conservation = ({
       const updatedConversation = conversations.find(
         (conv) => conv.id === selectedConversation.id
       );
+
+      if (!updatedConversation) {
+        // Cuộc trò chuyện đã bị xóa hoàn toàn khỏi danh sách
+        console.log(
+          "Conversation has been deleted, navigating back to home screen"
+        );
+        dispatch(setSelectedConversation(null));
+        dispatch(setShowConversation(false));
+        return;
+      }
 
       // Nếu có sự thay đổi về trạng thái (dissolved) của cuộc trò chuyện, cập nhật lại state
       if (
@@ -54,7 +68,7 @@ const Conservation = ({
         dispatch(setSelectedConversation(updatedConversation));
       }
     }
-  }, [conversations, selectedConversation?.id]);
+  }, [conversations, selectedConversation?.id, dispatch]);
 
   // lấy danh sách tin nhắn theo conversationId
   const {
@@ -935,8 +949,15 @@ const stompClient = React.useRef(null);
           <button className="btn btn-sm">
             <i className="bi bi-search"></i>
           </button>
-          <button className="btn btn-sm" onClick={showDetail ? onHideDetail : onShowDetail}>
-            <i className={`bi ${showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"} me-2`}></i>
+          <button
+            className="btn btn-sm"
+            onClick={showDetail ? onHideDetail : onShowDetail}
+          >
+            <i
+              className={`bi ${
+                showDetail ? "bi-arrow-bar-right" : "bi-arrow-bar-left"
+              } me-2`}
+            ></i>
           </button>
         </div>
       </div>
@@ -1386,6 +1407,20 @@ const stompClient = React.useRef(null);
           <div className="alert alert-warning mb-0 text-center">
             <i className="bi bi-lock-fill me-2"></i>
             Nhóm đã bị giải tán. Không thể gửi tin nhắn mới.
+            <button
+              className="btn btn-sm btn-outline-danger ms-2"
+              onClick={() => {
+                const confirmed = window.confirm(
+                  "Bạn có chắc muốn xóa cuộc trò chuyện này khỏi danh sách?"
+                );
+                if (confirmed) {
+                  deleteConversationForUser(selectedConversation.id);
+                }
+              }}
+            >
+              <i className="bi bi-trash3 me-1"></i>
+              Xóa cuộc trò chuyện
+            </button>
           </div>
         ) : (
           <>
