@@ -12,6 +12,7 @@ const QRLogin = ({ onSessionIdGenerated }) => {
       return v.toString(16);
     });
   };
+  //http://localhost:8080/api/v1/user/me={sessionId}
 
   const generateQRCode = async () => {
     try {
@@ -42,7 +43,8 @@ const QRLogin = ({ onSessionIdGenerated }) => {
       {qrCode && (
         <div className="text-center">
           <img src={qrCode} alt="QR Code" className="mb-4" />
-          {/* <p className="text-lg">Mã QR chứa session ID</p> */}
+          <p className="text-lg">Mã QR chứa session ID</p>
+      
         </div>
       )}
     </div>
