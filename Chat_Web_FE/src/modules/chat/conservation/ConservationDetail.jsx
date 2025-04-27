@@ -10,6 +10,11 @@ import { useDispatch } from "react-redux";
 import { Toast } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { setIsSuccessSent } from "../../../redux/friendSlice";
+import { findLinkGroupByConversationId } from "../../../services/ConversationService";
+import { useEffect } from "react";
+import { FaQrcode } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+
 
 const ConversationDetail = ({ conversationInfor }) => {
   console.log("conversationInfor:", conversationInfor);
@@ -20,6 +25,27 @@ const ConversationDetail = ({ conversationInfor }) => {
   const [showMemberGroup, setShowMemberGroup] = useState(true);
   const [showMemberList, setShowMemberList] = useState(false);
   const dispatch = useDispatch();
+
+
+  const navigate = useNavigate(); 
+
+  // lấy linkgroup theo conversationId
+  const [groupLink, setGroupLink] = useState("");
+  useEffect(() => {
+    const fetchGroupLink = async () => {
+      if (conversationInfor?.id && conversationInfor.is_group) {
+        try {
+          const link = await findLinkGroupByConversationId(conversationInfor.id);
+          setGroupLink(link?.linkGroup || ""); // <-- CHỈ LẤY GIÁ TRỊ CHUỖI
+        } catch (error) {
+          console.error("Failed to fetch group link:", error.message);
+        }
+      }
+    };
+  
+    fetchGroupLink();
+  }, [conversationInfor]);
+
 
   //Show view member group
   if (showMemberList) {
@@ -211,26 +237,32 @@ const ConversationDetail = ({ conversationInfor }) => {
                         <div className="d-flex flex-column">
                           <span>Link tham gia nhóm</span>
                           <span className="text-primary">
-                            zalo.me/g/{conversationInfor.id?.substring(0, 10)}
+                            {groupLink || "Chưa có link nhóm"}
                           </span>
                         </div>
                         <div className="ms-2">
-                          <button
-                            className="btn btn-sm p-0 me-2"
-                            onClick={() =>
-                              copyToClipboard(
-                                `zalo.me/g/${conversationInfor.id?.substring(
-                                  0,
-                                  10
-                                )}`
-                              )
-                            }
-                          >
-                            <i className="bi bi-clipboard fs-5"></i>
-                          </button>
-                          <button className="btn btn-sm p-0">
-                            <i className="bi bi-share fs-5"></i>
-                          </button>
+                            <button
+                              className="btn btn-sm p-0 me-2"
+                              onClick={() => copyToClipboard(groupLink)}
+                            >
+                              <i className="bi bi-clipboard fs-5"></i>
+                            </button>
+
+                            <button className="btn btn-sm p-0">
+                              <i className="bi bi-share fs-5"></i>
+                            </button>
+                            <button
+                              className="btn btn-sm p-0 ms-2"
+                              onClick={() => {
+                                // Mở tab mới với URL của GroupQRCodePage
+                                const url = `/group-qr-code/${conversationInfor.id}?groupName=${encodeURIComponent(
+                                  conversationInfor.name
+                                )}&groupLink=${encodeURIComponent(groupLink)}`;
+                                window.open(url, "_blank");
+                              }}
+                            >
+                              <FaQrcode size={24} />
+                            </button>
                         </div>
                       </div>
                     </div>

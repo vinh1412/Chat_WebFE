@@ -186,3 +186,22 @@ export const deleteConversationForUserService = async (conversationId) => {
     );
   }
 };
+
+export const findLinkGroupByConversationId = async (conversationId) => {
+  try {
+    const response = await axiosInstance.get(
+      `/conversations/linkGroup/${conversationId}`
+    );
+    console.log("Response findLinkGroupByConversationId data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error finding link group by conversation ID:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi tìm kiếm link nhóm"
+    );
+  }
+}
+
