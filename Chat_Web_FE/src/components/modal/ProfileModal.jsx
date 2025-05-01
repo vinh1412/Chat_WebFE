@@ -20,7 +20,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const fileInputRef = useRef(null);
-  console.log("currentUser", currentUser);
+  // console.log("currentUser", currentUser);
   const [showEditModal, setShowEditModal] = useState(false);
 
   // connect websocket
@@ -28,7 +28,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     if (currentUser?.id) {
       // function để xử lý khi nhận được tin nhắn từ WebSocket
       const handleMessageReceived = (updatedProfile) => {
-        console.log("Received message:", updatedProfile);
+        // console.log("Received message:", updatedProfile);
         // Cập nhật lại thông tin người dùng trong state
         setCurrentUser((prevUser) => ({
           ...prevUser,
@@ -46,8 +46,8 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const handleChangeAvatar = () => {
     fileInputRef.current?.click();
   };
-  console.log("Phone", currentUser?.phone);
-  console.log("FormatPhone", displayPhoneNumber(currentUser?.phone));
+  // console.log("Phone", currentUser?.phone);
+  // console.log("FormatPhone", displayPhoneNumber(currentUser?.phone));
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -174,7 +174,11 @@ const ProfileModal = ({ isOpen, onClose }) => {
             <h6 className="text-muted mb-3">Thông tin cá nhân</h6>
             <div>
               <strong>Giới tính:</strong>{" "}
-              {currentUser?.gender === "MALE" ? "Nam" : "Nữ"}
+              {currentUser?.gender === "MALE"
+                ? "Nam"
+                : currentUser?.gender
+                ? "Nữ"
+                : "Chưa cập nhật"}
             </div>
             <div>
               <strong>Ngày sinh:</strong>{" "}

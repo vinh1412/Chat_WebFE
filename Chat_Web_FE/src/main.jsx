@@ -17,6 +17,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage.jsx"));
 import ProtectedRoute from "./components/routing/ProtectedRoute";
 
+
 const queryClient = new QueryClient();
 const LayoutDashboard = React.lazy(() =>
   import("./components/layout/LayoutDashboard.jsx")
@@ -32,7 +33,6 @@ const RegisterStepInfo = React.lazy(() =>
   import("./pages/Register/RegisterStepInfo.jsx")
 );
 
-// router
 const router = createBrowserRouter([
   {
     element: (
