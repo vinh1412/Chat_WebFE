@@ -1,0 +1,192 @@
+.request-container {
+    background-color: #f0f2f5;
+    padding: 20px;
+    max-width: 100%;
+    margin: auto;
+    font-family: "Segoe UI", sans-serif;
+  }
+  
+  .title {
+    font-size: 20px;
+    /* font-weight: 600; */
+    /* margin-bottom: 20px; */
+    background-color: #ffffff;
+    padding: 10px;
+  }
+  
+  .section {
+    margin-bottom: 32px;
+  }
+  
+  .section-title {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 12px;
+  }
+  
+  /* ===== Card nhận lời mời ===== */
+  .request {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .request-card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    align-items: flex-start;
+    display: flex;
+    flex: 0 0 calc(33.333% - 11px); /* 3 per row with gap compensation */
+    box-sizing: border-box;
+  }
+  .avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 14px;
+  }
+  
+  .card-info {
+    flex: 1;
+  }
+  
+  .name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1d1d1f;
+  }
+  
+  .chat-icon {
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+  }
+  
+  .chat-icon:hover {
+    background-color: #e7f3ff;
+  }
+  
+  .time {
+    color: #888;
+    font-size: 13px;
+  }
+  
+  .message-box {
+    background: #f0f2f5;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    color: #333;
+    margin-top: 8px;
+    height: 60px;
+  }
+  
+  .action-buttons {
+    margin-top: 12px;
+  }
+  
+  .btn {
+    padding: 6px 14px;
+    font-size: 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+  
+  .btn-accept {
+    background-color: #005ae0;
+    color: #fff;
+  }
+  
+  .btn-accept:hover {
+    background-color: #0041b3;
+  }
+  
+  .btn-decline,
+  .btn-cancel {
+    background-color: #e4e6eb;
+    color: #050505;
+  }
+  
+  .btn-decline:hover,
+  .btn-cancel:hover {
+    background-color: #d8dadf;
+  }
+  
+  /* ===== Card gửi lời mời ===== */
+  .section-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #1d1d1f;
+  }
+  
+  .sent-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .sent-card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    display: flex;
+    flex: 0 0 calc(33.333% - 11px);
+    box-sizing: border-box;
+    min-width: 280px;
+  }
+  
+  .sent-left {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .sent-info {
+    flex: 1;
+  }
+  
+  .name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  
+  .time {
+    color: #888;
+    font-size: 13px;
+    display: block;
+    margin-top: 4px;
+  }
+  
+  .btn-cancel {
+    margin-top: 12px;
+    width: 100%;
+    background-color: #e4e6eb;
+    color: #050505;
+    padding: 8px 0;
+    border-radius: 6px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .btn-cancel:hover {
+    background-color: #d8dadf;
+  }
+  
