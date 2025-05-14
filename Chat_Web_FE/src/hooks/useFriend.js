@@ -75,7 +75,7 @@ const useFriend = () => {
         },
         onError: (error) => {
             console.error("Accept friend request failed:", error);
-            toast.error("Từ chối yêu cầu kết bạn thất bại.", {
+            toast.error("Chấp nhận yêu cầu kết bạn thất bại.", {
                 position: 'top-center',
                 autoClose: 2000,
             });

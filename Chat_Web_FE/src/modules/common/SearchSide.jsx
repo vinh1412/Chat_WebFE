@@ -17,23 +17,46 @@ const ItemSerch = ({item}) => {
     // console.log("ItemSerch", item);
     const dispatch = useDispatch();
     const [isFriend, setIsFriend] = React.useState(false);
-    const { sendRequest, isSuccessSent } = useFriend();
+    const [isSentSuccess, setIsSentSuccess] = React.useState(false);
+    const [isReceived, setIsReceived] = React.useState(false);
+    const { sendRequest, sentRequests, receivedRequests } = useFriend();
     const { currentUser } = useDashboardContext();
     const { findOrCreateConversation } = useConversation();
+
+      const sentReqs = React.useMemo(() => {
+          if(!Array.isArray(sentRequests?.response)) return [];
+          return sentRequests?.response || []; // Use the response from the sentRequests or an empty array if loading
+      }, [sentRequests]);
+    
+      const reciveReqs = React.useMemo(() => {
+          if(!Array.isArray(receivedRequests?.response)) return [];
+          return receivedRequests?.response || []; // Use the response from the sentRequests or an empty array if loading
+      }, [receivedRequests]);
 
     // Kiểm tra xem người dùng đã là bạn bè hay chưa
     React.useEffect(() => {
         const checkFriendStatus = async () => {
             try {
                 const response = await checkFriend(item.id);
-                console.log("Friend status:", response);
                 setIsFriend(response);
             } catch (error) {
                 console.error("Error checking friend status:", error);
             }
+
+            const isSent = sentReqs.find((req) => req?.userId === item?.id);
+            const isReceived = reciveReqs.find((req) => req?.userId === item?.id);
+
+            if (isSent) {
+                setIsSentSuccess(true);
+            }
+            if (isReceived) {
+                setIsReceived(true);
+            }
         }
         checkFriendStatus();
-    }, [item.id]);
+    }, [item.id, sentReqs, reciveReqs]);
+    console.log("isSentSuccess", item.id, isSentSuccess);
+    console.log("isReceived", item.id, isReceived);
 
     const handleClick = () => {
         // console.log("Item clicked:---------------", item);
@@ -71,13 +94,18 @@ const ItemSerch = ({item}) => {
             {!isFriend ? (
 
                 // Nếu chưa là bạn bè thì hiển thị nút gửi lời mời kết bạn
-                !isSuccessSent ? (
-                    <button className="rounded-2 btn btn-outline-secondary border" style={{fontSize: '12px', padding: '4px 8px'}} onClick={() => {sendRequest(item.id)}}>
-                        Kết bạn
-                    </button>
-                ) : (
+                isSentSuccess ? (
+                    
                     <button className="rounded-2 btn btn-outline-secondary border" style={{fontSize: '12px', padding: '4px 8px'}} disabled>
                         Đã gửi lời mời
+                    </button>
+                ) : isReceived ? (
+                    <button className="rounded-2 btn btn-outline-secondary border" style={{fontSize: '12px', padding: '4px 8px'}} disabled>
+                        Phản hồi
+                    </button>
+                ) : (
+                    <button className="rounded-2 btn btn-outline-secondary border" style={{fontSize: '12px', padding: '4px 8px'}} onClick={() => {sendRequest(item.id)}}>
+                        Kết bạn
                     </button>
                 )
             ): (<div></div>)}
@@ -93,6 +121,7 @@ const SearchSide = () => {
 
     const [keyword, setKeyword] = React.useState("");
     const [searchResults, setSearchResults] = React.useState([]);
+    const { currentUser } = useDashboardContext();
     
     // tự động focus vào ô tìm kiếm khi mở search
     React.useEffect(() => {
@@ -175,7 +204,7 @@ const SearchSide = () => {
                     <h6 className="mt-1">Kết quả tìm kiếm cho "{keyword}"</h6>
                     {/* List tìm kiếm gần đây */}
                     <div className="d-flex flex-column gap-2 mt-2">
-                        {searchResults.map((item) => (
+                        {searchResults.filter((item) => item.id !== currentUser.id).map((item) => (
                             // Gọi component ItemSerch và truyền props vào
                             <ItemSerch key={item.id} item={item} onClick={handleClick}/>
                         ))}

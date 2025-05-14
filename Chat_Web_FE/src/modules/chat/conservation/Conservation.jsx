@@ -92,9 +92,14 @@ const Conservation = ({
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [selectedReceivers, setSelectedReceivers] = useState([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
+
   const [isFriend, setIsFriend] = useState(false);
-  const { sendRequest } = useFriend();
-  const { isSuccessSent } = useSelector((state) => state.friend);
+  const [isSentReq, setIsSentReq] = useState({});
+  const [isReceivedReq, setIsReceivedReq] = useState({});
+  const [friendRequestId, setFriendRequestId] = useState('');
+  
+  const { sendRequest, sentRequests, receivedRequests, acceptRequest } = useFriend();
+
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
 
@@ -131,6 +136,17 @@ const Conservation = ({
     setShowVideoCallModal(true);
   };
 
+  // friend request
+  const sentReqs = React.useMemo(() => {
+    if(!Array.isArray(sentRequests?.response)) return [];
+    return sentRequests?.response || []; // Use the response from the sentRequests or an empty array if loading
+  }, [sentRequests]);
+      
+  const reciveReqs = React.useMemo(() => {
+    if(!Array.isArray(receivedRequests?.response)) return [];
+      return receivedRequests?.response || []; // Use the response from the receivedRequests or an empty array if loading
+  }, [receivedRequests]);
+
   const messageRefs = useRef({});
   // Lấy thông tin người dùng ngẫu nhiên
   const userReceiver = useMemo(() => {
@@ -145,28 +161,14 @@ const Conservation = ({
   // console.log("isSuccessSent:", isSuccessSent[userReceiver?.id]);
 
   console.log("Selected conversation:", selectedConversation);
-  // check xem có phải là bạn bè không
-  useEffect(() => {
-    const checkFriendStatus = async () => {
-      try {
-        const response = await checkFriend(userReceiver?.id);
-        setIsFriend(response);
-      } catch (error) {
-        console.error("Error checking friend status:", error);
-      }
-    };
-
-    if (userReceiver) {
-      checkFriendStatus();
-    }
-  }, [userReceiver]);
 
   useEffect(() => {
     if (userReceiver) {
       console.log("User receiver updated:", userReceiver);
     }
   }, [userReceiver]);
-  // check xem có phải là bạn bè không
+
+  // check friend status
   useEffect(() => {
     const checkFriendStatus = async () => {
       try {
@@ -175,9 +177,26 @@ const Conservation = ({
       } catch (error) {
         console.error("Error checking friend status:", error);
       }
-    };
+        //kiểm tra đã gửi lời mời hay chưa
+        const isSent = sentReqs.find((req) => req?.userId === userReceiver?.id);
+        if (isSent) {
+          setIsSentReq((prev) => ({...prev, [userReceiver?.id] : true}))
+        } else {
+          setIsSentReq((prev) => ({...prev, [userReceiver?.id] : false}))
+        }
+
+        //kiểm tra đã nhận lời mời hay chưa
+        const isReceived = reciveReqs.find((req) => req?.userId === userReceiver?.id);
+        if(isReceived) {
+          setIsReceivedReq((prev) => ({...prev, [userReceiver?.id]: true}));
+          setFriendRequestId(isReceived?.requestId);
+        } else {
+          setIsReceivedReq((prev) => ({...prev, [userReceiver?.id]: false}));
+        }
+      }
     if (userReceiver) checkFriendStatus();
-  }, [userReceiver]);
+
+  }, [userReceiver, sentReqs, reciveReqs]);
 
   useEffect(() => {
     if (messages) {
@@ -972,25 +991,46 @@ const Conservation = ({
       )}
       {/* Notification */}
       {!selectedConversation?.is_group && !isFriend && (
-        <div className="card-body d-flex align-items-center justify-content-between">
-          <div>
-            <i className="bi bi-person-plus-fill mx-2"></i>
-            <span>Gửi yêu cầu kết bạn tới người này</span>
-          </div>
-          {isSuccessSent[userReceiver?.id] ? (
-            <button className="btn btn-outline-secondary btn-sm" disabled>
-              Đã gửi lời mời kết bạn
-            </button>
+        <div className="card-body d-flex align-items-center justify-content-between" style={{ height: "10px" }}>
+          {isSentReq[userReceiver?.id] ? (
+            <div>
+
+              <span className="">
+               Bạn đã gửi lời mời kết bạn và đang chờ phản hồi từ người này
+              </span>
+            </div>
+          ) : isReceivedReq[userReceiver?.id] ? (
+            <>
+              <div>
+                <i className="bi bi-person-plus-fill mx-2"></i>
+                <span> Bạn đã nhận được lời mời kết bạn từ người này</span>
+              </div>
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => {
+                  console.log("Friend request ID:", friendRequestId);
+                  acceptRequest(friendRequestId);
+                }}
+              >
+                Chấp nhận
+              </button>
+            </>
           ) : (
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => {
-                sendRequest(userReceiver.id);
-                dispatch(setIsSuccessSent(userReceiver.id));
-              }}
-            >
-              Gửi kết bạn
-            </button>
+            <>
+              <div>
+                <i className="bi bi-person-plus-fill mx-2"></i>
+                <span>Gửi yêu cầu kết bạn tới người này</span>
+              </div>
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => {
+                  sendRequest(userReceiver.id);
+                  dispatch(setIsSuccessSent(userReceiver.id));
+                }}
+              >
+                Gửi kết bạn
+              </button>
+            </>
           )}
         </div>
       )}
