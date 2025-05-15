@@ -1,13 +1,17 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { FaSearch, FaSortAlphaDown, FaFilter, FaCheck, FaUserFriends } from "react-icons/fa"; // Added FaUserFriends here
 import "../../assets/css/ListFriend.css";
 import  useFriend from "../../hooks/useFriend"; // Adjust the import path as necessary
 import Loading from "../../components/common/Loading"; // Adjust the import path as necessary
-
+import SockJS from "sockjs-client"; 
+import { Client } from "@stomp/stompjs";
+import { useDashboardContext } from "../../context/Dashboard_context";
+import { useQueryClient } from "@tanstack/react-query";
 const ListFriend = () => {
-
+    const { currentUser } = useDashboardContext();
     const { friendList, isLoadingFriends } = useFriend(); // Assuming you have a hook to get the friend list
     const [loading, setLoading] = useState(false); // Local loading state for the component
+    const queryClient = useQueryClient();
 
     const friends = useMemo(() => {
         if(isLoadingFriends) return [];
@@ -52,6 +56,62 @@ const ListFriend = () => {
         setFilterOpen(false);
     };
 
+    //socket
+    const client = useRef(null);
+        useEffect(() => {
+            // Khởi tạo tạo kết nối WebSocket
+            const socket = new SockJS("http://localhost:8080/ws"); // Thay thế bằng URL WebSocket của bạn
+            // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
+            client.current = new Client({
+              webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
+              reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
+              debug: (str) => {
+                console.log(str);
+              },
+              onConnect: () => {
+                // Hàm được gọi khi kết nối thành công
+                console.log("Connected to WebSocket");
+                client.current.subscribe(
+                    `/friend/accept/${currentUser?.id}`,
+                    (message) => {
+                        if (message.body) {
+                            const data = JSON.parse(message.body);
+                            console.log("Nhận được tin nhắn từ WebSocket:", data);
+
+                            // Cập nhật danh sách bạn bè trong cache
+                            queryClient.setQueryData(['friendList'], (oldData) => {
+                                if(!oldData.response) return oldData;
+
+                                // Kiểm tra xem người dùng đã có trong danh sách bạn bè chưa
+                                const existingFriend = oldData.response.find(friend => friend.userId === data.userId);
+                                if(existingFriend) {
+                                    return oldData;
+                                }
+
+                                return {...oldData, response: [...oldData.response, data] };
+                            });
+
+                            // You can also display some notification if needed
+                            console.log("Friend request accepted:", data);
+                        }
+                    }
+                );
+              },
+              onStompError: (frame) => {
+                // Hàm được gọi khi có lỗi trong giao thức STOMP
+                console.error("Broker reported error: " + frame.headers["message"]);
+                console.error("Additional details: " + frame.body);
+              },
+            });
+        
+            client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
+        
+            return () => {
+              if (client.current && client.current.connected) {
+                client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
+              }
+            };
+        }, [client, currentUser?.id, queryClient]);
     return (
         <div className="group-list-wrapper">
             <div className="ListFriend__header">
