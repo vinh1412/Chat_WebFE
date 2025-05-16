@@ -29,6 +29,7 @@ import useConversation from "../../../hooks/useConversation";
 
 import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Conservation = ({
   onShowDetail,
@@ -81,6 +82,7 @@ const Conservation = ({
   } = useMessage(selectedConversation?.id);
 
   console.log("Conservation selectedConversation----", selectedConversation);
+  const queryClient = useQueryClient();
 
   const { currentUser } = useDashboardContext();
 
@@ -429,6 +431,14 @@ const Conservation = ({
             }
           }
         );
+
+        client.current.subscribe(`/friend/accept/${currentUser?.id}`, async (message) => {
+          if(message.body) {
+            const response = await checkFriend(userReceiver?.id);
+            setIsFriend(response);
+
+          }
+        });
       },
       onStompError: (frame) => {
         // Hàm được gọi khi có lỗi trong giao thức STOMP
