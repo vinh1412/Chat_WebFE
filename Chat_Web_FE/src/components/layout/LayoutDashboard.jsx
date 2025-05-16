@@ -55,6 +55,34 @@ const LayoutDashboard = () => {
                   }
                 }
           );
+
+          client.current.subscribe(
+                    `/friend/accept/${currentUser?.id}`,
+                    (message) => {
+                        if (message.body) {
+                            const data = JSON.parse(message.body);
+                            console.log("Nhận được tin nhắn từ WebSocket:", data);
+
+                            // Cập nhật danh sách bạn bè trong cache
+                            queryClient.setQueryData(['friendList'], (oldData) => {
+                                if(!oldData.response) return oldData;
+
+                                // Kiểm tra xem người dùng đã có trong danh sách bạn bè chưa
+                                const existingFriend = oldData.response.find(friend => friend.userId === data.userId);
+                                if(existingFriend) {
+                                    return oldData;
+                                }
+
+                                return {...oldData, response: [...oldData.response, data] };
+                            });
+                            queryClient.invalidateQueries(["sentRequests"]); //  cập nhật lại danh sách yêu cầu đã gửi
+                            queryClient.invalidateQueries(["receivedRequests"]); //  cập nhật lại danh sách yêu cầu đã nhận
+
+                            // You can also display some notification if needed
+                            console.log("Friend request accepted:", data);
+                        }
+                    }
+                );
         },
         onStompError: (frame) => {
           // Hàm được gọi khi có lỗi trong giao thức STOMP
