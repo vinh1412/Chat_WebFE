@@ -1,49 +1,82 @@
-import React, {useMemo} from "react";
+import React, {useEffect, useMemo, useRef} from "react";
 import "../../assets/css/ListFriendRequest.css";
 import useFriend from "../../hooks/useFriend";
 import Loading from "../../components/common/Loading";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { useDashboardContext } from "../../context/Dashboard_context";
+import { useQueryClient } from "@tanstack/react-query";
 
 const FriendRequests = () => {
-  // const receivedRequests = [
-  //   {
-  //     name: "Dương Nguyễn",
-  //     time: "42 phút - Từ cửa sổ trò chuyện",
-  //     message: "Xin chào, mình là Dương Nguyễn. Kết bạn với mình nhé!",
-  //     avatar: "https://i.pravatar.cc/300?img=1",
-  //   },
-  //   {
-  //     name: "Ngọc Trân",
-  //     time: "1 giờ - Từ cửa sổ trò chuyện",
-  //     message: "Chào bạn, mình là Trân. Kết nối nhé!",
-  //     avatar: "https://i.pravatar.cc/300?img=2",
-  //   },
-  //   {
-  //     name: "Minh Thư",
-  //     time: "2 giờ - Từ cửa sổ trò chuyện",
-  //     message: "Mình muốn làm quen với bạn!",
-  //     avatar: "https://i.pravatar.cc/300?img=3",
-  //   },
-  // ];
+  const queryClient = useQueryClient();
 
-  // const sentRequests = [
-  //   { name: "Sharecode",       avatar: "https://i.pravatar.cc/300?img=4"    },
-  //   { name: "Linh",       avatar: "https://i.pravatar.cc/300?img=6"    },
-  //   { name: "Nguyễn Duy Minh", avatar: "https://i.pravatar.cc/300?img=16"  },
-  // ];
-
+  const { currentUser } = useDashboardContext();
   const { sentRequests, isLoadingSent, receivedRequests, isLoadingRecive, acceptRequest, isLoadingAccepting, recallRequest, rejectRequest,  } = useFriend();
 
   const loading = useMemo(() => isLoadingSent || isLoadingRecive || isLoadingAccepting, [isLoadingSent, isLoadingRecive, isLoadingAccepting]);
 
   const sentReqs = useMemo(() => {
       if(isLoadingSent) return [];
-      return sentRequests?.response || []; // Use the response from the sentRequests or an empty array if loading
+      return sentRequests?.response || []; 
   }, [isLoadingSent, sentRequests]);
 
   const reciveReqs = useMemo(() => {
       if(isLoadingRecive) return [];
-      return receivedRequests?.response || []; // Use the response from the sentRequests or an empty array if loading
+      return receivedRequests?.response || []; 
   }, [isLoadingRecive, receivedRequests]);
+
+  // const client = useRef(null);
+  // useEffect(() => {
+  //   // Khởi tạo tạo kết nối WebSocket
+  //   const socket = new SockJS("http://localhost:8080/ws"); 
+  //     // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
+  //     client.current = new Client({
+  //       webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
+  //       reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
+  //       debug: (str) => {
+  //         console.log(str);
+  //       },
+  //       onConnect: () => {
+  //         // Hàm được gọi khi kết nối thành công
+  //         console.log("Connected to WebSocket");
+  //         client.current.subscribe(`/friend/request/${currentUser?.id}`,
+  //               (message) => {
+  //                 if (message.body) {
+  //                   const data = JSON.parse(message.body);
+  //                   console.log("Nhận được tin nhắn từ WebSocket:", data);
+
+  //                   // Cập nhật danh sách bạn bè trong cache
+  //                   queryClient.setQueryData(['receivedRequests'], (oldData) => {
+  //                     if (!oldData.response) return oldData;
+
+  //                     // Kiểm tra xem request đã tồn tại trong danh sách hay chưa
+  //                     const existingRequest = oldData.response.find(request => request.requestId === data.requestId);
+  //                     if (existingRequest) {
+  //                       return oldData;
+  //                     }
+
+  //                     return {...oldData, response: [...oldData.response, data] };
+  //                   });
+  //                 }
+  //               }
+  //         );
+  //       },
+  //       onStompError: (frame) => {
+  //         // Hàm được gọi khi có lỗi trong giao thức STOMP
+  //         console.error("Broker reported error: " + frame.headers["message"]);
+  //               console.error("Additional details: " + frame.body);
+  //       },
+  //     });
+        
+  //     client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
+        
+  //     return () => {
+  //       if (client.current && client.current.connected) {
+  //         client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
+  //       }
+  //     };
+  // }, [client, currentUser?.id, queryClient]);  
+
 
   return (
     <div className="request-container">
