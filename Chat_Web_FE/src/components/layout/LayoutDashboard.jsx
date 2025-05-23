@@ -34,7 +34,7 @@ const LayoutDashboard = () => {
                 (message) => {
                   if (message.body) {
                     const data = JSON.parse(message.body);
-                    console.log("Nhận được tin nhắn từ WebSocket:", data);
+                    console.log("Nhận được tin nhắn từ WebSocket request:", data);
 
                     // Cập nhật danh sách request trong cache
                     queryClient.setQueryData(['receivedRequests'], (oldData) => {
@@ -42,14 +42,17 @@ const LayoutDashboard = () => {
                           position: 'top-center',
                           autoClose: 2000,
                       });
-                      if (!oldData.response) return oldData;
-
-                      // Kiểm tra xem request đã tồn tại trong danh sách hay chưa
-                      const existingRequest = oldData.response.find(request => request.requestId === data.requestId);
-                      if (existingRequest) {
-                        return oldData;
+                      if (!Array.isArray(oldData.response)) {
+                        return {...oldData, response: [data] };
                       }
-
+                      
+                      if(Array.isArray(oldData.response)) {
+                        // Kiểm tra xem request đã tồn tại trong danh sách hay chưa
+                        const existingRequest = oldData.response.find(request => request.requestId === data.requestId);
+                        if (existingRequest) {
+                          return oldData;
+                        }
+                      }
                       return {...oldData, response: [...oldData.response, data] };
                     });
                   }
@@ -82,7 +85,29 @@ const LayoutDashboard = () => {
                             console.log("Friend request accepted:", data);
                         }
                     }
-                );
+          );
+
+          client.current.subscribe(`/friend/unfriend/${currentUser?.id}`,
+            (message) => {
+              if(message.body) {
+                const data = JSON.parse(message.body);
+                console.log("Nhận được tin nhắn từ WebSocket unfriend:", data);
+
+                // Cập nhật danh sách bạn bè trong cache
+                queryClient.setQueryData(['friendList'], (oldData) => {
+                  if(!oldData.response) return oldData;
+
+                 
+                  const friends = oldData.response.filter(friend => friend.userId !== data.userId);
+                  if(friends.length === oldData.response.length) {
+                    return oldData;
+                  }
+
+                  return {...oldData, response: friends };
+                });
+              }
+            }
+          )
         },
         onStompError: (frame) => {
           // Hàm được gọi khi có lỗi trong giao thức STOMP
