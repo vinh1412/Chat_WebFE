@@ -15,7 +15,6 @@ import { useEffect } from "react";
 import { FaQrcode } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-
 const ConversationDetail = ({ conversationInfor }) => {
   console.log("conversationInfor:", conversationInfor);
   const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
@@ -26,8 +25,7 @@ const ConversationDetail = ({ conversationInfor }) => {
   const [showMemberList, setShowMemberList] = useState(false);
   const dispatch = useDispatch();
 
-
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   // lấy linkgroup theo conversationId
   const [groupLink, setGroupLink] = useState("");
@@ -35,17 +33,18 @@ const ConversationDetail = ({ conversationInfor }) => {
     const fetchGroupLink = async () => {
       if (conversationInfor?.id && conversationInfor.is_group) {
         try {
-          const link = await findLinkGroupByConversationId(conversationInfor.id);
+          const link = await findLinkGroupByConversationId(
+            conversationInfor.id
+          );
           setGroupLink(link?.linkGroup || ""); // <-- CHỈ LẤY GIÁ TRỊ CHUỖI
         } catch (error) {
           console.error("Failed to fetch group link:", error.message);
         }
       }
     };
-  
+
     fetchGroupLink();
   }, [conversationInfor]);
-
 
   //Show view member group
   if (showMemberList) {
@@ -241,28 +240,30 @@ const ConversationDetail = ({ conversationInfor }) => {
                           </span>
                         </div>
                         <div className="ms-2">
-                            <button
-                              className="btn btn-sm p-0 me-2"
-                              onClick={() => copyToClipboard(groupLink)}
-                            >
-                              <i className="bi bi-clipboard fs-5"></i>
-                            </button>
+                          <button
+                            className="btn btn-sm p-0 me-2"
+                            onClick={() => copyToClipboard(groupLink)}
+                          >
+                            <i className="bi bi-clipboard fs-5"></i>
+                          </button>
 
-                            <button className="btn btn-sm p-0">
-                              <i className="bi bi-share fs-5"></i>
-                            </button>
-                            <button
-                              className="btn btn-sm p-0 ms-2"
-                              onClick={() => {
-                                // Mở tab mới với URL của GroupQRCodePage
-                                const url = `/group-qr-code/${conversationInfor.id}?groupName=${encodeURIComponent(
-                                  conversationInfor.name
-                                )}&groupLink=${encodeURIComponent(groupLink)}`;
-                                window.open(url, "_blank");
-                              }}
-                            >
-                              <FaQrcode size={24} />
-                            </button>
+                          <button className="btn btn-sm p-0">
+                            <i className="bi bi-share fs-5"></i>
+                          </button>
+                          <button
+                            className="btn btn-sm p-0 ms-2"
+                            onClick={() => {
+                              // Mở tab mới với URL của GroupQRCodePage
+                              const url = `/group-qr-code/${
+                                conversationInfor.id
+                              }?groupName=${encodeURIComponent(
+                                conversationInfor.name
+                              )}&groupLink=${encodeURIComponent(groupLink)}`;
+                              window.open(url, "_blank");
+                            }}
+                          >
+                            <FaQrcode size={24} />
+                          </button>
                         </div>
                       </div>
                     </div>
