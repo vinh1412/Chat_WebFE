@@ -1,14 +1,39 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useDashboardContext } from "../../../context/Dashboard_context";
-import { removeMember } from "../../../services/ConversationService";
-import { Toast } from "react-bootstrap";
+import {
+  removeMember,
+  getConversationByIdService,
+} from "../../../services/ConversationService";
 import { toast } from "react-toastify";
+import AddMemberGroupModal from "../../../components/modal/AddMemberGroupModal";
 
-const MemberListView = ({ conversationInfor, onBack }) => {
-  const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
-    useDashboardContext();
+const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
+  const {
+    currentUser,
+    setShowAddMemberGroupModal,
+    setConversationInfor,
+    showAddMemberGroupModal,
+  } = useDashboardContext();
   const [openMenuId, setOpenMenuId] = useState(null);
-  const menuRef = useRef(null); // Tham chiếu đến menu dropdown
+  const [members, setMembers] = useState(conversationInfor.members || []);
+  const menuRef = useRef(null);
+
+  // Cập nhật members khi conversationInfor thay đổi
+  useEffect(() => {
+    setMembers(conversationInfor.members || []);
+  }, [conversationInfor]);
+
+  // Hàm refetch lại members từ server
+  const refetchMembers = async () => {
+    try {
+      const updated = await getConversationByIdService(conversationInfor.id);
+      setMembers(updated.members);
+      setConversationInfor(updated); // cập nhật lại context nếu cần
+      if (onMembersChanged) onMembersChanged(); // callback để ConservationDetail cũng cập nhật
+    } catch (error) {
+      toast.error("Không thể cập nhật danh sách thành viên");
+    }
+  };
 
   // Xử lý sự kiện click bên ngoài menu dropdown để đóng menu
   useEffect(() => {
@@ -31,17 +56,23 @@ const MemberListView = ({ conversationInfor, onBack }) => {
   // Handle member removal
   const handleRemoveMember = async (conversationId, userId) => {
     try {
-      const response = await removeMember(conversationId, userId);
-      console.log(response);
+      await removeMember(conversationId, userId);
       toast.success("Đã xóa thành viên khỏi nhóm thành công");
-      setConversationInfor((prev) => ({
-        ...prev,
-        members: prev.members.filter((member) => member.id !== userId),
-      }));
+      await refetchMembers();
     } catch (error) {
-      console.log(error);
       toast.error("Bạn không phải nhóm trưởng");
     }
+  };
+
+  // Khi thêm thành viên, mở modal
+  const handleAddMember = () => {
+    setShowAddMemberGroupModal(true);
+    setConversationInfor(conversationInfor);
+  };
+
+  // Khi modal thêm thành viên đóng và có thêm thành viên mới, cập nhật lại danh sách
+  const handleMembersChangedFromModal = async () => {
+    await refetchMembers();
   };
 
   return (
@@ -65,10 +96,7 @@ const MemberListView = ({ conversationInfor, onBack }) => {
       <div className="px-3 py-2">
         <button
           className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center py-2"
-          onClick={() => {
-            setShowAddMemberGroupModal(true);
-            setConversationInfor(conversationInfor);
-          }}
+          onClick={handleAddMember}
           style={{
             borderRadius: "8px",
             backgroundColor: "#dadada",
@@ -83,9 +111,7 @@ const MemberListView = ({ conversationInfor, onBack }) => {
       {/* Member list */}
       <div className="px-3 py-2">
         <div className="d-flex justify-content-between align-items-center mb-2">
-          <h6 className="mb-0">
-            Danh sách thành viên ({conversationInfor.members.length})
-          </h6>
+          <h6 className="mb-0">Danh sách thành viên ({members.length})</h6>
           <button className="btn btn-link text-dark p-0">
             <i className="bi bi-three-dots fs-5"></i>
           </button>
@@ -93,7 +119,7 @@ const MemberListView = ({ conversationInfor, onBack }) => {
 
         {/* Members */}
         <div className="member-list">
-          {conversationInfor.members.map((member, index) => (
+          {members.map((member, index) => (
             <div
               key={index}
               className="d-flex align-items-center py-2 border-bottom border-secondary"
@@ -161,6 +187,15 @@ const MemberListView = ({ conversationInfor, onBack }) => {
           ))}
         </div>
       </div>
+
+      {/* Modal thêm thành viên */}
+      {showAddMemberGroupModal && (
+        <AddMemberGroupModal
+          conversationInfor={conversationInfor}
+          onClose={() => setShowAddMemberGroupModal(false)}
+          onMembersChanged={handleMembersChangedFromModal}
+        />
+      )}
     </div>
   );
 };
