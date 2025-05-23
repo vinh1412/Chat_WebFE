@@ -219,8 +219,6 @@ const DashboardProvider = ({ children }) => {
   const [showLeaderTransferModal, setShowLeaderTransferModal] = useState(false);
   const leaderTransferModalRef = useRef(null);
 
-
-
   // THÊM STATE CHO CÁC MODAL LƯU CONVERSATION
   const [conversationInfor, setConversationInfor] = useState(null);
 

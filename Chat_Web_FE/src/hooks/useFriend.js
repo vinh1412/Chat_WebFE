@@ -6,6 +6,7 @@ import {
   getFriendReqSent,
   rejectFriendReq,
   sendFriendReq,
+  unfriendFriend,
 } from "../services/FriendService";
 import { getFriendList } from "../services/UserService";
 // import { useNavigate } from "react-router-dom";
@@ -120,6 +121,25 @@ const useFriend = () => {
         }
     })
 
+    // Unfriend
+    const { mutate: unfriend } = useMutation({
+        mutationFn: (friendId) => unfriendFriend(friendId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(["friendList"]);
+            toast.success("Hủy kết bạn thành công!", {
+                position: 'top-center',
+                autoClose: 1000,
+            });
+        },
+        onError: (error) => {
+            console.error("Unfriend failed:", error);
+            toast.error("Hủy kết bạn thất bại.", {
+                position: 'top-center',
+                autoClose: 1000,
+            });
+        }
+    })
+
     return {
             friendList,
             isLoadingFriends,
@@ -134,6 +154,7 @@ const useFriend = () => {
             isLoadingAccepting,
             rejectRequest,
             recallRequest,
+            unfriend,
 
     };
 };

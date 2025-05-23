@@ -74,3 +74,20 @@ export const getFriendsList = async () => {
       throw error;
     }
   };
+
+
+export const unfriendFriend = async (friendId) => {
+    try {
+        const response = await axiosInstance.post(`/friend/unfriend/${friendId}`);
+        return response.data.response; 
+    } catch (error) {
+        console.error("Error unfriending friend:", error);
+        if (error.response) {
+            console.log("Status:", error.response.status);
+            console.log("Data:", error.response.data);
+        } else {
+            console.log("Other error:", error.message);
+        }
+        throw error;
+    }
+}  

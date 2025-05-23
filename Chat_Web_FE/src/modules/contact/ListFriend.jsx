@@ -1,25 +1,30 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { FaSearch, FaSortAlphaDown, FaFilter, FaCheck, FaUserFriends } from "react-icons/fa"; // Added FaUserFriends here
+import { FaSearch, FaSortAlphaDown, FaFilter, FaCheck, FaUserFriends } from "react-icons/fa"; 
+import { AiOutlineEllipsis } from "react-icons/ai";
 import "../../assets/css/ListFriend.css";
-import  useFriend from "../../hooks/useFriend"; // Adjust the import path as necessary
-import Loading from "../../components/common/Loading"; // Adjust the import path as necessary
+import  useFriend from "../../hooks/useFriend"; 
+import Loading from "../../components/common/Loading"; 
 import SockJS from "sockjs-client"; 
 import { Client } from "@stomp/stompjs";
 import { useDashboardContext } from "../../context/Dashboard_context";
-import { useQueryClient } from "@tanstack/react-query";
+
+import Swal from "sweetalert2";
+import ActionFriendDropdown from "../../components/modal/ActionFriendDropdown";
 const ListFriend = () => {
     const { currentUser } = useDashboardContext();
-    const { friendList, isLoadingFriends } = useFriend(); // Assuming you have a hook to get the friend list
-    const [loading, setLoading] = useState(false); // Local loading state for the component
-    const queryClient = useQueryClient();
+    const { friendList, isLoadingFriends, unfriend } = useFriend(); 
+    const [loading, setLoading] = useState(false); 
 
     const friends = useMemo(() => {
-        if(isLoadingFriends) return [];
-        return friendList?.response || []; // Use the response from the friendList or an empty array if loading
+        if (isLoadingFriends) return [];
+        return friendList?.response || [];
     }, [isLoadingFriends, friendList]);
 
     console.log("Friends:", friends); // Debugging line to check the friends data
-        
+     
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [activeDropdown, setActiveDropdown] = useState(null); // To handle dropdown for each friend
+    const dropdownRef = useRef(null);
 
     const [search, setSearch] = useState("");
     const [sortOpen, setSortOpen] = useState(false);
@@ -55,6 +60,28 @@ const ListFriend = () => {
         setFilterSubOpen(false);
         setFilterOpen(false);
     };
+
+
+
+    const toggleDropdown = (friendId) => {
+        setActiveDropdown(activeDropdown === friendId ? null : friendId); // Toggle dropdown cho bạn bè cụ thể
+    };
+
+      // Xử lý nhấp chuột ra bên ngoài để đóng menu thả xuống
+    // useEffect(() => {
+    //     const handleClickOutside = (event) => {
+    //       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    //         setShowDropdown(false);
+    //         console.log("Clicked outside the dropdown");
+    //       }
+    //     };
+    
+    //     document.addEventListener("mousedown", handleClickOutside);
+    //     return () => {
+    //       document.removeEventListener("mousedown", handleClickOutside);
+    //     };
+    // }, []);
+
 
     //socket
     // const client = useRef(null);
@@ -205,12 +232,20 @@ const ListFriend = () => {
             <div className="friend-list">
                 <div className="alphabet-header">A</div>
                 {filteredFriends.map((friend) => (
-                    <div className="friend-item" key={friend.userId}>
-                        <img src={friend.avatar} alt={friend.displayName} className="avatar" />
-                        <span className="name">{friend.displayName}</span>
-                        <div className="options">...</div>
+                    <div className="friend-item" key={friend?.userId}>
+                    <img src={friend?.avatar} alt={friend?.displayName} className="avatar" />
+                    <span className="name">{friend?.displayName}</span>
+                    <div className="options" onClick={() => {toggleDropdown(friend.userId); setShowDropdown(!showDropdown);}}>
+                        <AiOutlineEllipsis size={30} />
                     </div>
-                ))} 
+                    <ActionFriendDropdown
+                        friend={friend}
+                        setShowDropdown={() => setShowDropdown(activeDropdown === friend.userId)}
+                        showDropdown={activeDropdown === friend.userId ? showDropdown : false}
+                        dropdownRef={dropdownRef}
+                    />
+                    </div>
+                ))}
             </div>
 
             <Loading loading={isLoadingFriends} /> {/* Loading component to show loading state */}
