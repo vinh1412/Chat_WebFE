@@ -98,9 +98,10 @@ const Conservation = ({
   const [isFriend, setIsFriend] = useState(false);
   const [isSentReq, setIsSentReq] = useState({});
   const [isReceivedReq, setIsReceivedReq] = useState({});
-  const [friendRequestId, setFriendRequestId] = useState('');
-  
-  const { sendRequest, sentRequests, receivedRequests, acceptRequest } = useFriend();
+  const [friendRequestId, setFriendRequestId] = useState("");
+
+  const { sendRequest, sentRequests, receivedRequests, acceptRequest } =
+    useFriend();
 
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
@@ -140,13 +141,13 @@ const Conservation = ({
 
   // friend request
   const sentReqs = React.useMemo(() => {
-    if(!Array.isArray(sentRequests?.response)) return [];
+    if (!Array.isArray(sentRequests?.response)) return [];
     return sentRequests?.response || []; // Use the response from the sentRequests or an empty array if loading
   }, [sentRequests]);
-      
+
   const reciveReqs = React.useMemo(() => {
-    if(!Array.isArray(receivedRequests?.response)) return [];
-      return receivedRequests?.response || []; // Use the response from the receivedRequests or an empty array if loading
+    if (!Array.isArray(receivedRequests?.response)) return [];
+    return receivedRequests?.response || []; // Use the response from the receivedRequests or an empty array if loading
   }, [receivedRequests]);
 
   const messageRefs = useRef({});
@@ -179,25 +180,26 @@ const Conservation = ({
       } catch (error) {
         console.error("Error checking friend status:", error);
       }
-        //kiểm tra đã gửi lời mời hay chưa
-        const isSent = sentReqs.find((req) => req?.userId === userReceiver?.id);
-        if (isSent) {
-          setIsSentReq((prev) => ({...prev, [userReceiver?.id] : true}))
-        } else {
-          setIsSentReq((prev) => ({...prev, [userReceiver?.id] : false}))
-        }
-
-        //kiểm tra đã nhận lời mời hay chưa
-        const isReceived = reciveReqs.find((req) => req?.userId === userReceiver?.id);
-        if(isReceived) {
-          setIsReceivedReq((prev) => ({...prev, [userReceiver?.id]: true}));
-          setFriendRequestId(isReceived?.requestId);
-        } else {
-          setIsReceivedReq((prev) => ({...prev, [userReceiver?.id]: false}));
-        }
+      //kiểm tra đã gửi lời mời hay chưa
+      const isSent = sentReqs.find((req) => req?.userId === userReceiver?.id);
+      if (isSent) {
+        setIsSentReq((prev) => ({ ...prev, [userReceiver?.id]: true }));
+      } else {
+        setIsSentReq((prev) => ({ ...prev, [userReceiver?.id]: false }));
       }
-    if (userReceiver) checkFriendStatus();
 
+      //kiểm tra đã nhận lời mời hay chưa
+      const isReceived = reciveReqs.find(
+        (req) => req?.userId === userReceiver?.id
+      );
+      if (isReceived) {
+        setIsReceivedReq((prev) => ({ ...prev, [userReceiver?.id]: true }));
+        setFriendRequestId(isReceived?.requestId);
+      } else {
+        setIsReceivedReq((prev) => ({ ...prev, [userReceiver?.id]: false }));
+      }
+    };
+    if (userReceiver) checkFriendStatus();
   }, [userReceiver, sentReqs, reciveReqs]);
 
   useEffect(() => {
@@ -337,9 +339,12 @@ const Conservation = ({
     }
   };
 
+  const URL_WEB_SOCKET =
+    import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+
   useEffect(() => {
     // Khởi tạo tạo kết nối WebSocket
-    const socket = new SockJS("http://localhost:8080/ws"); // Thay thế bằng URL WebSocket của bạn
+    const socket = new SockJS(URL_WEB_SOCKET); // Thay thế bằng URL WebSocket của bạn
     // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
     client.current = new Client({
       webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
@@ -432,13 +437,15 @@ const Conservation = ({
           }
         );
 
-        client.current.subscribe(`/friend/accept/${currentUser?.id}`, async (message) => {
-          if(message.body) {
-            const response = await checkFriend(userReceiver?.id);
-            setIsFriend(response);
-
+        client.current.subscribe(
+          `/friend/accept/${currentUser?.id}`,
+          async (message) => {
+            if (message.body) {
+              const response = await checkFriend(userReceiver?.id);
+              setIsFriend(response);
+            }
           }
-        });
+        );
       },
       onStompError: (frame) => {
         // Hàm được gọi khi có lỗi trong giao thức STOMP
@@ -1001,12 +1008,14 @@ const Conservation = ({
       )}
       {/* Notification */}
       {!selectedConversation?.is_group && !isFriend && (
-        <div className="card-body d-flex align-items-center justify-content-between" style={{ height: "10px" }}>
+        <div
+          className="card-body d-flex align-items-center justify-content-between"
+          style={{ height: "10px" }}
+        >
           {isSentReq[userReceiver?.id] ? (
             <div>
-
               <span className="">
-               Bạn đã gửi lời mời kết bạn và đang chờ phản hồi từ người này
+                Bạn đã gửi lời mời kết bạn và đang chờ phản hồi từ người này
               </span>
             </div>
           ) : isReceivedReq[userReceiver?.id] ? (
