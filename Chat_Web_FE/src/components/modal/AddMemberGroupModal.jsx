@@ -7,7 +7,12 @@ import { useDashboardContext } from "../../context/Dashboard_context";
 // import useConversation from "../../hooks/useConversation";
 import { addMemberToGroupService } from "../../services/ConversationService";
 
-const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
+const AddMemberGroupModal = ({
+  isOpen,
+  onClose,
+  conversationInfor,
+  onMembersChanged,
+}) => {
   const [isFocused, setIsFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -70,6 +75,7 @@ const AddMemberGroupModal = ({ isOpen, onClose, conversationInfor }) => {
         await addMemberToGroupService(groupId, userId);
       }
       toast.success("Thêm thành viên thành công!");
+      if (onMembersChanged) await onMembersChanged(); // GỌI CALLBACK
       onClose();
     } catch (error) {
       console.error("Lỗi khi thêm thành viên:", error);

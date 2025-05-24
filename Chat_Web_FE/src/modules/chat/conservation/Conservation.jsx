@@ -446,6 +446,16 @@ const Conservation = ({
             }
           }
         );
+
+        client.current.subscribe(
+          `/friend/unfriend/${currentUser?.id}`,
+          async (message) => {
+            if (message.body) {
+              const response = await checkFriend(userReceiver?.id);
+              setIsFriend(response);
+            }
+          }
+        );
       },
       onStompError: (frame) => {
         // Hàm được gọi khi có lỗi trong giao thức STOMP
@@ -467,6 +477,7 @@ const Conservation = ({
     currentUser.id,
     refetchMessages,
     client,
+    userReceiver?.id,
   ]);
 
   //Handle sending GIF or Sticker
