@@ -225,3 +225,20 @@ export const updateGroupName = async (conversationId, newGroupName) => {
   }
 };
 
+export const getAllGroupConversationsByUserIdService = async () => {
+  try {
+    const response = await axiosInstance.get(
+      "/conversations/getAllGroupConversationsByUserId"
+    );
+    console.log("Response group conversations data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching group conversations:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy danh sách nhóm"
+    );
+  }
+};
