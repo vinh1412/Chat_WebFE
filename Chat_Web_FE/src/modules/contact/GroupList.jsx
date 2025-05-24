@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Container, Form, Row, Col } from "react-bootstrap";
 import { BsThreeDots } from "react-icons/bs";
-import { FaSearch, FaSortAlphaDown, FaFilter, FaCheck, FaUsers } from "react-icons/fa";
+import {
+  FaSearch,
+  FaSortAlphaDown,
+  FaFilter,
+  FaCheck,
+  FaUsers,
+} from "react-icons/fa";
 import { useDashboardContext } from "../../context/Dashboard_context";
 import { getAllGroupConversationsByUserIdService } from "../../services/ConversationService";
 import { toast } from "react-toastify";
@@ -33,24 +39,34 @@ const GroupList = () => {
   // WebSocket for real-time updates
   useEffect(() => {
     if (!currentUser?.id) return;
-
-    const socket = new SockJS("http://localhost:8080/ws");
+    const SOCKET_URL =
+      import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+    const socket = new SockJS(`${SOCKET_URL}`);
     const stompClient = Stomp.over(socket);
-    stompClient.connect({}, () => {
-      stompClient.subscribe(`/chat/create/group/${currentUser.id}`, (message) => {
-        const updatedConversation = JSON.parse(message.body);
-        if (updatedConversation.isGroup) {
-          setGroups((prev) =>
-            prev.some((c) => c.id === updatedConversation.id)
-              ? prev.map((c) => (c.id === updatedConversation.id ? updatedConversation : c))
-              : [...prev, updatedConversation]
-          );
-        }
-      });
-    }, (error) => {
-      console.error("WebSocket connection error:", error);
-      toast.error("Lỗi kết nối WebSocket");
-    });
+    stompClient.connect(
+      {},
+      () => {
+        stompClient.subscribe(
+          `/chat/create/group/${currentUser.id}`,
+          (message) => {
+            const updatedConversation = JSON.parse(message.body);
+            if (updatedConversation.isGroup) {
+              setGroups((prev) =>
+                prev.some((c) => c.id === updatedConversation.id)
+                  ? prev.map((c) =>
+                      c.id === updatedConversation.id ? updatedConversation : c
+                    )
+                  : [...prev, updatedConversation]
+              );
+            }
+          }
+        );
+      },
+      (error) => {
+        console.error("WebSocket connection error:", error);
+        toast.error("Lỗi kết nối WebSocket");
+      }
+    );
 
     return () => {
       if (stompClient.connected) {
@@ -115,11 +131,15 @@ const GroupList = () => {
                         {item.members.slice(0, 4).map((member, index) => (
                           <img
                             key={index}
-                            src={member.avatar || "https://i.pravatar.cc/300?img=1"}
+                            src={
+                              member.avatar || "https://i.pravatar.cc/300?img=1"
+                            }
                             alt={member.displayName}
                             className="rounded-circle"
                             style={{ width: "24px", height: "24px" }}
-                            onError={(e) => (e.target.src = "https://i.pravatar.cc/300?img=1")}
+                            onError={(e) =>
+                              (e.target.src = "https://i.pravatar.cc/300?img=1")
+                            }
                           />
                         ))}
                       </div>
@@ -128,7 +148,9 @@ const GroupList = () => {
                         src={item.avatar || "https://i.pravatar.cc/300?img=1"}
                         alt={item.name}
                         className="rounded-circle img-fluid object-fit-cover"
-                        onError={(e) => (e.target.src = "https://i.pravatar.cc/300?img=1")}
+                        onError={(e) =>
+                          (e.target.src = "https://i.pravatar.cc/300?img=1")
+                        }
                       />
                     )}
                   </div>
