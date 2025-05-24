@@ -205,3 +205,23 @@ export const findLinkGroupByConversationId = async (conversationId) => {
   }
 }
 
+
+export const updateGroupName = async (conversationId, newGroupName) => {
+  try {
+    const response = await axiosInstance.put(
+      "/conversations/update-group-name",
+      { conversationId, newGroupName }
+    );
+    console.log("Response updateGroupName data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating group name:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi cập nhật tên nhóm"
+    );
+  }
+};
+

@@ -222,6 +222,11 @@ const DashboardProvider = ({ children }) => {
   // THÊM STATE CHO CÁC MODAL LƯU CONVERSATION
   const [conversationInfor, setConversationInfor] = useState(null);
 
+  // Modal: Đổi tên nhóm
+  const [showChangeGroupNameModal, setShowChangeGroupNameModal] =useState(false);
+  const changeGroupNameModalRef = useRef(null);
+
+
   const contextValue = {
     currentUser,
     setCurrentUser,
@@ -284,6 +289,9 @@ const DashboardProvider = ({ children }) => {
     setShowLeaderTransferModal,
     leaderTransferModalRef,
 
+    showChangeGroupNameModal,
+    setShowChangeGroupNameModal,
+    changeGroupNameModalRef,
   };
 
   return (
