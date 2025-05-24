@@ -42,6 +42,7 @@
     "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
     "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
     "sweetalert2": "^11.21.2",
     "tailwindcss": "^4.1.3",
     "vite-plugin-node-polyfills": "^0.23.0"
