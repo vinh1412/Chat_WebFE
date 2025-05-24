@@ -14,6 +14,9 @@ import { useEffect } from "react";
 import { FaQrcode } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import useMessage from "../../../hooks/useMessage";
+import GroupBoard from "./GroupBoard";
+
+import ChangeGroupNameModal from "../../../components/modal/ChangeGroupNameModal";
 
 const ConversationDetail = ({ conversationInfor }) => {
   console.log("conversationInfor:", conversationInfor);
@@ -48,6 +51,9 @@ const ConversationDetail = ({ conversationInfor }) => {
     ? mediaMessages
     : mediaMessages.slice(0, maxMediaToShow);
 
+  const [showGroupBoard, setShowGroupBoard] = useState(false);
+  const [showChangeGroupNameModal, setShowChangeGroupNameModal] =
+    useState(false);
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
@@ -71,6 +77,10 @@ const ConversationDetail = ({ conversationInfor }) => {
     fetchGroupLink();
   }, [conversationInfor]);
 
+  const handleGroupNameUpdate = (updatedConversation) => {
+    setConversationInfor(updatedConversation); // Update conversation info
+  };
+
   //Show view member group
   if (showMemberList) {
     return (
@@ -81,6 +91,14 @@ const ConversationDetail = ({ conversationInfor }) => {
     );
   }
 
+  if (showGroupBoard) {
+    return (
+      <GroupBoard
+        conversationId={conversationInfor.id}
+        onBack={() => setShowGroupBoard(false)} // Pass onBack to close GroupBoard
+      />
+    );
+  }
   // Handle out group
   const handleLeaveGroup = async (conversationId) => {
     const isConfirmed = window.confirm(
@@ -168,13 +186,27 @@ const ConversationDetail = ({ conversationInfor }) => {
                 className="rounded-circle mb-2"
               />
             )}
-            <h6 className="mb-0 mt-2 fs-5">
-              {!conversationInfor.is_group
-                ? conversationInfor.members.find(
-                    (member) => member.id !== currentUser.id
-                  ).display_name
-                : conversationInfor.name}
-            </h6>
+            <div className="d-flex align-items-center mt-2">
+              <h6 className="mb-0 fs-5">
+                {!conversationInfor.is_group
+                  ? conversationInfor.members.find(
+                      (member) => member.id !== currentUser.id
+                    ).display_name
+                  : conversationInfor.name}
+              </h6>
+              {conversationInfor.is_group && (
+                <i
+                  className="bi bi-pencil-square ms-2"
+                  style={{
+                    cursor: "pointer",
+                    color: "#007bff",
+                    fontSize: "1rem",
+                  }}
+                  onClick={() => setShowChangeGroupNameModal(true)}
+                  title="Đổi tên nhóm"
+                />
+              )}
+            </div>
           </div>
 
           <div className="d-flex justify-content-center gap-3 my-2 align-items-center">
@@ -317,7 +349,11 @@ const ConversationDetail = ({ conversationInfor }) => {
                       <i className="bi bi-clock me-2"></i>
                       <span>Danh sách nhắc hẹn</span>
                     </div>
-                    <div className="d-flex align-items-center mb-3">
+                    <div
+                      className="d-flex align-items-center mb-3"
+                      onClick={() => setShowGroupBoard(true)} // Toggle GroupBoard on click
+                      style={{ cursor: "pointer" }}
+                    >
                       <i className="bi bi-file-earmark me-2"></i>
                       <span>Ghi chú, ghim, bình chọn</span>
                     </div>
@@ -566,6 +602,12 @@ const ConversationDetail = ({ conversationInfor }) => {
           </div>
         </>
       )}
+      <ChangeGroupNameModal
+        show={showChangeGroupNameModal}
+        onHide={() => setShowChangeGroupNameModal(false)}
+        conversationId={conversationInfor.id}
+        onSuccess={handleGroupNameUpdate}
+      />
     </div>
   );
 };

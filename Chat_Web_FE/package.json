@@ -20,7 +20,7 @@
     "@zegocloud/zego-uikit-prebuilt": "^2.14.3-beta",
     "axios": "^1.8.3",
     "bootstrap": "^5.3.5",
-    "bootstrap-icons": "^1.11.3",
+    "bootstrap-icons": "^1.13.1",
     "chat-web-fe": "file:",
     "emoji-picker-react": "^4.12.2",
     "firebase": "^11.6.0",
@@ -42,6 +42,7 @@
     "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
     "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
     "sweetalert2": "^11.21.2",
     "tailwindcss": "^4.1.3",
     "vite-plugin-node-polyfills": "^0.23.0"

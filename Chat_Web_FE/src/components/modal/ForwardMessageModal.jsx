@@ -22,13 +22,12 @@ const ForwardMessageModal = ({
   // Lấy danh sách bạn bè
   const { friendList, isLoadingFriends } = useFriend();
   const friends = useMemo(() => {
-    if (isLoadingFriends) return [];
-    return (
-      friendList?.response.filter(
-        (friend) => friend?.userId !== currentUser?.id
-      ) || []
-    ); // Use the response from the friendList or an empty array if loading
-  }, [isLoadingFriends, friendList, currentUser]);
+  if (isLoadingFriends || !friendList || !Array.isArray(friendList.response)) return [];
+  return friendList.response.filter(
+    (friend) => friend?.userId !== currentUser?.id
+  );
+}, [isLoadingFriends, friendList, currentUser]);
+
 
   // console.log("Friends:", friends); // Debugging line to check the friends data
   // Lọc và sắp xếp danh sách bạn bè

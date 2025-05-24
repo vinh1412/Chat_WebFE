@@ -112,3 +112,24 @@ export const deleteForUserMessageService = async ({ messageId, userId }) => {
     );
   }
 };
+
+export const getPinnedMessagesService = async (conversationId) => {
+  try {
+    if (!conversationId || typeof conversationId !== "string") {
+      throw new Error("Conversation ID không hợp lệ.");
+    }
+
+    const response = await axiosInstance.get(`/messages/pinned/${conversationId}`);
+    console.log("Response getPinnedMessagesService data:");
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching pinned messages:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy danh sách tin ghim"
+    );
+  }
+};

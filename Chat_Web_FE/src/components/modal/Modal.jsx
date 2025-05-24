@@ -14,6 +14,7 @@ import AddMemberGroupModal from "./AddMemberGroupModal";
 
 import DeputyModal from "./DeputyModal";
 import LeaderTransferModal from "./LeaderTransferModal";
+import ChangeGroupNameModal from "./ChangeGroupNameModal";
 
 const Modal = () => {
   const {
@@ -45,6 +46,10 @@ const Modal = () => {
     setShowDeputyModal,
     showLeaderTransferModal,
     setShowLeaderTransferModal,
+
+    showChangeGroupNameModal,
+    setShowChangeGroupNameModal,
+
 
     
   } = useDashboardContext();
@@ -235,6 +240,29 @@ const Modal = () => {
         />
       </ReactModal>
       
+      {/* Modal: Đổi tên nhóm */}
+      <ReactModal
+        isOpen={showChangeGroupNameModal}
+        onRequestClose={() => setShowChangeGroupNameModal(false)}
+        contentLabel="Change Group Name Modal"
+        style={{
+          content: {
+            width: "600px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+      >
+        <ChangeGroupNameModal
+          isOpen={showChangeGroupNameModal}
+          onClose={() => setShowChangeGroupNameModal(false)}
+          conversationId={conversationInfor?.id}
+          setCurrentConversationInfor={setCurrentConversationInfor}
+          conversationInfor={conversationInfor} // Truyền conversationInfor
+        />
+      </ReactModal>
     </>
   );
 };
