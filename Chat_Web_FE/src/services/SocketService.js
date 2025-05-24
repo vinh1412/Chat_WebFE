@@ -2,7 +2,8 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 export const connectWebSocket = async (userId, onMessageReceived) => {
-  const socket = new SockJS("http://18.138.216.146:8080/ws");
+  const SOCKET_URL = import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+  const socket = new SockJS(`${SOCKET_URL}`); // Sử dụng SockJS để tạo kết nối WebSocket
   const stompClient = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,
