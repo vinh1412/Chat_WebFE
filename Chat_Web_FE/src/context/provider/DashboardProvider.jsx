@@ -24,12 +24,15 @@ const DashboardProvider = ({ children }) => {
   const stompClient = useRef(null);
   const queryClient = useQueryClient();
 
+  const URL_WEB_SOCKET =
+    import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+
   // Kết nối WebSocket
   useEffect(() => {
     if (!currentUser?.id) return;
 
     // Kết nối đến WebSocket server
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS(URL_WEB_SOCKET);
     stompClient.current = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
@@ -223,9 +226,9 @@ const DashboardProvider = ({ children }) => {
   const [conversationInfor, setConversationInfor] = useState(null);
 
   // Modal: Đổi tên nhóm
-  const [showChangeGroupNameModal, setShowChangeGroupNameModal] =useState(false);
+  const [showChangeGroupNameModal, setShowChangeGroupNameModal] =
+    useState(false);
   const changeGroupNameModalRef = useRef(null);
-
 
   const contextValue = {
     currentUser,
