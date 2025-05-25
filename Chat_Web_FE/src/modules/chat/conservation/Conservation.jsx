@@ -588,6 +588,13 @@ const Conservation = ({
     //   });
     //   return;
     // }
+      if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+      toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
 
     const request = {
       conversationId: selectedConversation?.id,
@@ -654,6 +661,15 @@ const Conservation = ({
       // alert("Vui lòng chọn cuộc trò chuyện và nhập tin nhắn");
       return;
     }
+
+    if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+      toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
+
     try {
       const request = {
         conversationId: selectedConversation?.id,
@@ -704,6 +720,14 @@ const Conservation = ({
       toast.error("Vui lòng chọn cuộc trò chuyện trước");
       return;
     }
+      if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+      toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
+
 
     // Then after uploading
     const tempId = `temp-${Date.now()}`;
@@ -764,6 +788,15 @@ const Conservation = ({
       toast.error("Vui lòng chọn cuộc trò chuyện trước");
       return;
     }
+
+    if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+      toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
+
     // Then after uploading
     console.log("File to be sent:", file);
 
@@ -818,6 +851,14 @@ const Conservation = ({
   const handleSendVideo = async (file) => {
     if (!selectedConversation?.id) {
       toast.error("Vui lòng chọn cuộc trò chuyện trước");
+      return;
+    }
+
+     if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+      toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
+        position: "top-center",
+        autoClose: 2000,
+      });
       return;
     }
 
@@ -878,7 +919,7 @@ const Conservation = ({
 
   // Hàm gửi nhanh emoji
   const handleQuickReaction = () => {
-    if (!selectedConversation?.id) return;
+    // if (!selectedConversation?.id) return;
     // if (!client.current || !client.current.connected) {
     //   toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
     //     position: "top-center",
@@ -886,6 +927,13 @@ const Conservation = ({
     //   });
     //   return;
     // }
+      if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+      toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
 
     // Send the emoji reaction via WebSocket
     const request = {
@@ -1058,6 +1106,14 @@ const Conservation = ({
       }
     }
   };
+
+  const isAdmin = useMemo(() => {
+    if (!selectedConversation?.is_group) return true; // Không áp dụng cho cuộc trò chuyện 1-1
+    const currentMember = selectedConversation?.members?.find(
+      (member) => member.id === currentUser.id
+    );
+    return currentMember?.role === "ADMIN";
+  }, [selectedConversation, currentUser.id]);
 
   return (
     <div
@@ -1315,6 +1371,12 @@ const Conservation = ({
           padding: "10px",
         }}
       >
+      {selectedConversation?.restrictMessagingToAdmin && !isAdmin && (
+          <div className="alert alert-info mb-2 text-center">
+            <i className="bi bi-lock-fill me-2"></i>
+            Chỉ trưởng nhóm được phép nhắn tin trong nhóm này.
+          </div>
+        )}
         {isLoadingAllMessages ? (
           <p className="text-muted text-center">Đang tải tin nhắn...</p>
         ) : localMessages.length === 0 ? (
@@ -1680,6 +1742,11 @@ const Conservation = ({
               Xóa cuộc trò chuyện
             </button>
           </div>
+        ) : selectedConversation?.restrictMessagingToAdmin && !isAdmin ? (
+          <div className="alert alert-info mb-0 text-center">
+            <i className="bi bi-lock-fill me-2"></i>
+            Chỉ trưởng nhóm được phép nhắn tin trong nhóm này.
+          </div>
         ) : (
           <>
             <div className="d-flex align-items-center gap-2 mb-2">
@@ -1699,6 +1766,7 @@ const Conservation = ({
                   const files = Array.from(e.target.files);
                   if (files.length) handleSendImages(files);
                 }}
+                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
               />
               <label className="btn btn-light mb-0" htmlFor="file-upload">
                 <i className="bi bi-paperclip"></i>
@@ -1712,6 +1780,7 @@ const Conservation = ({
                   const files = Array.from(e.target.files);
                   if (files) handleSendFiles(files);
                 }}
+                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
               />
               <input
                 type="file"
@@ -1723,6 +1792,7 @@ const Conservation = ({
                   const files = Array.from(e.target.files);
                   if (files.length) handleSendVideos(files);
                 }}
+                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
               />
               <label className="btn btn-light mb-0" htmlFor="video-upload">
                 <i class="bi bi-file-earmark-play-fill"></i>
@@ -1732,13 +1802,14 @@ const Conservation = ({
                 onClick={() =>
                   alert("Tính năng ghi âm đang được phát triển...")
                 }
+                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
               >
                 <i className="bi bi-mic"></i>
               </button>
-              <button className="btn btn-light">
+              <button className="btn btn-light" disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}>
                 <i className="bi bi-lightning"></i>
               </button>
-              <button className="btn btn-light">
+              <button className="btn btn-light" disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}>
                 <i className="bi bi-three-dots"></i>
               </button>
             </div>
@@ -1775,10 +1846,12 @@ const Conservation = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSendMessage();
                 }}
+                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
               />
               <button
                 className="btn btn-light d-flex align-items-center"
                 onClick={handleSendMessage}
+                disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
               >
                 <i
                   className={`bi ${
@@ -1791,6 +1864,7 @@ const Conservation = ({
               <button
                 className="btn btn-light d-flex align-items-center"
                 onClick={handleQuickReaction} // Left click sends the reaction
+                disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
                 onContextMenu={(e) => {
                   e.preventDefault(); // Prevent default context menu
                   handleOpenReactionModal(); // Show custom modal on right click
