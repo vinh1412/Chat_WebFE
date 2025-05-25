@@ -13,12 +13,17 @@ import { getAllGroupConversationsByUserIdService } from "../../services/Conversa
 import { toast } from "react-toastify";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
+import { useDispatch } from "react-redux";
+import { setSelectedConversation, setShowConversation } from "../../redux/slice/commonSlice";
+import { useNavigate } from "react-router-dom";
 import "../../assets/css/GroupList.css";
 
 const GroupList = () => {
   const { currentUser } = useDashboardContext();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Fetch group conversations on mount
   useEffect(() => {
@@ -43,37 +48,55 @@ const GroupList = () => {
       import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
     const socket = new SockJS(`${SOCKET_URL}`);
     const stompClient = Stomp.over(socket);
-    stompClient.connect(
-      {},
-      () => {
-        stompClient.subscribe(
-          `/chat/create/group/${currentUser.id}`,
-          (message) => {
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+
+    const connect = () => {
+      stompClient.connect(
+        {},
+        () => {
+          console.log("WebSocket connected");
+          reconnectAttempts = 0;
+          stompClient.subscribe(`/chat/create/group/${currentUser.id}`, (message) => {
+            console.log("Received WebSocket message:", message.body);
             const updatedConversation = JSON.parse(message.body);
             if (updatedConversation.isGroup) {
               setGroups((prev) =>
                 prev.some((c) => c.id === updatedConversation.id)
-                  ? prev.map((c) =>
-                      c.id === updatedConversation.id ? updatedConversation : c
-                    )
+                  ? prev.map((c) => (c.id === updatedConversation.id ? updatedConversation : c))
                   : [...prev, updatedConversation]
               );
             }
+          });
+        },
+        (error) => {
+          console.error("WebSocket connection error:", error);
+          toast.error("Lỗi kết nối WebSocket");
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            console.log(`Reconnecting attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
+            setTimeout(connect, 5000);
           }
-        );
-      },
-      (error) => {
-        console.error("WebSocket connection error:", error);
-        toast.error("Lỗi kết nối WebSocket");
-      }
-    );
+        }
+      );
+    };
+
+    connect();
 
     return () => {
       if (stompClient.connected) {
+        console.log("Disconnecting WebSocket");
         stompClient.disconnect();
       }
     };
   }, [currentUser?.id]);
+
+  // Handle group selection
+  const handleSelectGroup = (group) => {
+    dispatch(setSelectedConversation(group));
+    dispatch(setShowConversation(true));
+    navigate(`/chat/${group.id}`);
+  };
 
   return (
     <div className="group-list-wrapper">
@@ -119,6 +142,8 @@ const GroupList = () => {
               <Row
                 key={item.id}
                 className="align-items-center justify-content-between py-2 border-bottom"
+                style={{ cursor: "pointer" }}
+                onClick={() => handleSelectGroup(item)}
               >
                 {/* Avatar nhóm hoặc thành viên */}
                 <Col xs="auto">
@@ -166,7 +191,7 @@ const GroupList = () => {
 
                 {/* Menu */}
                 <Col xs="auto">
-                  <BsThreeDots role="button" />
+                  <BsThreeDots role="button" onClick={(e) => e.stopPropagation()} />
                 </Col>
               </Row>
             ))

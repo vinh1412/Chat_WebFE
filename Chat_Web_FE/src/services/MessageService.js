@@ -1,4 +1,5 @@
 import axiosInstance from "../api/axios";
+import { toast } from "react-toastify";
 
 export const getMessagesByConversationIdService = async (conversationId) => {
   try {
@@ -133,3 +134,27 @@ export const getPinnedMessagesService = async (conversationId) => {
     );
   }
 };
+
+
+export const voteInPoll = async (messageId, userId, optionIndex) => {
+  try {
+    const response = await axiosInstance.post(
+      `/messages/${messageId}/vote`,
+      null,
+      {
+        params: { userId, optionIndex },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    console.log("Vote response:", response.data);
+    toast.success(response.data.message || "Bỏ phiếu thành công!"); // Thêm toast
+    return response.data;
+  } catch (error) {
+    console.error("Error voting:", error.response?.data || error.message);
+    toast.error(error.response?.data?.message || "Lỗi khi bỏ phiếu");
+    throw new Error(error.response?.data?.message || "Lỗi khi bỏ phiếu");
+  }
+};
+

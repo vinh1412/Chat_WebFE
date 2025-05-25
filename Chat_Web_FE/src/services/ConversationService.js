@@ -242,3 +242,23 @@ export const getAllGroupConversationsByUserIdService = async () => {
     );
   }
 };
+
+
+export const restrictMessagingService = async (conversationId, restrict) => {
+  try {
+    const response = await axiosInstance.post("/conversations/restrict-messaging", {
+      conversationId,
+      restrict: restrict.toString(),
+    });
+    console.log("Restricted messaging updated:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating messaging restriction:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi cập nhật cài đặt nhắn tin"
+    );
+  }
+};
