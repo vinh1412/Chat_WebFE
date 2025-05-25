@@ -620,7 +620,7 @@ const Conservation = ({
       const result = await uploadFile(file, chatMessageRequest);
       const updatedRequest = {
         ...chatMessageRequest,
-        fileUrl: result.fileUrl,
+        fileUrl: result.fileUrls?.[0],
       };
       client.current.publish({
         destination: "/app/chat/send",
@@ -631,6 +631,13 @@ const Conservation = ({
     } catch (error) {
       toast.error(`Lỗi khi gửi hình ảnh: ${error.message}`);
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+    }
+  };
+
+  // Hàm gửi nhiều hình ảnh
+  const handleSendImages = async (files) => {
+    for (const file of files) {
+      await handleSendImage(file);
     }
   };
 
@@ -667,7 +674,7 @@ const Conservation = ({
       const result = await uploadFile(file, chatMessageRequest);
       const updatedRequest = {
         ...chatMessageRequest,
-        fileUrl: result.fileUrl,
+        fileUrl: result.fileUrls?.[0],
       };
 
       client.current.publish({
@@ -679,6 +686,13 @@ const Conservation = ({
     } catch (error) {
       toast.error(`Lỗi khi gửi tệp đính kèm: ${error.message}`);
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+    }
+  };
+
+  // Gửi nhiều file
+  const handleSendFiles = async (files) => {
+    for (const file of files) {
+      await handleSendFile(file);
     }
   };
 
@@ -721,7 +735,7 @@ const Conservation = ({
       const result = await uploadFile(file, chatMessageRequest);
       const updatedRequest = {
         ...chatMessageRequest,
-        fileUrl: result.fileUrl,
+        fileUrl: result.fileUrls?.[0],
       };
 
       client.current.publish({
@@ -733,6 +747,13 @@ const Conservation = ({
     } catch (error) {
       toast.error(`Lỗi khi gửi video: ${error.message}`);
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+    }
+  };
+
+  // Gửi nhiều video
+  const handleSendVideos = async (files) => {
+    for (const file of files) {
+      await handleSendVideo(file);
     }
   };
 
@@ -1310,6 +1331,12 @@ const Conservation = ({
                           window.open(msg?.fileUrl, "_blank");
                         }}
                       >
+                        {console.log(
+                          "msg?.fileUrl:",
+                          msg?.fileUrl,
+                          "msg:",
+                          msg
+                        )}
                         <img
                           src={msg?.fileUrl}
                           alt="Hình ảnh"
@@ -1536,10 +1563,11 @@ const Conservation = ({
                 type="file"
                 id="image-upload"
                 accept="image/*"
+                multiple
                 style={{ display: "none" }}
                 onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) handleSendImage(file);
+                  const files = Array.from(e.target.files);
+                  if (files.length) handleSendImages(files);
                 }}
               />
               <label className="btn btn-light mb-0" htmlFor="file-upload">
@@ -1548,20 +1576,22 @@ const Conservation = ({
               <input
                 type="file"
                 id="file-upload"
+                multiple
                 style={{ display: "none" }}
                 onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) handleSendFile(file);
+                  const files = Array.from(e.target.files);
+                  if (files) handleSendFiles(files);
                 }}
               />
               <input
                 type="file"
                 id="video-upload"
+                multiple
                 accept="video/*" // Chỉ chấp nhận file video
                 style={{ display: "none" }}
                 onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) handleSendVideo(file); // Hàm xử lý gửi video
+                  const files = Array.from(e.target.files);
+                  if (files.length) handleSendVideos(files);
                 }}
               />
               <label className="btn btn-light mb-0" htmlFor="video-upload">
