@@ -38,11 +38,12 @@ const useMessage = (conversationId) => {
 
   // Hàm refetch tin nhắn
   const refetchMessages = () => {
+    console.log("Refetching messages for conversationId:", conversationId);
     queryClient.invalidateQueries(["messages", conversationId]);
   };
-  console.log("conversationId", conversationId);
-  console.log("messages ues", messages);
-  console.log("isLoadingAllMessages", isLoadingAllMessages);
+  // console.log("conversationId", conversationId);
+  // console.log("messages ues", messages);
+  // console.log("isLoadingAllMessages", isLoadingAllMessages);
 
   // Mutation để thu hồi tin nhắn
   const recallMessageMutation = useMutation({
