@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import "../../assets/css/GroupList.css";
+import { connectWebSocket, disconnectWebSocket, subscribeToConversation } from "../../services/SocketService";
 
 const GroupList = () => {
   const { currentUser } = useDashboardContext();
@@ -39,17 +40,9 @@ const GroupList = () => {
   // WebSocket for real-time updates
   useEffect(() => {
     if (!currentUser?.id) return;
-    const SOCKET_URL =
-      import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
-    const socket = new SockJS(`${SOCKET_URL}`);
-    const stompClient = Stomp.over(socket);
-    stompClient.connect(
-      {},
-      () => {
-        stompClient.subscribe(
-          `/chat/create/group/${currentUser.id}`,
-          (message) => {
-            const updatedConversation = JSON.parse(message.body);
+    connectWebSocket(() => {
+      subscribeToConversation(currentUser?.id, (message) => {
+            const updatedConversation = message;
             if (updatedConversation.isGroup) {
               setGroups((prev) =>
                 prev.some((c) => c.id === updatedConversation.id)
@@ -59,20 +52,28 @@ const GroupList = () => {
                   : [...prev, updatedConversation]
               );
             }
-          }
-        );
-      },
-      (error) => {
-        console.error("WebSocket connection error:", error);
-        toast.error("Lỗi kết nối WebSocket");
-      }
-    );
+          })
+    })
+        // stompClient.subscribe(
+        //   `/chat/create/group/${currentUser.id}`,
+        //   (message) => {
+        //     const updatedConversation = JSON.parse(message.body);
+        //     if (updatedConversation.isGroup) {
+        //       setGroups((prev) =>
+        //         prev.some((c) => c.id === updatedConversation.id)
+        //           ? prev.map((c) =>
+        //               c.id === updatedConversation.id ? updatedConversation : c
+        //             )
+        //           : [...prev, updatedConversation]
+        //       );
+        //     }
+        //   }
+        // );
+     
 
     return () => {
-      if (stompClient.connected) {
-        stompClient.disconnect();
-      }
-    };
+      disconnectWebSocket();
+    }
   }, [currentUser?.id]);
 
   return (

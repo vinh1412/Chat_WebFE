@@ -9,10 +9,10 @@ import useUser from "../../hooks/useUser";
 // import { current } from "@reduxjs/toolkit";
 import {
   connectWebSocket,
-  disconnectWebSocket,
+  disconnectWebSocket,  
+  subscribeToUserProfile
 } from "../../services/SocketService";
 import displayPhoneNumber from "../../utils/DisplayPhoneNumber";
-import { updateProfile } from "firebase/auth";
 
 const ProfileModal = ({ isOpen, onClose }) => {
   const { currentUser, fetchUser, setCurrentUser } = useDashboardContext();
@@ -26,19 +26,18 @@ const ProfileModal = ({ isOpen, onClose }) => {
   // connect websocket
   React.useEffect(() => {
     if (currentUser?.id) {
-      // function để xử lý khi nhận được tin nhắn từ WebSocket
-      const handleMessageReceived = (updatedProfile) => {
-        // console.log("Received message:", updatedProfile);
-        // Cập nhật lại thông tin người dùng trong state
-        setCurrentUser((prevUser) => ({
-          ...prevUser,
-          ...updatedProfile,
-        }));
-      };
-      const client = connectWebSocket(currentUser?.id, handleMessageReceived); // Kết nối WebSocket với user.id
+     
+      connectWebSocket(() => {
+        subscribeToUserProfile(currentUser?.id, (updatedProfile) => {
+          setCurrentUser((prevUser) => ({
+            ...prevUser,
+            ...updatedProfile,
+          }));
+        });
+      });
 
       return () => {
-        disconnectWebSocket(client); // Ngắt kết nối khi component unmount
+        disconnectWebSocket(); // Ngắt kết nối khi component unmount
       };
     }
   }, [currentUser?.id, setCurrentUser]);

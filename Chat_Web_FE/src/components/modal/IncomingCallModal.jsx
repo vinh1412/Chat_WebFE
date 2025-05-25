@@ -3,7 +3,7 @@ import ReactModal from "react-modal";
 import { useDashboardContext } from "../../context/Dashboard_context";
 import { toast } from "react-toastify";
 import VideoCallModal from "./VideoCallModal";
-import { connectWebSocket, disconnectWebSocket } from "../../services/SocketService.js";
+import { connectWebSocket, disconnectWebSocket } from "../../services/SocketService1.js";
 
 const IncomingCallModal = () => {
     const { currentUser } = useDashboardContext();
@@ -124,25 +124,25 @@ const IncomingCallModal = () => {
         }
     };
 
-    useEffect(() => {
-        if (currentUser?.id) {
-            modalRenderedRef.current = true;
-            setTimeout(() => {
-                initializeWebSocket();
-            }, 0);
-        }
+    // useEffect(() => {
+    //     if (currentUser?.id) {
+    //         modalRenderedRef.current = true;
+    //         setTimeout(() => {
+    //             initializeWebSocket();
+    //         }, 0);
+    //     }
 
-        return () => {
-            if (peerConnectionRef.current) {
-                peerConnectionRef.current.close();
-            }
-            if (localStreamRef.current) {
-                localStreamRef.current.getTracks().forEach((track) => track.stop());
-            }
-            disconnectWebSocket(stompClientRef.current);
-            modalRenderedRef.current = false;
-        };
-    }, [currentUser?.id, initializeWebSocket]);
+    //     return () => {
+    //         if (peerConnectionRef.current) {
+    //             peerConnectionRef.current.close();
+    //         }
+    //         if (localStreamRef.current) {
+    //             localStreamRef.current.getTracks().forEach((track) => track.stop());
+    //         }
+    //         disconnectWebSocket(stompClientRef.current);
+    //         modalRenderedRef.current = false;
+    //     };
+    // }, [currentUser?.id, initializeWebSocket]);
 
     const acceptCall = async () => {
         if (!stompClientRef.current || !stompClientRef.current.connected) {

@@ -3,7 +3,7 @@ import ReactModal from "react-modal";
 import { FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaPhoneSlash } from "react-icons/fa";
 import { useDashboardContext } from "../../context/Dashboard_context";
 import { toast } from "react-toastify";
-import { connectWebSocket, disconnectWebSocket } from "../../services/SocketService.js";
+import { connectWebSocket, disconnectWebSocket } from "../../services/SocketService1.js";
 
 const VideoCallModal = ({ isOpen, onClose, recipientId, recipientName, conversationId, callType = "video" }) => {
   console.log("VideoCallModal props:", { recipientId, conversationId });
@@ -178,27 +178,27 @@ const VideoCallModal = ({ isOpen, onClose, recipientId, recipientName, conversat
         }
     };
 
-    useEffect(() => {
-        if (isOpen) {
-            modalRenderedRef.current = true;
-            setTimeout(() => {
-                initializeCall();
-            }, 0);
-        }
+    // useEffect(() => {
+    //     if (isOpen) {
+    //         modalRenderedRef.current = true;
+    //         setTimeout(() => {
+    //             initializeCall();
+    //         }, 0);
+    //     }
 
-        return () => {
-            if (peerConnectionRef.current) {
-                peerConnectionRef.current.close();
-            }
-            if (localStreamRef.current) {
-                localStreamRef.current.getTracks().forEach((track) => track.stop());
-            }
-            disconnectWebSocket(stompClientRef.current);
-            clearInterval(timerRef.current);
-            setCallDuration(0);
-            modalRenderedRef.current = false;
-        };
-    }, [isOpen]);
+    //     return () => {
+    //         if (peerConnectionRef.current) {
+    //             peerConnectionRef.current.close();
+    //         }
+    //         if (localStreamRef.current) {
+    //             localStreamRef.current.getTracks().forEach((track) => track.stop());
+    //         }
+    //         disconnectWebSocket(stompClientRef.current);
+    //         clearInterval(timerRef.current);
+    //         setCallDuration(0);
+    //         modalRenderedRef.current = false;
+    //     };
+    // }, [isOpen]);
 
     const toggleMic = () => {
         if (localStreamRef.current) {
