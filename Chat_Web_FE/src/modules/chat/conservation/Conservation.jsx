@@ -37,6 +37,7 @@ const Conservation = ({
   showDetail,
   selectedConversation,
   client,
+  setShowSearchForm
 }) => {
   console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
@@ -44,6 +45,10 @@ const Conservation = ({
 
   const { conversations, deleteConversationForUser } = useConversation();
 
+  const handleShowSearchForm = () => {
+    setShowSearchForm(true); // Kích hoạt hiển thị SearchForm
+    if (!showDetail) onShowDetail(); // Nếu panel chi tiết chưa mở, mở nó
+  };
   console.log("conversations", conversations);
   useEffect(() => {
     if (selectedConversation && conversations?.length) {
@@ -1020,7 +1025,7 @@ const Conservation = ({
           <button className="btn btn-sm" onClick={handleOpenVideoCallModal}>
             <i className="bi bi-camera-video"></i>
           </button>
-          <button className="btn btn-sm">
+          <button className="btn btn-sm" onClick={handleShowSearchForm}>
             <i className="bi bi-search"></i>
           </button>
           <button
@@ -1717,6 +1722,7 @@ const Conservation = ({
 const App = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [conversationWidth, setConversationWidth] = useState("100%");
+  const [showSearchForm, setShowSearchForm] = useState(false);
 
   const selectedConversation = useSelector(
     (state) => state.common.selectedConversation
@@ -1731,6 +1737,7 @@ const App = () => {
   const handleHideDetail = () => {
     setShowDetail(false);
     setConversationWidth("100%");
+    setShowSearchForm(false);
   };
 
   return (
@@ -1748,6 +1755,7 @@ const App = () => {
           showDetail={showDetail}
           selectedConversation={selectedConversation}
           client={Client}
+          setShowSearchForm={setShowSearchForm}
           refetchConversation={refetchConversation}
         />
       </div>
@@ -1763,6 +1771,8 @@ const App = () => {
             conversationInfor={selectedConversation}
             client={Client} // Pass WebSocket client
             refetchConversation={refetchConversation} // Pass refetch function
+            showSearchForm={showSearchForm} // Truyền trạng thái hiển thị SearchForm
+            setShowSearchForm={setShowSearchForm}
           />
         </div>
       )}

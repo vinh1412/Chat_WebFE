@@ -150,12 +150,6 @@ const AddMemberGroupModal = ({
             </div>
           )}
 
-          {selectedMembers.length > 0 && (
-            <div className="px-3 py-1 text-muted small">
-              Đang chọn các ID: {selectedMembers.join(", ")}
-            </div>
-          )}
-
           <div className="friends-list">
             <strong className="d-block mb-2">Danh sách bạn bè</strong>
             <div className="overflow-auto" style={{ maxHeight: "300px" }}>

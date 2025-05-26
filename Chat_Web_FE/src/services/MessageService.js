@@ -158,3 +158,19 @@ export const voteInPoll = async (messageId, userId, optionIndex) => {
   }
 };
 
+export const searchMessages = async (params) => {
+  try {
+    const response = await axiosInstance.get("/messages/search", {
+      params: {
+        conversationId: params.conversationId,
+        keyword: params.keyword,
+        senderId: params.senderId,
+        date: params.date,
+      },
+    });
+    return response.data.response;
+  } catch (error) {
+    console.error("Error searching messages:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Lỗi khi tìm kiếm tin nhắn");
+  }
+};
