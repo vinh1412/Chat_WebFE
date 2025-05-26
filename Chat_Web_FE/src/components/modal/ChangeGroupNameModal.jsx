@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { updateGroupName } from "../../services/ConversationService";
+import { useDispatch } from "react-redux";
+import { setSelectedConversation } from "../../redux/slice/commonSlice";
 
 const ChangeGroupNameModal = ({ show, onHide, conversationId, onSuccess }) => {
+  const dispatch = useDispatch();
   const [newGroupName, setNewGroupName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,7 +21,8 @@ const ChangeGroupNameModal = ({ show, onHide, conversationId, onSuccess }) => {
     try {
       const response = await updateGroupName(conversationId, newGroupName);
       toast.success("Cập nhật tên nhóm thành công!");
-      onSuccess(response.conversation); // Pass updated conversation to parent
+      onSuccess(response.conversation);
+      dispatch(setSelectedConversation(response.conversation));
       setNewGroupName("");
       onHide();
     } catch (error) {
