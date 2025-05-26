@@ -31,16 +31,13 @@ import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { connectWebSocket, disconnectWebSocket, recallMessageToWebSocket, sendMessageToWebSocket, pinChatToWebSocket, unPinChatToWebSocket, subscribeToChat, subscribeFriendsToAcceptFriendRequest, subscribeFriendsToUnfriend, deleteMessageToWebSocket } from "../../../services/SocketService";
-
-
 const Conservation = ({
   onShowDetail,
   onHideDetail,
   showDetail,
   selectedConversation,
   client,
-  setShowSearchForm
+  setShowSearchForm,
 }) => {
   console.log("Conservation selectedConversation----", selectedConversation);
   const dispatch = useDispatch();
@@ -231,6 +228,8 @@ const Conservation = ({
     }
   }, [localMessages]);
 
+  const stompClient = React.useRef(null);
+
   const handleSelectReceiver = async (receiver) => {
     try {
       await forwardMessageService({
@@ -267,13 +266,13 @@ const Conservation = ({
         return false;
       }
 
-      // if (!client.current || !client.current.connected) {
-      //   toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
-      //     position: "top-center",
-      //     autoClose: 2000,
-      //   });
-      //   return false;
-      // }
+      if (!client.current || !client.current.connected) {
+        toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+        return false;
+      }
 
       const request = {
         messageId,
@@ -281,7 +280,10 @@ const Conservation = ({
         conversationId,
       };
 
-      pinChatToWebSocket(request)
+      client.current.publish({
+        destination: "/app/chat/pin",
+        body: JSON.stringify(request),
+      });
 
       setShowLimitWarning(false); // Ẩn thông báo nếu ghim thành công
       return true;
@@ -301,13 +303,13 @@ const Conservation = ({
   //hàm bỏ ghim tin nhắn
   const handleUnpinMessage = async ({ messageId, userId, conversationId }) => {
     try {
-      // if (!client.current || !client.current.connected) {
-      //   toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
-      //     position: "top-center",
-      //     autoClose: 2000,
-      //   });
-      //   return false;
-      // }
+      if (!client.current || !client.current.connected) {
+        toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+        return false;
+      }
 
       const request = {
         messageId,
@@ -315,7 +317,10 @@ const Conservation = ({
         conversationId,
       };
 
-      unPinChatToWebSocket(request);
+      client.current.publish({
+        destination: "/app/chat/unpin",
+        body: JSON.stringify(request),
+      });
 
       return true;
     } catch (error) {
@@ -339,143 +344,28 @@ const Conservation = ({
     }
   };
 
-  // const URL_WEB_SOCKET =
-  //   import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+  const URL_WEB_SOCKET =
+    import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
 
   useEffect(() => {
     // Khởi tạo tạo kết nối WebSocket
-    // const socket = new SockJS(URL_WEB_SOCKET); // Thay thế bằng URL WebSocket của bạn
-    // // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
-    // client.current = new Client({
-    //   webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
-    //   reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
-    //   debug: (str) => {
-    //     console.log(str);
-    //   },
-    //   onConnect: () => {
-    //     // Hàm được gọi khi kết nối thành công
-    //     console.log("Connected to WebSocket");
+    const socket = new SockJS(URL_WEB_SOCKET); // Thay thế bằng URL WebSocket của bạn
+    // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
+    client.current = new Client({
+      webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
+      reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
+      debug: (str) => {
+        console.log(str);
+      },
+      onConnect: () => {
+        // Hàm được gọi khi kết nối thành công
+        console.log("Connected to WebSocket");
 
-    //     client.current.subscribe(
-    //       `/chat/message/single/${selectedConversation?.id}`, //Đăng ký vào một kênh (topic) cụ thể,
-    //       // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
-    //       (message) => {
-    //         const newMessage = JSON.parse(message.body);
-    //         console.log("New message received:", newMessage);
-
-    //         //CASE 1: Kiểm tra nếu là tin nhắn đã thu hồi
-    //         if (newMessage.recalled === true) {
-    //           setLocalMessages((prevMessages) =>
-    //             prevMessages.map((msg) => {
-    //               const msgId = String(msg?.id || msg?._id);
-
-    //               const recalledMsgId = String(newMessage.id || newMessage._id);
-
-    //               if (msgId === recalledMsgId) {
-    //                 return { ...msg, recalled: true }; // Cập nhật thuộc tính recalled: true cho tin nhắn đó, giữ nguyên các thuộc tính khác
-    //               }
-
-    //               return msg; // Trả về mảng mới để cập nhật state
-    //             })
-    //           );
-
-    //           //CASE 2: Nếu không phải là tin nhắn đã thu hồi, thêm mới hoặc cập nhật tin nhắn
-    //         } else {
-    //           const messageId = newMessage.id || newMessage._id;
-
-    //           const existingMessageIndex = localMessages.findIndex(
-    //             (msg) =>
-    //               (msg?.id && String(msg?.id) === String(messageId)) ||
-    //               (msg?._id && String(msg?._id) === String(messageId))
-    //           );
-
-    //           //Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
-    //           //CASE 2.1: Nếu tin nhắn đã tồn tại, cập nhật lại nội dung
-    //           if (existingMessageIndex !== -1) {
-    //             setLocalMessages((prevMessages) => {
-    //               const newMessages = [...prevMessages];
-    //               newMessages[existingMessageIndex] = newMessage;
-    //               return newMessages;
-    //             });
-    //           }
-    //           //CASE 2.2: Nếu tin nhắn chưa tồn tại, thêm mới
-    //           else {
-    //             setLocalMessages((prev) => [...prev, newMessage]);
-    //           }
-
-    //           // Kiểm tra xem tin nhắn có được ghim hay không
-    //           if (newMessage.pinned) {
-    //             setPinnedMessages((prev) => {
-    //               const updatedPinned = prev.filter(
-    //                 (msg) =>
-    //                   String(msg.id || msg._id) !==
-    //                   String(newMessage.id || newMessage._id)
-    //               );
-    //               return [...updatedPinned, newMessage];
-    //             });
-    //           }
-    //           // Nếu tin nhắn không được ghim, xóa nó khỏi danh sách pinnedMessages
-    //           else {
-    //             setPinnedMessages((prev) =>
-    //               prev.filter(
-    //                 (msg) =>
-    //                   String(msg.id || msg._id) !==
-    //                   String(newMessage.id || newMessage._id)
-    //               )
-    //             );
-    //           }
-    //         }
-
-    //         refetchMessages();
-
-    //         // Tự động cuộn xuống cuối danh sách tin nhắn khi có tin nhắn mới
-    //         if (bottomRef.current) {
-    //           bottomRef.current.scrollIntoView({
-    //             behavior: "smooth",
-    //           });
-    //         }
-    //       }
-    //     );
-
-    //     client.current.subscribe(
-    //       `/friend/accept/${currentUser?.id}`,
-    //       async (message) => {
-    //         if (message.body) {
-    //           const response = await checkFriend(userReceiver?.id);
-    //           setIsFriend(response);
-    //         }
-    //       }
-    //     );
-
-    //     client.current.subscribe(
-    //       `/friend/unfriend/${currentUser?.id}`,
-    //       async (message) => {
-    //         if (message.body) {
-    //           const response = await checkFriend(userReceiver?.id);
-    //           setIsFriend(response);
-    //         }
-    //       }
-    //     );
-    //   },
-    //   onStompError: (frame) => {
-    //     // Hàm được gọi khi có lỗi trong giao thức STOMP
-    //     console.error("Broker reported error: " + frame.headers["message"]);
-    //     console.error("Additional details: " + frame.body);
-    //   },
-    // });
-
-    // client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
-
-    // return () => {
-    //   if (client.current && client.current.connected) {
-    //     client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
-    //   }
-    // };
-
-    connectWebSocket(() => {
-      subscribeToChat(selectedConversation?.id, 
-        (message) => {
-            const newMessage = message;
+        client.current.subscribe(
+          `/chat/message/single/${selectedConversation?.id}`, //Đăng ký vào một kênh (topic) cụ thể,
+          // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
+          (message) => {
+            const newMessage = JSON.parse(message.body);
             console.log("New message received:", newMessage);
 
             //CASE 1: Kiểm tra nếu là tin nhắn đã thu hồi
@@ -550,27 +440,42 @@ const Conservation = ({
               });
             }
           }
-      );
+        );
 
+        client.current.subscribe(
+          `/friend/accept/${currentUser?.id}`,
+          async (message) => {
+            if (message.body) {
+              const response = await checkFriend(userReceiver?.id);
+              setIsFriend(response);
+            }
+          }
+        );
 
-      subscribeFriendsToAcceptFriendRequest(currentUser?.id, async (message) => {
-        if (message) {
-          const response = await checkFriend(userReceiver?.id);
-          setIsFriend(response);
-        }
-      });
-
-      subscribeFriendsToUnfriend(currentUser?.id, async (message) => {
-        if (message) {
-          const response = await checkFriend(userReceiver?.id);
-          setIsFriend(response);
-        }
-      });
-
+        client.current.subscribe(
+          `/friend/unfriend/${currentUser?.id}`,
+          async (message) => {
+            if (message.body) {
+              const response = await checkFriend(userReceiver?.id);
+              setIsFriend(response);
+            }
+          }
+        );
+      },
+      onStompError: (frame) => {
+        // Hàm được gọi khi có lỗi trong giao thức STOMP
+        console.error("Broker reported error: " + frame.headers["message"]);
+        console.error("Additional details: " + frame.body);
+      },
     });
+
+    client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
+
     return () => {
-      disconnectWebSocket();
-    }
+      if (client.current && client.current.connected) {
+        client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
+      }
+    };
   }, [
     selectedConversation?.id,
     localMessages,
@@ -582,25 +487,24 @@ const Conservation = ({
 
   //Handle sending GIF or Sticker
   const handleSendGifOrSticker = (url, type) => {
-    // if (
-    //   !selectedConversation?.id ||
-    //   !client.current ||
-    //   !client.current.connected
-    // ) {
-    //   toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
-    //     position: "top-center",
-    //     autoClose: 3000,
-    //   });
-    //   return;
-    // }
-      if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+    if (
+      !selectedConversation?.id ||
+      !client.current ||
+      !client.current.connected
+    ) {
+      toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+    if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
       toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
         position: "top-center",
         autoClose: 2000,
       });
       return;
     }
-
     const request = {
       conversationId: selectedConversation?.id,
       senderId: currentUser.id,
@@ -609,13 +513,12 @@ const Conservation = ({
     };
     // console.log("Sending GIF request:", request);
 
-    sendMessageToWebSocket(request);
-    // client.current.publish({
-    //   destination: "/app/chat/send",
-    //   body: JSON.stringify(request),
-    // });
-    refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
+    client.current.publish({
+      destination: "/app/chat/send",
+      body: JSON.stringify(request),
+    });
 
+    refetchMessages();
     setShowStickerPicker(false);
   };
 
@@ -666,7 +569,6 @@ const Conservation = ({
       // alert("Vui lòng chọn cuộc trò chuyện và nhập tin nhắn");
       return;
     }
-
     if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
       toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
         position: "top-center",
@@ -674,7 +576,6 @@ const Conservation = ({
       });
       return;
     }
-
     try {
       const request = {
         conversationId: selectedConversation?.id,
@@ -683,35 +584,21 @@ const Conservation = ({
         messageType: "TEXT",
       };
 
-      // if (!client.current || !client.current.connected) {
-      //   toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
-      //     position: "top-center",
-      //     autoClose: 3000,
-      //   });
-      //   return;
-      // }
+      if (!client.current || !client.current.connected) {
+        toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        return;
+      }
 
       // Gửi tin nhắn qua WebSocket
-      // client.current.publish({
-      //   destination: "/app/chat/send",
-      //   body: JSON.stringify(request),
-      // });
+      client.current.publish({
+        destination: "/app/chat/send",
+        body: JSON.stringify(request),
+      });
 
-      sendMessageToWebSocket(request);
-      // Cập nhật tin nhắn localMessage
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: `temp-${Date.now()}`,
-          senderId: currentUser.id,
-          messageType: "TEXT",
-          content: newMessage,
-          timestamp: new Date(),
-        },
-      ]);
-
-
-      // refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
+      refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
       setNewMessage("");
     } catch (error) {
       console.error("Conservation send message error:", error.message);
@@ -725,14 +612,13 @@ const Conservation = ({
       toast.error("Vui lòng chọn cuộc trò chuyện trước");
       return;
     }
-      if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+    if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
       toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
         position: "top-center",
         autoClose: 2000,
       });
       return;
     }
-
 
     // Then after uploading
     const tempId = `temp-${Date.now()}`;
@@ -763,16 +649,13 @@ const Conservation = ({
         ...chatMessageRequest,
         fileUrl: result.fileUrls?.[0],
       };
+      client.current.publish({
+        destination: "/app/chat/send",
+        body: JSON.stringify(updatedRequest),
+      });
 
-      // client.current.publish({
-      //   destination: "/app/chat/send",
-      //   body: JSON.stringify(updatedRequest),
-      // });
-      sendMessageToWebSocket(updatedRequest);
-
-      //Cập nhật lại tin nhắn localMessage để gửi ảnh
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
-      // refetchMessages();
+      refetchMessages();
     } catch (error) {
       toast.error(`Lỗi khi gửi hình ảnh: ${error.message}`);
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
@@ -783,7 +666,6 @@ const Conservation = ({
   const handleSendImages = async (files) => {
     for (const file of files) {
       await handleSendImage(file);
-
     }
   };
 
@@ -793,7 +675,6 @@ const Conservation = ({
       toast.error("Vui lòng chọn cuộc trò chuyện trước");
       return;
     }
-
     if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
       toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
         position: "top-center",
@@ -801,7 +682,6 @@ const Conservation = ({
       });
       return;
     }
-
     // Then after uploading
     console.log("File to be sent:", file);
 
@@ -832,13 +712,13 @@ const Conservation = ({
         fileUrl: result.fileUrls?.[0],
       };
 
-      // client.current.publish({
-      //   destination: "/app/chat/send",
-      //   body: JSON.stringify(updatedRequest),
-      // });
-      sendMessageToWebSocket(updatedRequest);
-      // Cập 
+      client.current.publish({
+        destination: "/app/chat/send",
+        body: JSON.stringify(updatedRequest),
+      });
+
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+      refetchMessages();
     } catch (error) {
       toast.error(`Lỗi khi gửi tệp đính kèm: ${error.message}`);
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
@@ -858,8 +738,7 @@ const Conservation = ({
       toast.error("Vui lòng chọn cuộc trò chuyện trước");
       return;
     }
-
-     if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+    if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
       toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
         position: "top-center",
         autoClose: 2000,
@@ -902,13 +781,13 @@ const Conservation = ({
         fileUrl: result.fileUrls?.[0],
       };
 
-      // client.current.publish({
-      //   destination: "/app/chat/send",
-      //   body: JSON.stringify(updatedRequest),
-      // });
-      sendMessageToWebSocket(updatedRequest);
+      client.current.publish({
+        destination: "/app/chat/send",
+        body: JSON.stringify(updatedRequest),
+      });
 
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+      refetchMessages();
     } catch (error) {
       toast.error(`Lỗi khi gửi video: ${error.message}`);
       setLocalMessages((prev) => prev.filter((msg) => msg.id !== tempId));
@@ -924,15 +803,15 @@ const Conservation = ({
 
   // Hàm gửi nhanh emoji
   const handleQuickReaction = () => {
-    // if (!selectedConversation?.id) return;
-    // if (!client.current || !client.current.connected) {
-    //   toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
-    //     position: "top-center",
-    //     autoClose: 3000,
-    //   });
-    //   return;
-    // }
-      if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
+    if (!selectedConversation?.id) return;
+    if (!client.current || !client.current.connected) {
+      toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+    if (selectedConversation.restrictMessagingToAdmin && !isAdmin) {
       toast.error("Chỉ trưởng nhóm được phép nhắn tin trong nhóm này", {
         position: "top-center",
         autoClose: 2000,
@@ -948,11 +827,10 @@ const Conservation = ({
       content: defaultReactionEmoji.icon,
     };
 
-    // client.current.publish({
-    //   destination: "/app/chat/send",
-    //   body: JSON.stringify(request),
-    // });
-    sendMessageToWebSocket(request);
+    client.current.publish({
+      destination: "/app/chat/send",
+      body: JSON.stringify(request),
+    });
   };
 
   // Hàm thu hồi tin nhắn
@@ -964,6 +842,8 @@ const Conservation = ({
     try {
       // console.log("Recalling message:", messageId, senderId, conversationId);
 
+      // Nếu đang sử dụng WebSocket và kết nối đang hoạt động
+      if (client.current && client.current.connected) {
         // Đảm bảo messageId đang được dùng là đúng
         const messageToRecall = localMessages.find(
           (msg) =>
@@ -987,36 +867,21 @@ const Conservation = ({
           messageId: messageId,
           senderId: senderId,
           conversationId: conversationId,
-          messageType: "TEXT"
         };
 
         // Gửi yêu cầu thu hồi qua WebSocket, Server sẽ xử lý yêu cầu này và gửi thông báo thu hồi tới tất cả client trong cuộc trò chuyện
-        // client.current.publish({
-        //   destination: "/app/chat/recall",
-        //   body: JSON.stringify(request),
-        // });
-
-        recallMessageToWebSocket(request);
-        // Cập nhật lại localMessages để đánh dấu tin nhắn đã thu hồi
-        setLocalMessages((prevMessages) =>
-          prevMessages.map((msg) => {
-            if (
-              String(msg?.id) === String(messageId) ||
-              String(msg?._id) === String(messageId)
-            ) {
-              return { ...msg, recalled: true }; // Đánh dấu tin nhắn đã thu hồi
-            }
-            return msg; // Trả về mảng mới để cập nhật state
-          })
-        );
-        // await recallMessage({
-        //   messageId: messageId,
-        //   senderId: senderId,
-        //   conversationId: conversationId,
-        // });
+        client.current.publish({
+          destination: "/app/chat/recall",
+          body: JSON.stringify(request),
+        });
+        await recallMessage({ messageId, senderId, conversationId });
 
         return true;
-      
+      } else {
+        // Fallback nếu WebSocket không hoạt động
+        await recallMessage({ messageId, senderId, conversationId });
+        return true;
+      }
     } catch (error) {
       console.error("Error recalling message:", error);
       toast.error(
@@ -1033,22 +898,25 @@ const Conservation = ({
   // Hàm xóa tin nhắn cho người dùng
   const handleDeleteForUser = async ({ messageId, userId }) => {
     try {
-        // client.current.publish({
-        //   destination: "/app/chat/delete-for-user",
-        //   body: JSON.stringify({
-        //     messageId: messageId,
-        //     userId: userId,
-        //   }),
-        // });
-        deleteMessageToWebSocket({
-          messageId: messageId,
-          userId: userId,
+      // Nếu WebSocket đang kết nối, gửi yêu cầu xóa qua WebSocket
+      if (client.current && client.current.connected) {
+        client.current.publish({
+          destination: "/app/chat/delete-for-user",
+          body: JSON.stringify({
+            messageId: messageId,
+            userId: userId,
+          }),
         });
 
-        // await deleteForUserMessage({ messageId, userId });
+        await deleteForUserMessage({ messageId, userId });
 
         return true;
-      
+      } else {
+        // Fallback - gọi API nếu WebSocket không hoạt động
+        await deleteForUserMessage({ messageId, userId });
+
+        return true;
+      }
     } catch (error) {
       console.error("Error deleting message for user:", error);
       toast.error(
@@ -1376,11 +1244,12 @@ const Conservation = ({
           padding: "10px",
         }}
       >
-      {selectedConversation?.restrictMessagingToAdmin && !isAdmin && (
+        {selectedConversation?.restrictMessagingToAdmin && !isAdmin && (
           <div className="alert alert-info mb-2 text-center">
             <i className="bi bi-lock-fill me-2"></i>
             Chỉ trưởng nhóm được phép nhắn tin trong nhóm này.
           </div>
+          //
         )}
         {isLoadingAllMessages ? (
           <p className="text-muted text-center">Đang tải tin nhắn...</p>
@@ -1771,7 +1640,9 @@ const Conservation = ({
                   const files = Array.from(e.target.files);
                   if (files.length) handleSendImages(files);
                 }}
-                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
               />
               <label className="btn btn-light mb-0" htmlFor="file-upload">
                 <i className="bi bi-paperclip"></i>
@@ -1785,7 +1656,9 @@ const Conservation = ({
                   const files = Array.from(e.target.files);
                   if (files) handleSendFiles(files);
                 }}
-                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
               />
               <input
                 type="file"
@@ -1797,7 +1670,9 @@ const Conservation = ({
                   const files = Array.from(e.target.files);
                   if (files.length) handleSendVideos(files);
                 }}
-                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
               />
               <label className="btn btn-light mb-0" htmlFor="video-upload">
                 <i class="bi bi-file-earmark-play-fill"></i>
@@ -1807,14 +1682,26 @@ const Conservation = ({
                 onClick={() =>
                   alert("Tính năng ghi âm đang được phát triển...")
                 }
-                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
               >
                 <i className="bi bi-mic"></i>
               </button>
-              <button className="btn btn-light" disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}>
+              <button
+                className="btn btn-light"
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
+              >
                 <i className="bi bi-lightning"></i>
               </button>
-              <button className="btn btn-light" disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}>
+              <button
+                className="btn btn-light"
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
+              >
                 <i className="bi bi-three-dots"></i>
               </button>
             </div>
@@ -1851,12 +1738,16 @@ const Conservation = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSendMessage();
                 }}
-                  disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
               />
               <button
                 className="btn btn-light d-flex align-items-center"
                 onClick={handleSendMessage}
-                disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
               >
                 <i
                   className={`bi ${
@@ -1869,7 +1760,9 @@ const Conservation = ({
               <button
                 className="btn btn-light d-flex align-items-center"
                 onClick={handleQuickReaction} // Left click sends the reaction
-                disabled={selectedConversation?.restrictMessagingToAdmin && !isAdmin}
+                disabled={
+                  selectedConversation?.restrictMessagingToAdmin && !isAdmin
+                }
                 onContextMenu={(e) => {
                   e.preventDefault(); // Prevent default context menu
                   handleOpenReactionModal(); // Show custom modal on right click

@@ -11,7 +11,6 @@ import { useDashboardContext } from "../../context/Dashboard_context";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { toast as showToast } from "react-toastify";
-import { connectWebSocket, disconnectWebSocket, subscribeToSendFriendRequest, subscribeFriendsToAcceptFriendRequest, subscribeFriendsToUnfriend } from "../../services/SocketService";
 
 const LayoutDashboard = () => {
   const queryClient = useQueryClient();
@@ -21,10 +20,22 @@ const LayoutDashboard = () => {
     import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
   useEffect(() => {
     // Khởi tạo tạo kết nối WebSocket
-    connectWebSocket(() => {
-      subscribeToSendFriendRequest(currentUser?.id, (message) => {
-         if (message) {
-              const data = message;
+    const socket = new SockJS(URL_WEB_SOCKET);
+    // Tạo một instance của Client từ @stomp/stompjs, để giao tiếp với server qua WebSocket.
+    client.current = new Client({
+      webSocketFactory: () => socket, // Sử dụng SockJS để tạo kết nối WebSocket
+      reconnectDelay: 5000, // Thời gian chờ để kết nối lại sau khi mất kết nối
+      debug: (str) => {
+        console.log(str);
+      },
+      onConnect: () => {
+        // Hàm được gọi khi kết nối thành công
+        console.log("Connected to WebSocket");
+        client.current.subscribe(
+          `/friend/request/${currentUser?.id}`,
+          (message) => {
+            if (message.body) {
+              const data = JSON.parse(message.body);
               console.log("Nhận được tin nhắn từ WebSocket request:", data);
 
               // Cập nhật danh sách request trong cache
@@ -49,12 +60,15 @@ const LayoutDashboard = () => {
                 return { ...oldData, response: [...oldData.response, data] };
               });
             }
-      });
+          }
+        );
 
-      subscribeFriendsToAcceptFriendRequest(currentUser?.id, (message) => {
-        if (message) {
-              const data = message;
-              console.log("Nhận được tin nhắn từ WebSocket accept:", message);
+        client.current.subscribe(
+          `/friend/accept/${currentUser?.id}`,
+          (message) => {
+            if (message.body) {
+              const data = JSON.parse(message.body);
+              console.log("Nhận được tin nhắn từ WebSocket:", data);
 
               // Cập nhật danh sách bạn bè trong cache
               queryClient.setQueryData(["friendList"], (oldData) => {
@@ -76,43 +90,48 @@ const LayoutDashboard = () => {
               // You can also display some notification if needed
               console.log("Friend request accepted:", data);
             }
-      });
+          }
+        );
 
-      subscribeFriendsToUnfriend(currentUser?.id, (message) => {
-        if (message) {
-              const data = message;
-              console.log("Nhận được tin nhắn từ WebSocket unfriend:", message);
+        client.current.subscribe(
+          `/friend/unfriend/${currentUser?.id}`,
+          (message) => {
+            if (message.body) {
+              const data = JSON.parse(message.body);
+              console.log("Nhận được tin nhắn từ WebSocket unfriend:", data);
 
               // Cập nhật danh sách bạn bè trong cache
               queryClient.setQueryData(["friendList"], (oldData) => {
                 if (!oldData.response) return oldData;
 
-                // Kiểm tra xem người dùng đã có trong danh sách bạn bè chưa
-                const existingFriend = oldData.response.find(
-                  (friend) => friend.userId === data.userId
+                const friends = oldData.response.filter(
+                  (friend) => friend.userId !== data.userId
                 );
-                if (existingFriend) {
+                if (friends.length === oldData.response.length) {
                   return oldData;
                 }
 
-                return { ...oldData, response: [...oldData.response, data] };
+                return { ...oldData, response: friends };
               });
-              queryClient.invalidateQueries(["sentRequests"]); //  cập nhật lại danh sách yêu cầu đã gửi
-              queryClient.invalidateQueries(["receivedRequests"]); //  cập nhật lại danh sách yêu cầu đã nhận
-
-              // You can also display some notification if needed
-              console.log("Friend request accepted:", data);
-        }
-      })
+            }
+          }
+        );
+      },
+      onStompError: (frame) => {
+        // Hàm được gọi khi có lỗi trong giao thức STOMP
+        console.error("Broker reported error: " + frame.headers["message"]);
+        console.error("Additional details: " + frame.body);
+      },
     });
 
-    
+    client.current.activate(); // Kích hoạt kết nối WebSocket, bắt đầu quá trình kết nối tới server.
 
     return () => {
-      disconnectWebSocket();
+      if (client.current && client.current.connected) {
+        client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
+      }
     };
   }, [client, currentUser?.id, queryClient]);
-
   return (
     <>
       <Modal />

@@ -3,11 +3,11 @@ import { DashboardContext } from "../Dashboard_context";
 import { getCurrentUserService } from "../../services/UserService";
 import { removeTokens } from "../../services/AuthService";
 import { useQueryClient } from "@tanstack/react-query";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 import { toast } from "react-toastify";
 import { getAllConversationsByUserIdService } from "../../services/ConversationService";
 import store from "../../redux/store";
-
-import { disconnectWebSocket, connectWebSocket, subscribeToConversation, subscribeToDissolveGroup, subscribeToDeleteConversation } from "../../services/SocketService";
 import {
   setSelectedConversation,
   setShowConversation,
@@ -21,17 +21,33 @@ const DashboardProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
+  const stompClient = useRef(null);
   const queryClient = useQueryClient();
+
+  const URL_WEB_SOCKET =
+    import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
 
   // Kết nối WebSocket
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!stompClient.current || !currentUser?.id) return;
 
-    connectWebSocket(() => {
-        subscribeToConversation(currentUser.id, (message) => {
-          if (!message) return;
-          try {
-              const newGroupConversation = message;
+    // Kết nối đến WebSocket server
+    const socket = new SockJS(URL_WEB_SOCKET);
+    stompClient.current = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 500,
+      debug: (str) => {
+        console.log(str);
+      },
+      onConnect: () => {
+        console.log("Connected to WebSocket in Dashboard context");
+
+        // Đăng ký lắng nghe tin nhắn từ server
+        stompClient.current.subscribe(
+          `/chat/create/group/${currentUser.id}`,
+          (message) => {
+            try {
+              const newGroupConversation = JSON.parse(message.body);
               console.log(
                 "New group conversation received:",
                 newGroupConversation
@@ -49,13 +65,15 @@ const DashboardProvider = ({ children }) => {
             } catch (error) {
               console.error("Error processing group creation message:", error);
             }
-        });
+          }
+        );
 
-      // Đăng ký lắng nghe giải tán nhóm
-        subscribeToDissolveGroup(currentUser.id, (message) => {
-          if (!message) return;
-           try {
-              const notificationData = message;
+        // Đăng ký lắng nghe giải tán nhóm
+        stompClient.current.subscribe(
+          `/chat/dissolve/group/${currentUser.id}`,
+          (message) => {
+            try {
+              const notificationData = JSON.parse(message.body);
               console.log("Dissolve Group dissolved:", notificationData);
               const conversationName = notificationData.name;
               console.log("Conversation name:", conversationName);
@@ -71,12 +89,14 @@ const DashboardProvider = ({ children }) => {
                 error
               );
             }
-        });
+          }
+        );
 
-        subscribeToDeleteConversation(currentUser.id, (message) => {
-          if (!message) return;
-          try {
-              const deletedConversation = message;
+        stompClient.current.subscribe(
+          `/chat/delete/${currentUser.id}`,
+          (message) => {
+            try {
+              const deletedConversation = JSON.parse(message.body);
               console.log("Conversation deleted:", deletedConversation);
 
               // Update the conversations list
@@ -103,12 +123,21 @@ const DashboardProvider = ({ children }) => {
                 error
               );
             }
-        });
-
+          }
+        );
+      },
+      onStompError: (frame) => {
+        console.error("Broker reported error: " + frame.headers["message"]);
+        console.error("Additional details: " + frame.body);
+      },
     });
 
+    stompClient.current.activate();
+
     return () => {
-      disconnectWebSocket();
+      if (stompClient.current && stompClient.current.connected) {
+        stompClient.current.deactivate();
+      }
     };
   }, [currentUser?.id, queryClient]);
 

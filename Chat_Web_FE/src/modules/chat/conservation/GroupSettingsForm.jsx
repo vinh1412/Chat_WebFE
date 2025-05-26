@@ -28,7 +28,9 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
   // Đồng bộ trạng thái restrictMessaging khi selectedConversation thay đổi
   useEffect(() => {
     if (selectedConversation?.id === conversationId) {
-      setRestrictMessaging(selectedConversation.restrictMessagingToAdmin || false);
+      setRestrictMessaging(
+        selectedConversation.restrictMessagingToAdmin || false
+      );
     }
   }, [selectedConversation, conversationId]);
 
@@ -63,7 +65,10 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
     }
     const newRestrictState = !restrictMessaging;
     try {
-      const response = await restrictMessagingService(conversationId, newRestrictState);
+      const response = await restrictMessagingService(
+        conversationId,
+        newRestrictState
+      );
       setRestrictMessaging(newRestrictState);
       // Cập nhật Redux state
       dispatch(
@@ -147,8 +152,8 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
       >
         {!isAdmin && (
           <div className="bg-secondary text-center mb-2 text-white rounded-2 p-2">
-            <i className="bi bi-file-earmark-lock2"></i> Tính năng này chỉ dành cho
-            quản trị viên nhóm.
+            <i className="bi bi-file-earmark-lock2"></i> Tính năng này chỉ dành
+            cho quản trị viên nhóm.
           </div>
         )}
 
