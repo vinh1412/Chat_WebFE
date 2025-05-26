@@ -23,14 +23,20 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
     setMembers(conversationInfor.members || []);
   }, [conversationInfor]);
 
+  // Listen for WebSocket updates from parent components
+  // The parent component handles WebSocket subscriptions for group updates
+  // We just need to make sure we update our local state when conversationInfor changes
+
   // Hàm refetch lại members từ server
   const refetchMembers = async () => {
     try {
       const updated = await getConversationByIdService(conversationInfor.id);
+      console.log("Updated conversation members:", updated.members);
       setMembers(updated.members);
       setConversationInfor(updated); // cập nhật lại context nếu cần
       if (onMembersChanged) onMembersChanged(); // callback để ConservationDetail cũng cập nhật
     } catch (error) {
+      console.error("Error fetching updated members:", error);
       toast.error("Không thể cập nhật danh sách thành viên");
     }
   };
@@ -58,9 +64,11 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
     try {
       await removeMember(conversationId, userId);
       toast.success("Đã xóa thành viên khỏi nhóm thành công");
+      // Server will broadcast via WebSocket but we'll also refetch
       await refetchMembers();
     } catch (error) {
-      toast.error("Bạn không phải nhóm trưởng");
+      console.error("Error removing member:", error);
+      toast.error(error.response?.data || "Bạn không có quyền xóa thành viên");
     }
   };
 

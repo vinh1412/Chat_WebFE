@@ -29,13 +29,13 @@ const DashboardProvider = ({ children }) => {
 
   // Kết nối WebSocket
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!stompClient.current || !currentUser?.id) return;
 
     // Kết nối đến WebSocket server
     const socket = new SockJS(URL_WEB_SOCKET);
     stompClient.current = new Client({
       webSocketFactory: () => socket,
-      reconnectDelay: 5000,
+      reconnectDelay: 500,
       debug: (str) => {
         console.log(str);
       },
