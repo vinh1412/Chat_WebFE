@@ -1,0 +1,7 @@
+.highlight-message {
+  background-color: #fff3cd !important;
+  transition: background-color 1s ease;
+}
+
+.search-result-item:hover {
+  background-color: #e9ecef !important;
