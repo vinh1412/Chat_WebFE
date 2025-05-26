@@ -17,8 +17,11 @@ import useMessage from "../../../hooks/useMessage";
 import GroupBoard from "./GroupBoard";
 
 import ChangeGroupNameModal from "../../../components/modal/ChangeGroupNameModal";
+import SearchForm from "./SearchForm";
+import formatTime from "../../../utils/FormatTime";
+import { useSelector } from "react-redux";
 
-const ConversationDetail = ({ conversationInfor }) => {
+const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm, }) => {
   console.log("conversationInfor:", conversationInfor);
   const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
     useDashboardContext();
@@ -32,6 +35,8 @@ const ConversationDetail = ({ conversationInfor }) => {
   const messages = useMessage(conversationInfor.id); // Sử dụng hook để lấy messages theo conversationId
 
   const messageData = messages?.messages?.response;
+
+  const searchResults = useSelector((state) => state.common.searchResults) || [];
 
   //Lọc ảnh/ video từ messages
   const mediaMessages = Array.isArray(messageData)
@@ -130,6 +135,18 @@ const ConversationDetail = ({ conversationInfor }) => {
       });
   };
 
+  // Hàm để nhảy tới tin nhắn khi nhấn vào kết quả tìm kiếm
+  const handleJumpToMessage = (messageId) => {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+      messageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      messageElement.classList.add("highlight-message");
+    }
+  };
+
   return (
     <div
       className="card shadow-sm h-100 "
@@ -147,6 +164,47 @@ const ConversationDetail = ({ conversationInfor }) => {
           onBack={() => setShowGroupSettings(false)}
           conversationId={conversationInfor?.id}
         />
+      ) : showSearchForm ? (
+        <>
+          <div className="card-header d-flex align-items-center justify-content-between">
+            <h6 className="mb-0">Tìm kiếm tin nhắn</h6>
+            <button
+              className="btn btn-sm"
+              onClick={() => setShowSearchForm(false)}
+            >
+              <i className="bi bi-arrow-left"></i>
+            </button>
+          </div>
+          <div className="card-body">
+            <SearchForm conversationId={conversationInfor.id} />
+            {/* Hiển thị kết quả tìm kiếm */}
+            {searchResults.length > 0 ? (
+              <div className="search-results mt-3">
+                <h6>Kết quả tìm kiếm:</h6>
+                {searchResults.map((result) => (
+                  <div
+                    key={result.id}
+                    className="search-result-item p-2 rounded bg-light mb-2"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleJumpToMessage(result.id)}
+                  >
+                    <p className="mb-0">
+                      <strong>{result.senderName}</strong>: {result.content}
+                    </p>
+                    <small className="text-muted">
+                      {formatTime(result.timestamp)}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted">
+                Hãy nhập từ khóa để bắt đầu tìm kiếm tin nhắn và file trong trò
+                chuyện
+              </p>
+            )}
+          </div>
+        </>
       ) : (
         <>
           <div className=" card-header text-center">

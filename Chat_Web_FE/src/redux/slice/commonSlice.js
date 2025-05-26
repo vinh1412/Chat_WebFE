@@ -6,6 +6,9 @@ const commonSlice = createSlice({
     showConversation: false,
     showSearch: false,
     selectedConversation: null,
+    searchResults: [],
+    currentUser: null, 
+    members: [],
   },
   reducers: {
     setShowConversation: (state, action) => ({
@@ -19,9 +22,18 @@ const commonSlice = createSlice({
       ...state,
       showSearch: action.payload,
     }),
+    setSearchResults: (state, action) => {
+      state.searchResults = action.payload; 
+    },
+    setCurrentUser: (state, action) => {
+      state.currentUser = action.payload; 
+    },
+    setMembers: (state, action) => {
+      state.members = action.payload;
+    },
   },
 });
 
-export const { setShowConversation, setShowSearch, setSelectedConversation } =
+export const { setShowConversation, setShowSearch, setSelectedConversation, setSearchResults, setCurrentUser, setMembers } =
   commonSlice.actions;
 export default commonSlice.reducer;
