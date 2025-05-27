@@ -83,8 +83,6 @@ export const searchUser = async (keyword) => {
       "Error searching user:",
       error.response?.data || error.message
     );
-    throw new Error(
-      error.response?.data?.message || "Failed to search user"
-    );
+    throw new Error(error.response?.data?.message || "Failed to search user");
   }
 };
