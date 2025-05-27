@@ -5,25 +5,27 @@ import { useDashboardContext } from "../../context/Dashboard_context";
 import { AiOutlineClose } from "react-icons/ai";
 import { searchUser } from "../../services/UserService";
 import "react-phone-input-2/lib/style.css";
+import { useDispatch, useSelector } from "react-redux";
+import { addToRecentSearches } from "../../redux/slice/searchHistorySlice";
 
-const data = [
-  {
-    id: "1",
-    name: "Nguyễn Văn A",
-    phoneNumber: "123456789",
-    avatar: "https://i.pravatar.cc/300?img=1",
-  },
-  {
-    id: "2",
-    name: "Trần Văn B",
-    phoneNumber: "123456781",
-    avatar: "https://i.pravatar.cc/300?img=2",
-  },
-];
+// const data = [
+//   {
+//     id: "1",
+//     name: "Nguyễn Văn A",
+//     phoneNumber: "123456789",
+//     avatar: "https://i.pravatar.cc/300?img=1",
+//   },
+//   {
+//     id: "2",
+//     name: "Trần Văn B",
+//     phoneNumber: "123456781",
+//     avatar: "https://i.pravatar.cc/300?img=2",
+//   },
+// ];
 
-const ItemCurrentlyFriend = ({ item }) => {
+const ItemCurrentlyFriend = ({ item, onClick }) => {
   return (
-    <Row className="g-0 pt-2" style={{ cursor: "pointer" }}>
+    <Row className="g-0 pt-2" style={{ cursor: "pointer" }} onClick={onClick}>
       <Col xs="auto" className="d-flex align-items-center p-2">
         <div
           className="overflow-hidden"
@@ -39,10 +41,10 @@ const ItemCurrentlyFriend = ({ item }) => {
 
       <Col className="d-flex flex-column justify-content-center p-2">
         <div className="" style={{ fontSize: "1.03rem", fontWeight: "500" }}>
-          {item.name}
+          {item.display_name}
         </div>
         <div className="text-muted" style={{ fontSize: "0.8rem" }}>
-          (+84) {item.phoneNumber}
+          {item.phone}
         </div>
       </Col>
     </Row>
@@ -66,6 +68,11 @@ const AddFriendModal = () => {
   const [notificationMessage, setNotificationMessage] = useState("");
   const phoneInputRef = useRef(null);
 
+  const dispatch = useDispatch();
+  const recentSearches = useSelector(
+    (state) => state.searchHistory.recentSearches
+  );
+
   useEffect(() => {
     if (phoneInputRef.current) {
       const inputEl = phoneInputRef.current.querySelector("input");
@@ -74,6 +81,13 @@ const AddFriendModal = () => {
       }
     }
   }, []);
+
+  // Hàm xử lý khi click vào một kết quả tìm kiếm gần đây
+  const handleRecentSearchClick = (item) => {
+    setSelectedSearchUser(item);
+    setShowAccountInfoSearchModal(true);
+    setShowAddFriendModal(false);
+  };
 
   // Hàm xử lý tìm kiếm người bạn bè bằng số điện thoại
   const handleSearch = async () => {
@@ -126,10 +140,12 @@ const AddFriendModal = () => {
       const result = await searchUser(phoneNumber);
 
       if (result.response && result.response.length > 0) {
-        setSelectedSearchUser(result.response[0]);
+        const user = result.response[0];
+        setSelectedSearchUser(user);
         setShowAccountInfoSearchModal(true);
         setShowAddFriendModal(false);
         setPhone("");
+        dispatch(addToRecentSearches(user));
       } else {
         setNotificationMessage(
           "Số điện thoại chưa đăng ký tài khoản hoặc không cho phép tìm kiếm."
@@ -217,14 +233,19 @@ const AddFriendModal = () => {
           />
         </div>
 
-        <div>
-          <span className="fs-6 text-muted fw-normal">Kết quả gần đây</span>
-
-          {/* output */}
-          {data.map((item) => (
-            <ItemCurrentlyFriend key={item.id} item={item} />
-          ))}
-        </div>
+        {/* Hiển thị kết quả tìm kiếm gần đây */}
+        {recentSearches.length > 0 && (
+          <div>
+            <span className="fs-6 text-muted fw-normal">Kết quả gần đây</span>
+            {recentSearches.map((item) => (
+              <ItemCurrentlyFriend
+                key={item.id}
+                item={item}
+                onClick={() => handleRecentSearchClick(item)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* button */}
         <div className="d-flex align-items-center py-3 px-4 border-top mt-auto">
@@ -244,7 +265,9 @@ const AddFriendModal = () => {
             </button>
           </div>
         </div>
+
         {error && <div className="text-danger mt-2">{error}</div>}
+
         {showNotification && (
           <div
             className="position-absolute p-3 text-white"

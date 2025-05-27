@@ -91,7 +91,6 @@ const AccountInfoSearchModal = ({ show, handleClose, user }) => {
 
   // Hàm xử lý khi người dùng nhấn nút "Gọi điện"
   const handleCall = () => {
-    // Xử lý cuộc gọi ở đây (có thể mở modal cuộc gọi)
     alert("Chức năng gọi điện đang được phát triển");
   };
 
