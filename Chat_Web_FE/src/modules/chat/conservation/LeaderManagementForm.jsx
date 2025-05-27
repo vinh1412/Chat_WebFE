@@ -169,100 +169,49 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
   };
 
   const handleTransferLeader = async (memberId) => {
-    if (!memberId) {
-      toast.error("Vui lòng chọn một thành viên", {
-        position: "top-center",
-        autoClose: 2000,
-      });
-      return;
-    }
+  if (!memberId) {
+    toast.error("Vui lòng chọn một thành viên", {
+      position: "top-center",
+      autoClose: 2000,
+    });
+    return;
+  }
 
-    // Prevent self-transfer
-    if (memberId === userRole.userId) {
-      toast.error("Không thể chuyển quyền trưởng nhóm cho chính bạn", {
-        position: "top-center",
-        autoClose: 2000,
-      });
-      return;
-    }
+  if (memberId === userRole.userId) {
+    toast.error("Không thể chuyển quyền trưởng nhóm cho chính bạn", {
+      position: "top-center",
+      autoClose: 2000,
+    });
+    return;
+  }
 
-    let transferSuccess = false; // Track if the transfer succeeds
+  try {
+    // Gán ADMIN cho người mới
+    await updateLeaderRole(memberId, "ADMIN");
 
+    // Hạ quyền người hiện tại xuống MEMBER
+    await updateLeaderRole(userRole.userId, "MEMBER");
+
+    // Thành công => đóng modal
+    setConfirmTransfer({ show: false, memberId: null });
+  } catch (error) {
+    toast.error("Chuyển quyền thất bại: " + error.message, {
+      position: "top-center",
+      autoClose: 3000,
+    });
+
+    // Nếu lỗi xảy ra sau khi đã set ADMIN cho người mới, rollback lại
     try {
-      await updateLeaderRole(
-        memberId,
-        "ADMIN",
-        async () => {
-          await updateLeaderRole(
-            userRole.userId,
-            "MEMBER",
-            () => {
-              transferSuccess = true; // Mark transfer as successful
-              setConfirmTransfer({ show: false, memberId: null });
-            },
-            (error) => {
-              if (process.env.NODE_ENV !== "production") {
-                console.error("Error updating old ADMIN role:", error.message);
-              }
-              // Only show error toast if the transfer hasn't succeeded
-              if (!transferSuccess) {
-                toast.error("Failed to update leader role: " + error.message, {
-                  position: "top-center",
-                  autoClose: 3000,
-                });
-              }
-            }
-          );
-        },
-        async (error) => {
-          if (process.env.NODE_ENV !== "production") {
-            console.error("Error transferring leader role:", error.message);
-          }
-          // Only attempt rollback if the memberId is still valid
-          if (isValidObjectId(memberId)) {
-            await updateLeaderRole(
-              memberId,
-              "MEMBER",
-              null,
-              (rollbackError) => {
-                if (process.env.NODE_ENV !== "production") {
-                  console.error("Rollback failed:", rollbackError.message);
-                }
-                // Suppress rollback error toast if the transfer succeeded
-                if (!transferSuccess) {
-                  toast.error("Rollback failed: " + rollbackError.message, {
-                    position: "top-center",
-                    autoClose: 3000,
-                  });
-                }
-              }
-            );
-          } else {
-            if (process.env.NODE_ENV !== "production") {
-              console.warn("Skipping rollback due to invalid memberId:", memberId);
-            }
-          }
-          // Only show the failure toast if the transfer didn't succeed
-          if (!transferSuccess) {
-            toast.error("Chuyển quyền thất bại: " + error.message, {
-              position: "top-center",
-              autoClose: 3000,
-            });
-          }
-        }
-      );
-    } catch (error) {
-      if (process.env.NODE_ENV !== "production") {
-        console.error("Unexpected error in handleTransferLeader:", error.message);
-      }
-      if (!transferSuccess) {
-        toast.error("Chuyển quyền thất bại: " + error.message, {
-          position: "top-center",
-          autoClose: 3000,
-        });
-      }
+      await updateLeaderRole(memberId, "MEMBER");
+    } catch (rollbackError) {
+      toast.error("Rollback failed: " + rollbackError.message, {
+        position: "top-center",
+        autoClose: 3000,
+      });
     }
-  };
+  }
+};
+
 
   const confirmTransferLeader = (memberId) => {
     if (process.env.NODE_ENV !== "production") {
