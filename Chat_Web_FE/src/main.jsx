@@ -33,9 +33,9 @@ const RegisterStepOTP = React.lazy(() =>
 const RegisterStepInfo = React.lazy(() =>
   import("./pages/Register/RegisterStepInfo.jsx")
 );
-const GroupQRCodePage = React.lazy(() =>
-  import("./pages/GroupQRCodePage.jsx")
-);
+// const GroupQRCodePage = React.lazy(() =>
+//   import("./pages/GroupQRCodePage.jsx")
+// );
 
 const router = createBrowserRouter([
   {
@@ -48,11 +48,12 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <DashboardPage />,
-      },
-      {
-        path: "/group-qr-code/:conversationId",
-        element: <GroupQRCodePage />,
-      },
+      }
+      // ,
+      // {
+      //   path: "/group-qr-code/:conversationId",
+      //   element: <GroupQRCodePage />,
+      // },
     ],
   },
   {
