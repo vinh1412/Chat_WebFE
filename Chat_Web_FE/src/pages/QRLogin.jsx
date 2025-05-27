@@ -1,4 +1,3 @@
-// QRLogin.jsx
 import React, { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
@@ -12,12 +11,11 @@ const QRLogin = ({ onSessionIdGenerated }) => {
       return v.toString(16);
     });
   };
-  //http://localhost:8080/api/v1/user/me={sessionId}
 
   const generateQRCode = async () => {
     try {
       const session = generateSessionId();
-      onSessionIdGenerated(session); // Gửi sessionId lên LoginPage
+      onSessionIdGenerated(session);
       const qrCodeData = await QRCode.toDataURL(session);
       setQrCode(qrCodeData);
     } catch (error) {
@@ -27,24 +25,48 @@ const QRLogin = ({ onSessionIdGenerated }) => {
 
   useEffect(() => {
     generateQRCode();
-
     const interval = setInterval(() => {
       generateQRCode();
-    }, 30000000);// 30 phút
+    }, 30000000); // 30 phút
 
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">QR Code Login</h1>
+  const styles = {
+    wrapper: {
+      marginLeft: "10px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100vh",
+      backgroundColor: "#f3f4f6", // light gray
+      textAlign: "center",
+    },
+    title: {
+      fontSize: "24px",
+      fontWeight: "bold",
+      marginBottom: "16px"
+    },
+    img: {
+      marginBottom: "16px",
+      width: "200px",
+      height: "200px",
+      borderRadius: "8px"
+    },
+    description: {
+      fontSize: "18px"
+    }
+  };
 
+  return (
+    <div style={styles.wrapper}>
+      <h1 style={styles.title}>QR Code Login</h1>
 
       {qrCode && (
-        <div className="text-center">
-          <img src={qrCode} alt="QR Code" className="mb-4" />
-          <p className="text-lg">Mã QR chứa session ID</p>
-      
+        <div>
+          <img src={qrCode} alt="QR Code" style={styles.img} />
+          {/* <p style={styles.description}>Mã QR chứa session ID</p> */}
         </div>
       )}
     </div>
@@ -52,3 +74,4 @@ const QRLogin = ({ onSessionIdGenerated }) => {
 };
 
 export default QRLogin;
+
