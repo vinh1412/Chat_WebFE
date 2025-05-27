@@ -61,7 +61,6 @@ const ItemSerch = ({ item }) => {
     checkFriendStatus();
   }, [item.id, sentReqs, reciveReqs]);
 
-
   const handleClick = () => {
     // console.log("Item clicked:---------------", item);
     const senderId = currentUser._id || currentUser.id; // hoặc tùy theo cấu trúc user của bạn

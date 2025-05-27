@@ -55,6 +55,8 @@ const AddFriendModal = () => {
     setShowAddFriendModal,
     setShowAccountInfoSearchModal,
     setSelectedSearchUser,
+    currentUser,
+    setShowProfileModal,
   } = useDashboardContext();
 
   const [phone, setPhone] = useState("");
@@ -73,6 +75,7 @@ const AddFriendModal = () => {
     }
   }, []);
 
+  // Hàm xử lý tìm kiếm người bạn bè bằng số điện thoại
   const handleSearch = async () => {
     if (!phone) {
       setNotificationMessage("Vui lòng nhập số điện thoại để tìm kiếm.");
@@ -97,12 +100,36 @@ const AddFriendModal = () => {
         phoneNumber = "0" + phoneNumber;
       }
 
+      // Kiểm tra nếu số điện thoại tìm kiếm là của chính người dùng hiện tại
+      const currentUserPhone = currentUser?.phone;
+
+      let formattedSearchPhone = phoneNumber;
+
+      if (formattedSearchPhone.startsWith("0")) {
+        formattedSearchPhone = formattedSearchPhone.substring(1);
+      }
+
+      formattedSearchPhone = "+84" + formattedSearchPhone;
+
+      // So sánh số điện thoại
+      if (
+        (currentUserPhone && currentUserPhone === formattedSearchPhone) ||
+        (currentUser?.phone && currentUser.phone === phoneNumber)
+      ) {
+        setShowAddFriendModal(false);
+        setShowProfileModal(true);
+        setPhone("");
+        setIsLoading(false);
+        return;
+      }
+
       const result = await searchUser(phoneNumber);
 
       if (result.response && result.response.length > 0) {
         setSelectedSearchUser(result.response[0]);
         setShowAccountInfoSearchModal(true);
         setShowAddFriendModal(false);
+        setPhone("");
       } else {
         setNotificationMessage(
           "Số điện thoại chưa đăng ký tài khoản hoặc không cho phép tìm kiếm."
@@ -116,8 +143,6 @@ const AddFriendModal = () => {
       console.error("Search error:", err);
       setError("Đã xảy ra lỗi khi tìm kiếm người dùng.");
       alert("Đã xảy ra lỗi khi tìm kiếm người dùng!");
-    } finally {
-      setIsLoading(false);
     }
   };
 
