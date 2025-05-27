@@ -230,6 +230,11 @@ const DashboardProvider = ({ children }) => {
     useState(false);
   const changeGroupNameModalRef = useRef(null);
 
+  // Modal: Tìm kiếm thông tin tài khoản
+  const [showAccountInfoSearchModal, setShowAccountInfoSearchModal] =
+    useState(false);
+  const [selectedSearchUser, setSelectedSearchUser] = useState(null);
+
   const contextValue = {
     currentUser,
     setCurrentUser,
@@ -295,6 +300,11 @@ const DashboardProvider = ({ children }) => {
     showChangeGroupNameModal,
     setShowChangeGroupNameModal,
     changeGroupNameModalRef,
+
+    showAccountInfoSearchModal,
+    setShowAccountInfoSearchModal,
+    selectedSearchUser,
+    setSelectedSearchUser,
   };
 
   return (

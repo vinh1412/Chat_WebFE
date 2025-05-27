@@ -15,6 +15,7 @@ import AddMemberGroupModal from "./AddMemberGroupModal";
 import DeputyModal from "./DeputyModal";
 import LeaderTransferModal from "./LeaderTransferModal";
 import ChangeGroupNameModal from "./ChangeGroupNameModal";
+import AccountInfoSearchModal from "./AccountInfoSearchModal";
 
 const Modal = () => {
   const {
@@ -41,7 +42,7 @@ const Modal = () => {
     setShowAddMemberGroupModal,
     addMemberGroupModalRef,
     setCurrentConversationInfor,
-    conversationInfor, 
+    conversationInfor,
     showDeputyModal,
     setShowDeputyModal,
     showLeaderTransferModal,
@@ -50,8 +51,10 @@ const Modal = () => {
     showChangeGroupNameModal,
     setShowChangeGroupNameModal,
 
-
-    
+    showAccountInfoSearchModal,
+    setShowAccountInfoSearchModal,
+    selectedSearchUser,
+    setSelectedSearchUser,
   } = useDashboardContext();
 
   return (
@@ -183,16 +186,16 @@ const Modal = () => {
         overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
       >
         <AddMemberGroupModal
-        isOpen={showAddMemberGroupModal}
-        onClose={() => setShowAddMemberGroupModal(false)}
-        addMemberGroupModalRef={addMemberGroupModalRef}
-        setCurrentConversationInfor={setCurrentConversationInfor}
-        conversationInfor={conversationInfor} // Truyền conversationInfor
-      />
-    </ReactModal >
+          isOpen={showAddMemberGroupModal}
+          onClose={() => setShowAddMemberGroupModal(false)}
+          addMemberGroupModalRef={addMemberGroupModalRef}
+          setCurrentConversationInfor={setCurrentConversationInfor}
+          conversationInfor={conversationInfor} // Truyền conversationInfor
+        />
+      </ReactModal>
 
-        {/* Modal: Chọn phó nhóm */}
-    
+      {/* Modal: Chọn phó nhóm */}
+
       <ReactModal
         isOpen={showDeputyModal}
         onRequestClose={() => setShowDeputyModal(false)}
@@ -229,7 +232,8 @@ const Modal = () => {
           },
         }}
         className="modal-content bg-white rounded border-0 p-2 position-relative"
-        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"q
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+        q
       >
         <LeaderTransferModal
           isOpen={showLeaderTransferModal}
@@ -239,7 +243,7 @@ const Modal = () => {
           conversationInfor={conversationInfor} // Truyền conversationInfor
         />
       </ReactModal>
-      
+
       {/* Modal: Đổi tên nhóm */}
       <ReactModal
         isOpen={showChangeGroupNameModal}
@@ -261,6 +265,32 @@ const Modal = () => {
           conversationId={conversationInfor?.id}
           setCurrentConversationInfor={setCurrentConversationInfor}
           conversationInfor={conversationInfor} // Truyền conversationInfor
+        />
+      </ReactModal>
+
+      {/* Modal: Search User Info */}
+      <ReactModal
+        isOpen={showAccountInfoSearchModal}
+        onRequestClose={() => setShowAccountInfoSearchModal(false)}
+        contentLabel="Account Info Search Modal"
+        style={{
+          content: {
+            width: "500px",
+            maxWidth: "90%",
+            margin: "auto",
+          },
+        }}
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+      >
+        <AccountInfoSearchModal
+          show={showAccountInfoSearchModal}
+          handleClose={() => {
+            setShowAccountInfoSearchModal(false);
+            setSelectedSearchUser(null);
+            setShowAddFriendModal(true); // Show the add friend modal again
+          }}
+          user={selectedSearchUser}
         />
       </ReactModal>
     </>

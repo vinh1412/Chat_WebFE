@@ -19,7 +19,7 @@ const DashboardOptionList = () => {
   const { setShowAddFriendModal, setShowCreateGroupModal } =
     useDashboardContext();
   const { conversations, isLoadingAllConversations } = useConversation(); // Lấy danh sách cuộc trò chuyện từ hook useConversation
-  console.log("conversations----------", conversations);
+  // console.log("conversations----------", conversations);
 
   return (
     <Container
