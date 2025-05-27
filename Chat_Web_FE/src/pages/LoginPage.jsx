@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import QRLogin from "../pages/QRLogin";
 
 const LoginPage = () => {
-  const [phone, setPhone] = useState("0862058920");
+  const [phone, setPhone] = useState("0367494904");
   const [password, setPassword] = useState("12345678");
   const [sessionId, setSessionId] = useState(null);
 
