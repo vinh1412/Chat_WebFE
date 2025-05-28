@@ -235,6 +235,8 @@ const DashboardProvider = ({ children }) => {
     useState(false);
   const [selectedSearchUser, setSelectedSearchUser] = useState(null);
 
+  const [currentChatUser, setCurrentChatUser] = useState(null);
+
   const contextValue = {
     currentUser,
     setCurrentUser,
@@ -305,6 +307,9 @@ const DashboardProvider = ({ children }) => {
     setShowAccountInfoSearchModal,
     selectedSearchUser,
     setSelectedSearchUser,
+
+    currentChatUser,
+    setCurrentChatUser,
   };
 
   return (

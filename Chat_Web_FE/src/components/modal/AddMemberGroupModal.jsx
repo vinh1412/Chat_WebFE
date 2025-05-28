@@ -22,10 +22,10 @@ const AddMemberGroupModal = ({
   const { friendList, isLoadingFriends } = useFriend();
 
   useEffect(() => {
-    console.log("conversationInfor:", conversationInfor);
-    console.log("Group ID:", conversationInfor?.id);
-    console.log("Members:", conversationInfor?.members);
-    console.log("selectedMembers:", selectedMembers);
+    // console.log("conversationInfor:", conversationInfor);
+    // console.log("Group ID:", conversationInfor?.id);
+    // console.log("Members:", conversationInfor?.members);
+    // console.log("selectedMembers:", selectedMembers);
   }, [conversationInfor, selectedMembers]);
 
   const friends = useMemo(() => {
@@ -172,7 +172,7 @@ const AddMemberGroupModal = ({
                         disabled={isAlreadyMember}
                         onChange={() => {
                           if (!isAlreadyMember) {
-                            console.log("Toggle (checkbox):", user.userId);
+                            // console.log("Toggle (checkbox):", user.userId);
                             toggleMember(user.userId);
                           }
                         }}
