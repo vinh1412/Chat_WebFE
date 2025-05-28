@@ -1,0 +1,39 @@
+.custom-modal-width {
+  max-width: 1000px; /* Tăng chiều rộng lên 1000px (rộng hơn một chút so với xl mặc định 1140px) */
+  width: 90%; /* Đảm bảo responsive trên màn hình nhỏ */
+  margin: 0 auto; /* Căn giữa theo chiều ngang */
+}
+
+@media (min-width: 1200px) {
+  .custom-modal-width {
+    width: 1000px; /* Chiều rộng cố định trên màn hình lớn */
+  }
+}
+
+.modal-content {
+  border-radius: 10px; /* Bo góc nhẹ cho giao diện đẹp hơn */
+}
+
+.modal-header {
+  border-bottom: 1px solid #dee2e6; /* Tách header với body */
+}
+
+.nav-tabs .nav-link {
+  color: #007bff; /* Màu tab giống hình ảnh */
+  border: none;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+  border-bottom-color: #007bff; /* Màu viền dưới khi active */
+  background-color: transparent;
+}
+
+.form-control {
+  border-color: #ced4da; /* Màu viền input */
+  border-radius: 20px; /* Bo góc input */
+}
+
+.checkbox-container {
+  margin-right: 8px;
+}
