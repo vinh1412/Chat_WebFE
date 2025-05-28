@@ -30,6 +30,7 @@ import useConversation from "../../../hooks/useConversation";
 import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
 import { useQueryClient } from "@tanstack/react-query";
+import GroupInfoModal from "../../../components/modal/GroupInfoLinkModal";
 
 const Conservation = ({
   onShowDetail,
@@ -989,6 +990,33 @@ const Conservation = ({
     return currentMember?.role === "ADMIN";
   }, [selectedConversation, currentUser.id]);
 
+  // modal link gr
+  
+  
+  const [showModal, setShowModal] = useState(false);
+
+  const handleOpenModal = (e) => {
+    e.stopPropagation(); // ngăn sự kiện nổi bọt
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleJoin = () => {
+    // Xử lý khi user bấm Tham gia
+    // alert('Bạn đã tham gia nhóm!');
+    setShowModal(false);
+  };
+
+  // TACH LINKGROUP  chỉ lấy sau qrcode/
+  const extractLinkGroup = (text) => {
+    const regex = /qrcode\/(.*)/;
+    const match = text.match(regex);
+    return match ? match[1] : null;
+  };
+
   return (
     <div
       className="card shadow-sm h-100"
@@ -1497,6 +1525,22 @@ const Conservation = ({
                         </a>
                       </div>
                     )
+                  ) : msg?.messageType === "TEXT" && msg.content.startsWith("http") ? (
+                    <div>
+                      <small className="text-muted d-block">
+                        <button
+                          className="btn btn-link p-0"
+                          onClick={handleOpenModal}
+                        >
+                          {msg.content}
+              
+
+                        </button>
+                          {showModal && (
+                            <GroupInfoModal onClose={handleCloseModal} onJoin={handleJoin} groupLink={extractLinkGroup(msg.content)}/>
+                          )}
+                      </small>
+                    </div>
                   ) : (
                     <span>{msg?.content || msg?.text}</span>
                   )}
@@ -1508,6 +1552,21 @@ const Conservation = ({
                       </small>
                     </div>
                   )}
+                   {/* {msg?.messageType === "TEXT" && msg.content.startsWith("http") && (
+                    <div>
+                      <small className="text-muted d-block">
+                        <button
+                          className="btn btn-link p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(msg.content, "_blank");
+                          }}
+                        >
+                          {msg.content}
+                        </button>
+                      </small>
+                    </div>
+                  )} */}
                 </div>
 
                 {/* Show message actions on hover OR when clicked */}

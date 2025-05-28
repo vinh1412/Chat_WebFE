@@ -17,6 +17,8 @@ import LeaderTransferModal from "./LeaderTransferModal";
 import ChangeGroupNameModal from "./ChangeGroupNameModal";
 import AccountInfoSearchModal from "./AccountInfoSearchModal";
 
+import GroupInfoModal from "./GroupInfoLinkModal";
+
 const Modal = () => {
   const {
     showAddFriendModal,
@@ -55,6 +57,11 @@ const Modal = () => {
     setShowAccountInfoSearchModal,
     selectedSearchUser,
     setSelectedSearchUser,
+
+
+    // GroupInfoModal,
+    // setGroupInfoModal,
+    
   } = useDashboardContext();
 
   return (
@@ -135,6 +142,20 @@ const Modal = () => {
           onClose={() => setShowCreateGroupModal(false)}
         />
       </ReactModal>
+
+      {/* Modal group info */}
+      {/* <ReactModal
+        isOpen={GroupInfoModal}
+        onRequestClose={() => setGroupInfoModal(false)}
+        contentLabel="Group Info Modal"
+        className="modal-content bg-white rounded border-0 p-2 position-relative"
+        overlayClassName="modal-overlay position-fixed top-0 start-0 z-50 shadow-lg d-flex justify-content-center align-items-center w-100"
+      >
+        <GroupInfoModal
+          isOpen={GroupInfoModal}
+          onClose={() => setGroupInfoModal(false)}
+        />
+      </ReactModal> */}
 
       {/* Modal cuộc gọi video */}
       <ReactModal
@@ -292,6 +313,8 @@ const Modal = () => {
           }}
           user={selectedSearchUser}
         />
+
+
       </ReactModal>
     </>
   );
