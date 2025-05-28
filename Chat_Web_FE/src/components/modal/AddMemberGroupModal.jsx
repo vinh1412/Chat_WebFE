@@ -78,10 +78,10 @@ const AddMemberGroupModal = ({
       { conversationId: conversationInfor.id, userId: selectedMembers },
       {
         onSuccess: () => {
-          toast.success("Thêm thành viên vào nhóm thành công", {
-            position: "top-right",
-            autoClose: 500,
-          });
+          // toast.success("Thêm thành viên vào nhóm thành công", {
+          //   position: "top-right",
+          //   autoClose: 500,
+          // });
           setSelectedMembers([]);
           if (onMembersChanged) onMembersChanged();
           onClose();
