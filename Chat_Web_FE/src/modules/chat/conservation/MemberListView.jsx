@@ -55,6 +55,9 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
     removeMemberFromGroup.mutate(
       { conversationId, memberId: userId },
       {
+        onSuccess: async () => {
+          toast.success("Đã xóa thành viên khỏi nhóm");
+        },
         onError: (error) => {
           console.error("Error removing member:", error);
           toast.error(error.message || "Bạn không có quyền xóa thành viên");
