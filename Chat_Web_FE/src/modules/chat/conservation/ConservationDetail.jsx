@@ -21,6 +21,8 @@ import SearchForm from "./SearchForm";
 import formatTime from "../../../utils/FormatTime";
 import { useSelector } from "react-redux";
 import ModalGroupQRCode from "./ModalGroupQRCode";
+import Swal from "sweetalert2";
+import useConversation from "../../../hooks/useConversation";
 
 const ConversationDetail = ({
   conversationInfor,
@@ -43,6 +45,18 @@ const ConversationDetail = ({
   const [showMediaSection, setShowMediaSection] = useState(true);
   const [showFileSection, setShowFileSection] = useState(true);
   const messages = useMessage(conversationInfor.id); // Sử dụng hook để lấy messages theo conversationId
+  const { conversation, isLoadingConversation, leaveGroupFromGroup } =
+    useConversation(conversationInfor.id);
+
+  // Sử dụng conversation từ useConversation nếu có, nếu không thì dùng conversationInfor
+  const displayConversation = conversation || conversationInfor;
+
+  // Đồng bộ conversationInfor khi conversation thay đổi
+  useEffect(() => {
+    if (conversation && conversation.id) {
+      setConversationInfor(conversation);
+    }
+  }, [conversation, setConversationInfor]);
 
   // ... các state hiện tại
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
@@ -90,30 +104,39 @@ const ConversationDetail = ({
   const [groupLink, setGroupLink] = useState("");
   useEffect(() => {
     const fetchGroupLink = async () => {
-      if (conversationInfor?.id && conversationInfor.is_group) {
+      if (displayConversation?.id && displayConversation.is_group) {
         try {
           const link = await findLinkGroupByConversationId(
-            conversationInfor.id
+            displayConversation.id
           );
-          setGroupLink(link?.linkGroup || ""); // <-- CHỈ LẤY GIÁ TRỊ CHUỖI
+          setGroupLink(link?.linkGroup || "");
         } catch (error) {
           console.error("Failed to fetch group link:", error.message);
         }
       }
     };
-
     fetchGroupLink();
-  }, [conversationInfor]);
+  }, [displayConversation]);
 
   const handleGroupNameUpdate = (updatedConversation) => {
-    setConversationInfor(updatedConversation); // Update conversation info
+    setConversationInfor(updatedConversation);
   };
+
+  if (isLoadingConversation) {
+    return (
+      <div className="card shadow-sm h-100 d-flex justify-content-center align-items-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   //Show view member group
   if (showMemberList) {
     return (
       <MemberListView
-        conversationInfor={conversationInfor}
+        conversationInfor={displayConversation}
         onBack={() => setShowMemberList(false)}
       />
     );
@@ -122,26 +145,37 @@ const ConversationDetail = ({
   if (showGroupBoard) {
     return (
       <GroupBoard
-        conversationId={conversationInfor.id}
-        onBack={() => setShowGroupBoard(false)} // Pass onBack to close GroupBoard
+        conversationId={displayConversation.id}
+        onBack={() => setShowGroupBoard(false)}
       />
     );
   }
   // Handle out group
   const handleLeaveGroup = async (conversationId) => {
-    const isConfirmed = window.confirm(
-      "Bạn có chắc chắn muốn rời nhóm này không?"
-    );
+    // Hiển thị hộp thoại xác nhận
+    const isConfirmed = await Swal.fire({
+      title: "Xác nhận rời nhóm",
+      text: "Bạn có chắc chắn muốn rời nhóm này không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Rời nhóm",
+      cancelButtonText: "Hủy",
+    }).then((result) => {
+      return result.isConfirmed;
+    });
     if (isConfirmed) {
-      try {
-        const response = await leaveGroup(conversationId);
-        console.log("Response leaveGroup data:", response.data);
-        toast.success("Bạn đã rời nhóm thành công!");
-        dispatch(setShowConversation(false));
-      } catch (error) {
-        console.error("Error leaving group:", error.message);
-        alert("Lỗi khi rời nhóm. Vui lòng thử lại.");
-      }
+      leaveGroupFromGroup.mutate(conversationId, {
+        onSuccess: () => {
+          toast.success("Bạn đã rời nhóm thành công!");
+          dispatch(setShowConversation(false));
+          dispatch(setIsSuccessSent(true));
+          navigate("/chat");
+        },
+        onError: (error) => {
+          console.error("Error leaving group:", error);
+          toast.error(error.message || "Không thể rời nhóm!");
+        },
+      });
     }
   };
 
@@ -185,7 +219,7 @@ const ConversationDetail = ({
       {showGroupSettings ? (
         <GroupSettingsForm
           onBack={() => setShowGroupSettings(false)}
-          conversationId={conversationInfor?.id}
+          conversationId={displayConversation?.id}
         />
       ) : showSearchForm ? (
         <>
@@ -199,7 +233,7 @@ const ConversationDetail = ({
             </button>
           </div>
           <div className="card-body">
-            <SearchForm conversationId={conversationInfor.id} />
+            <SearchForm conversationId={displayConversation.id} />
             {/* Hiển thị kết quả tìm kiếm */}
             {searchResults.length > 0 ? (
               <div className="search-results mt-3">
@@ -234,30 +268,32 @@ const ConversationDetail = ({
             <h6 className="mb-0 ">Thông tin hội thoại</h6>
           </div>
           <div className="d-flex flex-column align-items-center mt-2">
-            {conversationInfor.is_group ? (
+            {displayConversation.is_group ? (
               <div
                 className="d-flex flex-wrap"
                 style={{ width: "80px", height: "80px" }}
               >
-                {conversationInfor.members.slice(0, 4).map((member, index) => (
-                  <img
-                    key={index}
-                    src={member.avatar}
-                    alt={`member-${index}`}
-                    className="rounded-circle"
-                    width={40}
-                    height={40}
-                    style={{
-                      objectFit: "cover",
-                      border: "4px solid gray",
-                    }}
-                  />
-                ))}
+                {displayConversation.members
+                  .slice(0, 4)
+                  .map((member, index) => (
+                    <img
+                      key={index}
+                      src={member.avatar}
+                      alt={`member-${index}`}
+                      className="rounded-circle"
+                      width={40}
+                      height={40}
+                      style={{
+                        objectFit: "cover",
+                        border: "4px solid gray",
+                      }}
+                    />
+                  ))}
               </div>
             ) : (
               <img
                 src={
-                  conversationInfor.members.find(
+                  displayConversation.members.find(
                     (member) => member.id !== currentUser.id
                   )?.avatar
                 }
@@ -269,13 +305,13 @@ const ConversationDetail = ({
             )}
             <div className="d-flex align-items-center mt-2">
               <h6 className="mb-0 fs-5">
-                {!conversationInfor.is_group
-                  ? conversationInfor.members.find(
+                {!displayConversation.is_group
+                  ? displayConversation.members.find(
                       (member) => member.id !== currentUser.id
                     ).display_name
-                  : conversationInfor.name}
+                  : displayConversation.name}
               </h6>
-              {conversationInfor.is_group && (
+              {displayConversation.is_group && (
                 <i
                   className="bi bi-pencil-square ms-2"
                   style={{
@@ -305,12 +341,12 @@ const ConversationDetail = ({
               </small>
             </div>
 
-            {conversationInfor.is_group && (
+            {displayConversation.is_group && (
               <div
                 className="d-flex flex-column align-items-center"
                 onClick={() => {
                   setShowAddMemberGroupModal(true);
-                  setConversationInfor(conversationInfor); // Sửa tên hàm
+                  setConversationInfor(displayConversation); // Sửa tên hàm
                 }}
                 style={{ cursor: "pointer" }}
               >
@@ -321,17 +357,17 @@ const ConversationDetail = ({
               </div>
             )}
 
-            {!conversationInfor.is_group ? (
+            {!displayConversation.is_group ? (
               <div
                 className="d-flex flex-column align-items-center"
                 onClick={() => {
                   // Lấy user đang nhắn tin (không phải người dùng hiện tại)
-                  const chatUser = conversationInfor.members.find(
+                  const chatUser = displayConversation.members.find(
                     (member) => member.id !== currentUser.id
                   );
 
                   // Truyền thông tin user vào context để CreateGroupModal có thể sử dụng
-                  setConversationInfor(conversationInfor);
+                  setConversationInfor(displayConversation);
                   setCurrentChatUser(chatUser);
                   setShowCreateGroupModal(true);
                 }}
@@ -358,7 +394,7 @@ const ConversationDetail = ({
 
           <div className="card-body">
             {/* Dropdown thành viên nhóm */}
-            {conversationInfor.is_group && (
+            {displayConversation.is_group && (
               <div className="mb-3">
                 <div
                   className="d-flex align-items-center justify-content-between mb-2"
@@ -380,7 +416,9 @@ const ConversationDetail = ({
                       style={{ cursor: "pointer" }}
                     >
                       <i className="bi bi bi-people me-2"></i>
-                      <span>{conversationInfor.members.length} Thành viên</span>
+                      <span>
+                        {displayConversation.members.length} Thành viên
+                      </span>
                     </div>
                     <div className="d-flex align-items-center mb-3 bg-light rounded">
                       <i className="bi bi-link-45deg fs-5 me-2"></i>
@@ -412,8 +450,8 @@ const ConversationDetail = ({
                             show={showQRCodeModal}
                             onClose={closeQRCodeModal}
                             groupLink={groupLink}
-                            groupName={conversationInfor.name}
-                            groupId={conversationInfor.id}
+                            groupName={displayConversation.name}
+                            groupId={displayConversation.id}
                           />
                         </div>
                       </div>
@@ -423,7 +461,7 @@ const ConversationDetail = ({
               </div>
             )}
             {/* dropdown bảng tin nhóm */}
-            {conversationInfor.is_group && (
+            {displayConversation.is_group && (
               <div className="mb-3">
                 <div
                   className="d-flex align-items-center justify-content-between mb-2"
@@ -455,7 +493,7 @@ const ConversationDetail = ({
                 )}
               </div>
             )}
-            {!conversationInfor.is_group && (
+            {!displayConversation.is_group && (
               <div className="d-flex align-items-center mb-3">
                 <i className="bi bi-clock me-2"></i>
                 <span>Danh sách nhắc hẹn</span>
@@ -681,10 +719,10 @@ const ConversationDetail = ({
               <span>Xóa lịch sử trò chuyện</span>
             </button>
             {/* Rời nhóm */}
-            {conversationInfor.is_group && (
+            {displayConversation.is_group && (
               <button
                 className="btn p-0 d-flex align-items-left mt-2 w-100 fs-6 text-normal text-danger"
-                onClick={() => handleLeaveGroup(conversationInfor.id)}
+                onClick={() => handleLeaveGroup(displayConversation.id)}
               >
                 <i
                   className="bi bi-box-arrow-right me-2"
@@ -699,7 +737,7 @@ const ConversationDetail = ({
       <ChangeGroupNameModal
         show={showChangeGroupNameModal}
         onHide={() => setShowChangeGroupNameModal(false)}
-        conversationId={conversationInfor.id}
+        conversationId={displayConversation.id}
         onSuccess={handleGroupNameUpdate}
       />
     </div>
