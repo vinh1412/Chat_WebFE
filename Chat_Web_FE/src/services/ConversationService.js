@@ -131,24 +131,28 @@ export const leaveGroup = async (conversationId) => {
   }
 };
 
-export const transferLeader = async (conversationId, memberId, requestingUserId) => {
+export const transferLeader = async (
+  conversationId,
+  memberId,
+  requestingUserId
+) => {
   try {
-      const response = await axiosInstance.put('/conversations/update-role', {
-          conversationId,
-          memberId,
-          role: 'ADMIN',
-          requestingUserId,
-      });
-      console.log('Response transferLeader data:', response.data);
-      return response.data;
+    const response = await axiosInstance.put("/conversations/update-role", {
+      conversationId,
+      memberId,
+      role: "ADMIN",
+      requestingUserId,
+    });
+    console.log("Response transferLeader data:", response.data);
+    return response.data;
   } catch (error) {
-      console.error(
-        "Error transferring leader:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        error.response?.data?.message || "Lỗi khi chuyển quyền trưởng nhóm"
-      );
+    console.error(
+      "Error transferring leader:",
+      error.response?.data || error.message
+    );
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi chuyển quyền trưởng nhóm"
+    );
   }
 };
 export const removeMember = async (conversationId, userId) => {
@@ -203,8 +207,7 @@ export const findLinkGroupByConversationId = async (conversationId) => {
       error.response?.data?.message || "Lỗi khi tìm kiếm link nhóm"
     );
   }
-}
-
+};
 
 export const updateGroupName = async (conversationId, newGroupName) => {
   try {
@@ -243,13 +246,15 @@ export const getAllGroupConversationsByUserIdService = async () => {
   }
 };
 
-
 export const restrictMessagingService = async (conversationId, restrict) => {
   try {
-    const response = await axiosInstance.post("/conversations/restrict-messaging", {
-      conversationId,
-      restrict: restrict.toString(),
-    });
+    const response = await axiosInstance.post(
+      "/conversations/restrict-messaging",
+      {
+        conversationId,
+        restrict: restrict.toString(),
+      }
+    );
     console.log("Restricted messaging updated:", response.data);
     return response.data;
   } catch (error) {
