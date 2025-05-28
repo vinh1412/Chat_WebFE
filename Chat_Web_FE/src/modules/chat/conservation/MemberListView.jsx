@@ -6,6 +6,7 @@ import {
 } from "../../../services/ConversationService";
 import { toast } from "react-toastify";
 import AddMemberGroupModal from "../../../components/modal/AddMemberGroupModal";
+import useConversation from "../../../hooks/useConversation";
 
 const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
   const {
@@ -18,14 +19,18 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
   const [members, setMembers] = useState(conversationInfor.members || []);
   const menuRef = useRef(null);
 
+  const { conversation, removeMemberFromGroup } = useConversation(
+    conversationInfor.id
+  );
+
   // Cập nhật members khi conversationInfor thay đổi
   useEffect(() => {
-    setMembers(conversationInfor.members || []);
-  }, [conversationInfor]);
-
-  // Listen for WebSocket updates from parent components
-  // The parent component handles WebSocket subscriptions for group updates
-  // We just need to make sure we update our local state when conversationInfor changes
+    if (conversation?.members) {
+      setMembers(conversation.members);
+      setConversationInfor(conversation);
+      if (onMembersChanged) onMembersChanged();
+    }
+  }, [conversation, setConversationInfor, onMembersChanged]);
 
   // Hàm refetch lại members từ server
   const refetchMembers = async () => {
@@ -61,15 +66,15 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
 
   // Handle member removal
   const handleRemoveMember = async (conversationId, userId) => {
-    try {
-      await removeMember(conversationId, userId);
-      toast.success("Đã xóa thành viên khỏi nhóm thành công");
-      // Server will broadcast via WebSocket but we'll also refetch
-      await refetchMembers();
-    } catch (error) {
-      console.error("Error removing member:", error);
-      toast.error(error.response?.data || "Bạn không có quyền xóa thành viên");
-    }
+    removeMemberFromGroup.mutate(
+      { conversationId, memberId: userId },
+      {
+        onError: (error) => {
+          console.error("Error removing member:", error);
+          toast.error(error.message || "Bạn không có quyền xóa thành viên");
+        },
+      }
+    );
   };
 
   // Khi thêm thành viên, mở modal
@@ -79,8 +84,8 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
   };
 
   // Khi modal thêm thành viên đóng và có thêm thành viên mới, cập nhật lại danh sách
-  const handleMembersChangedFromModal = async () => {
-    await refetchMembers();
+  const handleMembersChangedFromModal = () => {
+    if (onMembersChanged) onMembersChanged();
   };
 
   return (

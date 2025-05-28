@@ -5,11 +5,119 @@ import {
   findOrCreateConversationService,
   getAllConversationsByUserIdService,
   deleteConversationForUserService,
+  getConversationByIdService,
+  removeMember,
+  updateGroupName,
+  leaveGroup,
 } from "../services/ConversationService";
 import { toast } from "react-toastify";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { useEffect, useRef } from "react";
 
-const useConversation = (conservationId) => {
+const URL_WEB_SOCKET =
+  import.meta.env.VITE_WS_URL || "http://localhost:8080/ws";
+
+const useConversation = (conversationId) => {
   const queryClient = useQueryClient();
+  const client = useRef(null);
+
+  // Websocket setup for real-time updates
+  useEffect(() => {
+    if (!conversationId) return;
+    const socket = new SockJS(URL_WEB_SOCKET);
+    client.current = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 500,
+      debug: (str) => {
+        console.log(str);
+      },
+      onConnect: () => {
+        console.log("WebSocket connected for conversation:", conversationId);
+        // Subscribe to the conversation's topic
+        client.current.subscribe(
+          `/chat/create/group/${conversationId}`,
+          (message) => {
+            const data = JSON.parse(message.body);
+            console.log(
+              "Received message for conversation:",
+              conversationId,
+              ":",
+              data
+            );
+            // Refetch the conversation to get the latest data
+            queryClient.invalidateQueries(["conversation", conversationId]);
+          }
+        );
+        client.current.activate(); // đảm bảo kích hoạt client
+        return () => {
+          if (client.current && client.current.connected) {
+            client.current.deactivate();
+            console.log(
+              "WebSocket disconnected for conversation:",
+              conversationId
+            );
+          }
+        };
+      },
+    });
+  }, [conversationId, queryClient]);
+
+  const { data: conversation, isLoading: isLoadingConversation } = useQuery({
+    queryKey: ["conversation", conversationId],
+    queryFn: () => getConversationByIdService(conversationId),
+    enabled: !!conversationId, // Only fetch if conservationId is provided
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    retryOnMount: false,
+  });
+
+  const removeMemberFromGroup = useMutation({
+    mutationFn: ({ conversationId, memberId }) =>
+      removeMember(conversationId, memberId),
+    onSuccess: () => {
+      // refetch thông tin cuộc hội thoại
+      queryClient.invalidateQueries(["conversation", conversationId]);
+      // refetch danh sách cuộc trò chuyện để cập nhật
+      queryClient.invalidateQueries(["conversations"]);
+    },
+    onError: (error) => {
+      console.log("Send message error:", error.message);
+    },
+  });
+
+  const updateGroupNameFromGroup = useMutation({
+    mutationFn: ({ conversationId, newName }) =>
+      updateGroupName(conversationId, newName),
+    onSuccess: () => {
+      // refetch thông tin cuộc hội thoại
+      queryClient.invalidateQueries(["conversation", conversationId]);
+      // refetch danh sách cuộc trò chuyện để cập nhật
+      queryClient.invalidateQueries(["conversations"]);
+    },
+    onError: (error) => {
+      console.log("Update group name error:", error.message);
+    },
+  });
+
+  const leaveGroupFromGroup = useMutation({
+    mutationFn: (conversationId) => leaveGroup(conversationId),
+    onSuccess: () => {
+      // refetch thông tin cuộc hội thoại
+      queryClient.invalidateQueries(["conversation", conversationId]);
+      // refetch danh sách cuộc trò chuyện để cập nhật
+      queryClient.invalidateQueries(["conversations"]);
+    },
+    onError: (error) => {
+      console.log("Leave group error:", error.message);
+    },
+  });
+
+  const refetchConversation = () => {
+    console.log("Refetching conversation with ID:", conversationId);
+    queryClient.invalidateQueries(["conversation", conversationId]);
+  };
 
   const { data: conversations, isLoading: isLoadingAllConversations } =
     useQuery({
@@ -118,6 +226,12 @@ const useConversation = (conservationId) => {
   });
 
   return {
+    conversation,
+    isLoadingConversation,
+    removeMemberFromGroup,
+    updateGroupNameFromGroup,
+    leaveGroupFromGroup,
+    refetchConversation,
     conversations,
     isLoadingAllConversations,
     isCreatingConversation,
