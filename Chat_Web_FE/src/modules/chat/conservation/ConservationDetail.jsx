@@ -22,10 +22,19 @@ import formatTime from "../../../utils/FormatTime";
 import { useSelector } from "react-redux";
 import ModalGroupQRCode from "./ModalGroupQRCode";
 
-const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm, }) => {
+const ConversationDetail = ({
+  conversationInfor,
+  showSearchForm,
+  setShowSearchForm,
+}) => {
   console.log("conversationInfor:", conversationInfor);
-  const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
-    useDashboardContext();
+  const {
+    currentUser,
+    setShowAddMemberGroupModal,
+    setConversationInfor,
+    setShowCreateGroupModal,
+    setCurrentChatUser,
+  } = useDashboardContext();
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [showGroupBulletin, setShowGroupBulletin] = useState(true);
   const [showMemberGroup, setShowMemberGroup] = useState(true);
@@ -35,44 +44,22 @@ const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm
   const [showFileSection, setShowFileSection] = useState(true);
   const messages = useMessage(conversationInfor.id); // Sử dụng hook để lấy messages theo conversationId
 
-
-
-    // ... các state hiện tại
-    const [showQRCodeModal, setShowQRCodeModal] = useState(false);
-    // ... các useEffect và hàm khác
-    // Hàm mở modal QR
-    const openQRCodeModal = () => {
-      setShowQRCodeModal(true);
-    };
-    // Hàm đóng modal QR
-    const closeQRCodeModal = () => {
-      setShowQRCodeModal(false);
-    };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // ... các state hiện tại
+  const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+  // ... các useEffect và hàm khác
+  // Hàm mở modal QR
+  const openQRCodeModal = () => {
+    setShowQRCodeModal(true);
+  };
+  // Hàm đóng modal QR
+  const closeQRCodeModal = () => {
+    setShowQRCodeModal(false);
+  };
 
   const messageData = messages?.messages?.response;
 
-  const searchResults = useSelector((state) => state.common.searchResults) || [];
+  const searchResults =
+    useSelector((state) => state.common.searchResults) || [];
 
   //Lọc ảnh/ video từ messages
   const mediaMessages = Array.isArray(messageData)
@@ -335,7 +322,21 @@ const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm
             )}
 
             {!conversationInfor.is_group ? (
-              <div className="d-flex flex-column align-items-center">
+              <div
+                className="d-flex flex-column align-items-center"
+                onClick={() => {
+                  // Lấy user đang nhắn tin (không phải người dùng hiện tại)
+                  const chatUser = conversationInfor.members.find(
+                    (member) => member.id !== currentUser.id
+                  );
+
+                  // Truyền thông tin user vào context để CreateGroupModal có thể sử dụng
+                  setConversationInfor(conversationInfor);
+                  setCurrentChatUser(chatUser);
+                  setShowCreateGroupModal(true);
+                }}
+                style={{ cursor: "pointer" }}
+              >
                 <i className="bi bi-person-plus fs-6"></i>
                 <small className="text-center" style={{ fontSize: "13px" }}>
                   Tạo nhóm trò chuyện
@@ -405,7 +406,7 @@ const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm
                             className="btn btn-sm p-0 ms-2"
                             onClick={openQRCodeModal}
                           >
-                          <FaQrcode size={24} />
+                            <FaQrcode size={24} />
                           </button>
                           <ModalGroupQRCode
                             show={showQRCodeModal}
