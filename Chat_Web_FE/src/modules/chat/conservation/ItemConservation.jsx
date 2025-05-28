@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import formatTime from "../../../utils/FormatTime";
 import { useDashboardContext } from "../../../context/Dashboard_context";
 
-const ItemConservation = ({ item }) => {
+const ItemConservation = ({ item, isActive }) => {
   const dispatch = useDispatch();
 
   const { currentUser, fetchUser } = useDashboardContext();
@@ -38,8 +38,14 @@ const ItemConservation = ({ item }) => {
   return (
     <Row
       key={item.id}
-      className="g-0 border-bottom pt-2"
-      style={{ cursor: "pointer" }}
+      className={`g-0 pt-2 ${isActive ? "active-conversation" : ""}`}
+      style={{
+        cursor: "pointer",
+        height: "72px",
+        display: "flex",
+        alignItems: "center",
+        backgroundColor: isActive ? "#e9f5ff" : "transparent",
+      }}
       onClick={handleClick}
     >
       <Col xs="auto" className="d-flex align-items-center p-2">
@@ -70,13 +76,32 @@ const ItemConservation = ({ item }) => {
       </Col>
 
       <Col className="d-flex flex-column justify-content-center p-2">
-        <div className="" style={{ fontSize: "1.1rem", fontWeight: "500" }}>
+        <div
+          style={{
+            fontSize: "1.1rem",
+            fontWeight: isActive ? "600" : "500",
+            color: isActive ? "#1877f2" : "inherit",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "125px",
+          }}
+        >
           {!item.is_group
             ? item.members.find((member) => member.id !== currentUser.id)
                 ?.display_name
             : item.name}
         </div>
-        <div className="text-muted" style={{ fontSize: "0.9rem" }}>
+        <div
+          className="text-muted"
+          style={{
+            fontSize: "0.9rem",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "130px",
+          }}
+        >
           {item.last_message?.senderId === currentUser.id
             ? `Bạn: ${item.last_message.content}`
             : item.last_message?.content}
