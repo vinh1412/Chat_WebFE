@@ -13,7 +13,12 @@ import useConversation from "../../hooks/useConversation";
 import { BsSearch, BsPinAngleFill } from "react-icons/bs";
 import { toast } from "react-toastify";
 import "../../assets/css/GroupBoard.css";
-
+import Swal from "sweetalert2";
+import {
+  setSelectedConversation,
+  setShowConversation,
+} from "../../redux/slice/commonSlice";
+import store from "../../redux/store";
 import { getAllGroupConversationsByUserIdService } from "../../services/ConversationService";
 
 const DashboardOptionList = () => {
@@ -22,7 +27,12 @@ const DashboardOptionList = () => {
   const showSearch = useSelector((state) => state.common.showSearch);
   const { setShowAddFriendModal, setShowCreateGroupModal } =
     useDashboardContext();
-  const { conversations, isLoadingAllConversations, refetch } = useConversation(); // Lấy danh sách cuộc trò chuyện từ hook useConversation
+  const {
+    conversations,
+    isLoadingAllConversations,
+    refetch,
+    deleteConversationForUser,
+  } = useConversation();
   // console.log("conversations----------", conversations);
 
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -33,6 +43,9 @@ const DashboardOptionList = () => {
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [availableGroups, setAvailableGroups] = useState([]);
   const [activeTab, setActiveTab] = useState("Tất cả");
+  const selectedConversation = useSelector(
+    (state) => state.common.selectedConversation
+  );
 
   const handleMenuToggle = (id) => {
     setOpenMenuId(openMenuId === id ? null : id);
@@ -61,9 +74,9 @@ const DashboardOptionList = () => {
   // Sắp xếp: hội thoại ghim lên đầu
   const sortedConversations = conversations
     ? [
-      ...conversations.filter((c) => pinnedIds.includes(c.id)),
-      ...conversations.filter((c) => !pinnedIds.includes(c.id)),
-    ]
+        ...conversations.filter((c) => pinnedIds.includes(c.id)),
+        ...conversations.filter((c) => !pinnedIds.includes(c.id)),
+      ]
     : [];
 
   // Hiển thị modal tham gia nhóm
@@ -126,6 +139,41 @@ const DashboardOptionList = () => {
     return filtered;
   }, [availableGroups, activeTab, searchTerm]);
 
+  // Thêm hàm xử lý xóa hội thoại
+  const handleDeleteConversation = (conversation) => {
+    Swal.fire({
+      title: "Xác nhận xóa hội thoại",
+      text: `Bạn có chắc chắn muốn xóa hội thoại với "${conversation.name}" không?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteConversationForUser(conversation.id, {
+          onSuccess: () => {
+            // Nếu đang xem cuộc hội thoại bị xóa, quay về màn hình chính
+            const currentSelectedConversationId =
+              store.getState().common.selectedConversation?.id;
+
+            if (conversation.id === currentSelectedConversationId) {
+              dispatch(setSelectedConversation(null));
+              dispatch(setShowConversation(false));
+            }
+
+            // Đóng menu dropdown
+            setOpenMenuId(null);
+          },
+          onError: (error) => {
+            console.error("Lỗi khi xóa hội thoại:", error);
+          },
+        });
+      }
+    });
+  };
+
   return (
     <Container
       fluid
@@ -182,25 +230,51 @@ const DashboardOptionList = () => {
           {currentTab === "Chat" && (
             <Container
               fluid
-              className="w-100 border border-top-0 overflow-auto "
-              style={{ maxHeight: "calc(100vh - 56px)" }}
+              className="w-100 border border-top-0 overflow-auto p-0 "
+              style={{
+                minHeight: "calc(100vh - 69px)",
+                height: "100%",
+                overflowY: "auto",
+              }}
             >
               {sortedConversations?.map((item) => (
                 <div
                   key={item.id}
-                  className="d-flex align-items-center justify-content-between position-relative"
-                  style={{ minHeight: 56 }}
+                  className={`d-flex align-items-center justify-content-between position-relative ${
+                    selectedConversation?.id === item.id
+                      ? "active-conversation"
+                      : ""
+                  }`}
+                  style={{
+                    minHeight: 56,
+                    backgroundColor:
+                      selectedConversation?.id === item.id
+                        ? "#e9f5ff"
+                        : "transparent",
+                  }}
                 >
                   <div className="d-flex align-items-center">
                     {/* Hiển thị icon ghim nếu đã ghim */}
                     {pinnedIds.includes(item.id) && (
-                      <BsPinAngleFill color="#f7b731" style={{ marginRight: 8 }} />
+                      <BsPinAngleFill
+                        color="#f7b731"
+                        style={{ marginRight: 8 }}
+                      />
                     )}
-                    <ItemConservation item={item} />
+                    <ItemConservation
+                      item={item}
+                      isActive={selectedConversation?.id === item.id}
+                    />
                   </div>
                   <span
                     className="bi bi-three-dots-vertical"
-                    style={{ cursor: "pointer", padding: 8 }}
+                    style={{
+                      cursor: "pointer",
+                      padding: 8,
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
                     onClick={() => handleMenuToggle(item.id)}
                   />
                   {openMenuId === item.id && (
@@ -220,17 +294,39 @@ const DashboardOptionList = () => {
                         style={{ cursor: "pointer" }}
                         onClick={() => handlePinConversation(item.id)}
                       >
-                        {pinnedIds.includes(item.id) ? "Bỏ ghim hội thoại" : "Ghim hội thoại"}
+                        {pinnedIds.includes(item.id)
+                          ? "Bỏ ghim hội thoại"
+                          : "Ghim hội thoại"}
                       </div>
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Đánh dấu chưa đọc</div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
+                        Đánh dấu chưa đọc
+                      </div>
                       {!item.is_group && (
-                        <div className="px-3 py-2" style={{ cursor: "pointer" }} onClick={() => handleShowJoinGroupModal(item.id)}>Thêm vào nhóm</div>
+                        <div
+                          className="px-3 py-2"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleShowJoinGroupModal(item.id)}
+                        >
+                          Thêm vào nhóm
+                        </div>
                       )}
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Tắt thông báo</div>
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Ẩn trò chuyện</div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
+                        Tắt thông báo
+                      </div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
+                        Ẩn trò chuyện
+                      </div>
                       <hr className="my-1" />
-                      <div className="px-3 py-2 text-danger" style={{ cursor: "pointer" }}>Xóa hội thoại</div>
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Báo xấu</div>
+                      <div
+                        className="px-3 py-2 text-danger"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleDeleteConversation(item)}
+                      >
+                        Xóa hội thoại
+                      </div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
+                        Báo xấu
+                      </div>
                     </div>
                   )}
                 </div>
@@ -275,7 +371,10 @@ const DashboardOptionList = () => {
               <Nav.Link eventKey="Bạn bè">Bạn bè</Nav.Link>
             </Nav.Item>
           </Nav>
-          <div className="mt-3" style={{ maxHeight: "400px", overflowY: "auto" }}>
+          <div
+            className="mt-3"
+            style={{ maxHeight: "400px", overflowY: "auto" }}
+          >
             {filteredGroups.map((group) => (
               <Row
                 key={group.id}
@@ -293,7 +392,7 @@ const DashboardOptionList = () => {
                   <input
                     type="checkbox"
                     checked={selectedGroups.includes(group.id)}
-                    onChange={() => { }}
+                    onChange={() => {}}
                     style={{ marginRight: 8 }}
                   />
                 </Col>
@@ -309,14 +408,18 @@ const DashboardOptionList = () => {
                         alt={member.displayName}
                         className="rounded-circle"
                         style={{ width: 20, height: 20 }}
-                        onError={(e) => (e.target.src = "https://i.pravatar.cc/300?img=1")}
+                        onError={(e) =>
+                          (e.target.src = "https://i.pravatar.cc/300?img=1")
+                        }
                       />
                     ))}
                   </div>
                 </Col>
                 <Col>
                   <div className="fw-bold">{group.name}</div>
-                  <div className="text-muted small">{group.members.length} thành viên</div>
+                  <div className="text-muted small">
+                    {group.members.length} thành viên
+                  </div>
                 </Col>
               </Row>
             ))}
@@ -326,9 +429,7 @@ const DashboardOptionList = () => {
           <Button variant="secondary" onClick={handleCloseJoinGroupModal}>
             Hủy
           </Button>
-          <Button variant="primary">
-            Mời
-          </Button>
+          <Button variant="primary">Mời</Button>
         </Modal.Footer>
       </Modal>
     </Container>
