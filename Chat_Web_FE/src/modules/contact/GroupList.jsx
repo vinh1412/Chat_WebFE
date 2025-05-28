@@ -14,11 +14,18 @@ import { toast } from "react-toastify";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import "../../assets/css/GroupList.css";
+import { useDispatch } from "react-redux";
+import {
+  setSelectedConversation,
+  setShowConversation,
+} from "../../redux/slice/commonSlice";
+import { setCurrentTab } from "../../redux/slice/chatSlice";
 
 const GroupList = () => {
   const { currentUser } = useDashboardContext();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
 
   // Fetch group conversations on mount
   useEffect(() => {
@@ -75,6 +82,22 @@ const GroupList = () => {
     };
   }, [currentUser?.id]);
 
+  // Thêm hàm xử lý khi click vào nhóm
+  const handleGroupClick = (group) => {
+    if (!group) return;
+
+    // Set cuộc trò chuyện được chọn
+    dispatch(setSelectedConversation(group));
+
+    // Hiển thị cuộc trò chuyện
+    dispatch(setShowConversation(true));
+
+    // Chuyển sang tab Chat
+    dispatch(setCurrentTab("Chat"));
+
+    console.log("Chuyển đến nhóm chat:", group.name);
+  };
+
   return (
     <div className="group-list-wrapper">
       <div className="ListFriend__header">
@@ -119,6 +142,8 @@ const GroupList = () => {
               <Row
                 key={item.id}
                 className="align-items-center justify-content-between py-2 border-bottom"
+                onClick={() => handleGroupClick(item)}
+                style={{ cursor: "pointer" }}
               >
                 {/* Avatar nhóm hoặc thành viên */}
                 <Col xs="auto">
