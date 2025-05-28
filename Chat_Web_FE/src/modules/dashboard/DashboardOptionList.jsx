@@ -1,8 +1,7 @@
 //Bao gồm list conservation và list option contact (danh sách lời mời kết bạn, danh sách bạn bè,....)
 
-import React from "react";
-import { Container, Col, Row, Button } from "react-bootstrap";
-import { BsSearch } from "react-icons/bs";
+import React, { useState, useMemo, useEffect } from "react";
+import { Container, Col, Row, Modal, Button, Nav, Form } from "react-bootstrap";
 import { AiOutlineUserAdd, AiOutlineUsergroupAdd } from "react-icons/ai";
 import { useDispatch, useSelector } from "react-redux";
 import { useDashboardContext } from "../../context/Dashboard_context";
@@ -11,6 +10,11 @@ import ItemConservation from "../chat/conservation/ItemConservation";
 import ContactSideBar from "../contact/ContactSideBar";
 import SearchSide from "../common/SearchSide";
 import useConversation from "../../hooks/useConversation";
+import { BsSearch, BsPinAngleFill } from "react-icons/bs";
+import { toast } from "react-toastify";
+import "../../assets/css/GroupBoard.css";
+
+import { getAllGroupConversationsByUserIdService } from "../../services/ConversationService";
 
 const DashboardOptionList = () => {
   const dispatch = useDispatch();
@@ -18,8 +22,109 @@ const DashboardOptionList = () => {
   const showSearch = useSelector((state) => state.common.showSearch);
   const { setShowAddFriendModal, setShowCreateGroupModal } =
     useDashboardContext();
-  const { conversations, isLoadingAllConversations } = useConversation(); // Lấy danh sách cuộc trò chuyện từ hook useConversation
+  const { conversations, isLoadingAllConversations, refetch } = useConversation(); // Lấy danh sách cuộc trò chuyện từ hook useConversation
   // console.log("conversations----------", conversations);
+
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [pinnedIds, setPinnedIds] = useState([]);
+
+  const [showJoinGroupModal, setShowJoinGroupModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [availableGroups, setAvailableGroups] = useState([]);
+  const [activeTab, setActiveTab] = useState("Tất cả");
+
+  const handleMenuToggle = (id) => {
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
+
+  const handleCloseMenu = () => setOpenMenuId(null);
+
+  // Toggle ghim/bỏ ghim với giới hạn 3
+  const handlePinConversation = (id) => {
+    if (pinnedIds.includes(id)) {
+      // Bỏ ghim
+      setPinnedIds((prev) => prev.filter((pid) => pid !== id));
+      // toast.success("Đã bỏ ghim cuộc trò chuyện");
+    } else {
+      // Ghim mới, kiểm tra giới hạn
+      if (pinnedIds.length >= 3) {
+        toast.warn("Bạn chỉ có thể ghim tối đa 3 cuộc trò chuyện.");
+        return;
+      }
+      setPinnedIds((prev) => [id, ...prev]);
+      // toast.success("Đã ghim cuộc trò chuyện");
+    }
+    setOpenMenuId(null);
+  };
+
+  // Sắp xếp: hội thoại ghim lên đầu
+  const sortedConversations = conversations
+    ? [
+      ...conversations.filter((c) => pinnedIds.includes(c.id)),
+      ...conversations.filter((c) => !pinnedIds.includes(c.id)),
+    ]
+    : [];
+
+  // Hiển thị modal tham gia nhóm
+  const handleShowJoinGroupModal = () => {
+    setShowJoinGroupModal(true);
+    fetchAvailableGroups(); // Lấy danh sách nhóm khi mở modal
+  };
+
+  const handleCloseJoinGroupModal = () => {
+    setShowJoinGroupModal(false);
+    setSearchTerm("");
+    setSelectedGroups([]);
+  };
+
+  // Fetch danh sách nhóm khả dụng
+  const fetchAvailableGroups = async () => {
+    try {
+      const groups = await getAllGroupConversationsByUserIdService();
+      setAvailableGroups(groups);
+    } catch (error) {
+      toast.error("Lỗi khi tải danh sách nhóm: " + error.message);
+    }
+  };
+
+  // Xử lý tham gia nhóm
+  // const handleJoinGroups = async () => {
+  //   if (selectedGroups.length === 0) {
+  //     toast.warn("Vui lòng chọn ít nhất một nhóm để tham gia.");
+  //     return;
+  //   }
+
+  //   try {
+  //     // Giả định API để tham gia nhóm (cần triển khai backend)
+  //     await Promise.all(selectedGroups.map((groupId) => joinGroup(groupId)));
+  //     toast.success("Đã gửi yêu cầu tham gia nhóm thành công!");
+  //     refetch(); // Làm mới danh sách hội thoại
+  //     handleCloseJoinGroupModal();
+  //   } catch (error) {
+  //     toast.error("Lỗi khi tham gia nhóm: " + error.message);
+  //   }
+  // };
+
+  // Lọc nhóm theo tab và tìm kiếm
+  const filteredGroups = useMemo(() => {
+    let filtered = [...availableGroups];
+    if (activeTab !== "Tất cả") {
+      filtered = filtered.filter((group) => {
+        const tabMap = {
+          "Gia đình": "family",
+          "Bạn bè": "friend",
+        };
+        return group.category === tabMap[activeTab];
+      });
+    }
+    if (searchTerm) {
+      filtered = filtered.filter((group) =>
+        group.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return filtered;
+  }, [availableGroups, activeTab, searchTerm]);
 
   return (
     <Container
@@ -80,13 +185,56 @@ const DashboardOptionList = () => {
               className="w-100 border border-top-0 overflow-auto "
               style={{ maxHeight: "calc(100vh - 56px)" }}
             >
-              {isLoadingAllConversations ? (
-                <div className="text-center mt-3">Đang tải...</div>
-              ) : (
-                conversations?.map((item) => (
-                  <ItemConservation key={item.id} item={item} />
-                ))
-              )}
+              {sortedConversations?.map((item) => (
+                <div
+                  key={item.id}
+                  className="d-flex align-items-center justify-content-between position-relative"
+                  style={{ minHeight: 56 }}
+                >
+                  <div className="d-flex align-items-center">
+                    {/* Hiển thị icon ghim nếu đã ghim */}
+                    {pinnedIds.includes(item.id) && (
+                      <BsPinAngleFill color="#f7b731" style={{ marginRight: 8 }} />
+                    )}
+                    <ItemConservation item={item} />
+                  </div>
+                  <span
+                    className="bi bi-three-dots-vertical"
+                    style={{ cursor: "pointer", padding: 8 }}
+                    onClick={() => handleMenuToggle(item.id)}
+                  />
+                  {openMenuId === item.id && (
+                    <div
+                      className="shadow rounded bg-white"
+                      style={{
+                        position: "absolute",
+                        top: 40,
+                        right: 0,
+                        zIndex: 100,
+                        minWidth: 200,
+                      }}
+                      onMouseLeave={handleCloseMenu}
+                    >
+                      <div
+                        className="px-3 py-2"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handlePinConversation(item.id)}
+                      >
+                        {pinnedIds.includes(item.id) ? "Bỏ ghim hội thoại" : "Ghim hội thoại"}
+                      </div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Đánh dấu chưa đọc</div>
+                      {!item.is_group && (
+                        <div className="px-3 py-2" style={{ cursor: "pointer" }} onClick={() => handleShowJoinGroupModal(item.id)}>Thêm vào nhóm</div>
+                      )}
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Tắt thông báo</div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Ẩn trò chuyện</div>
+                      <hr className="my-1" />
+                      <div className="px-3 py-2 text-danger" style={{ cursor: "pointer" }}>Xóa hội thoại</div>
+                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>Báo xấu</div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </Container>
           )}
 
@@ -95,6 +243,94 @@ const DashboardOptionList = () => {
       ) : (
         <SearchSide />
       )}
+
+      {/* Modal tham gia nhóm */}
+      <Modal
+        show={showJoinGroupModal}
+        onHide={handleCloseJoinGroupModal}
+        centered
+        size="xl" // Sử dụng size "xl" (khoảng 1140px mặc định)
+        dialogClassName="custom-modal-width" // Áp dụng CSS tùy chỉnh
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Mời tham gia nhóm</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Control
+            type="text"
+            placeholder="Tìm nhóm theo tên"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-3"
+            style={{ borderRadius: 20 }}
+          />
+          <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab}>
+            <Nav.Item>
+              <Nav.Link eventKey="Tất cả">Tất cả</Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="Gia đình">Gia đình</Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="Bạn bè">Bạn bè</Nav.Link>
+            </Nav.Item>
+          </Nav>
+          <div className="mt-3" style={{ maxHeight: "400px", overflowY: "auto" }}>
+            {filteredGroups.map((group) => (
+              <Row
+                key={group.id}
+                className="align-items-center py-2 border-bottom"
+                style={{ cursor: "pointer" }}
+                onClick={() => {
+                  setSelectedGroups((prev) =>
+                    prev.includes(group.id)
+                      ? prev.filter((id) => id !== group.id)
+                      : [...prev, group.id]
+                  );
+                }}
+              >
+                <Col xs="auto">
+                  <input
+                    type="checkbox"
+                    checked={selectedGroups.includes(group.id)}
+                    onChange={() => { }}
+                    style={{ marginRight: 8 }}
+                  />
+                </Col>
+                <Col xs="auto">
+                  <div
+                    className="d-flex flex-wrap"
+                    style={{ width: 40, height: 40, overflow: "hidden" }}
+                  >
+                    {group.members.slice(0, 4).map((member, index) => (
+                      <img
+                        key={index}
+                        src={member.avatar || "https://i.pravatar.cc/300?img=1"}
+                        alt={member.displayName}
+                        className="rounded-circle"
+                        style={{ width: 20, height: 20 }}
+                        onError={(e) => (e.target.src = "https://i.pravatar.cc/300?img=1")}
+                      />
+                    ))}
+                  </div>
+                </Col>
+                <Col>
+                  <div className="fw-bold">{group.name}</div>
+                  <div className="text-muted small">{group.members.length} thành viên</div>
+                </Col>
+              </Row>
+            ))}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseJoinGroupModal}>
+            Hủy
+          </Button>
+          <Button variant="primary">
+            Mời
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };
