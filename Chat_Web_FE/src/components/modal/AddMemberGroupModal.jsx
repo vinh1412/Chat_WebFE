@@ -183,7 +183,7 @@ const AddMemberGroupModal = ({
                         disabled={isAlreadyMember}
                         onChange={() => {
                           if (!isAlreadyMember) {
-                            console.log("Toggle (checkbox):", user.userId);
+                            // console.log("Toggle (checkbox):", user.userId);
                             toggleMember(user.userId);
                           }
                         }}

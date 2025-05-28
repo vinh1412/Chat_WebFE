@@ -14,11 +14,16 @@ import { toast } from "react-toastify";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import "../../assets/css/GroupList.css";
+import { Modal, Button } from "react-bootstrap";
+import { leaveGroup } from "../../services/ConversationService";
 
 const GroupList = () => {
   const { currentUser } = useDashboardContext();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch group conversations on mount
   useEffect(() => {
@@ -54,8 +59,8 @@ const GroupList = () => {
               setGroups((prev) =>
                 prev.some((c) => c.id === updatedConversation.id)
                   ? prev.map((c) =>
-                      c.id === updatedConversation.id ? updatedConversation : c
-                    )
+                    c.id === updatedConversation.id ? updatedConversation : c
+                  )
                   : [...prev, updatedConversation]
               );
             }
@@ -75,6 +80,36 @@ const GroupList = () => {
     };
   }, [currentUser?.id]);
 
+  const handleShowModal = (group) => {
+    setSelectedGroup(group);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedGroup(null);
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!selectedGroup) return;
+    const isConfirmed = window.confirm(
+      `Bạn có chắc chắn muốn rời nhóm "${selectedGroup.name}" không?`
+    );
+    if (isConfirmed) {
+      try {
+        await leaveGroup(selectedGroup.id);
+        toast.success(`Bạn đã rời nhóm: ${selectedGroup.name}`);
+        setGroups((prev) => prev.filter((g) => g.id !== selectedGroup.id));
+        handleCloseModal();
+      } catch (error) {
+        toast.error("Lỗi khi rời nhóm. Vui lòng thử lại.");
+      }
+    }
+  };
+
+  const filteredGroups = groups.filter((group) =>
+    group.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="group-list-wrapper">
       <div className="ListFriend__header">
@@ -88,7 +123,12 @@ const GroupList = () => {
         {/* Tìm kiếm & filter */}
         <Row className="g-2 mb-3">
           <Col xs={4}>
-            <Form.Control type="text" placeholder="🔍 Tìm kiếm..." />
+            <Form.Control
+              type="text"
+              placeholder="🔍 Tìm kiếm..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </Col>
           <Col xs={4}>
             <Form.Select>
@@ -112,10 +152,10 @@ const GroupList = () => {
         <div className="group-list">
           {loading ? (
             <p>Đang tải...</p>
-          ) : groups.length === 0 ? (
+          ) : filteredGroups.length === 0 ? (
             <p>Chưa có nhóm nào.</p>
           ) : (
-            groups.map((item) => (
+            filteredGroups.map((item) => (
               <Row
                 key={item.id}
                 className="align-items-center justify-content-between py-2 border-bottom"
@@ -166,13 +206,31 @@ const GroupList = () => {
 
                 {/* Menu */}
                 <Col xs="auto">
-                  <BsThreeDots role="button" />
+                  <BsThreeDots role="button" onClick={() => handleShowModal(item)} />
                 </Col>
               </Row>
             ))
           )}
         </div>
       </Container>
+
+      {/* Modal xác nhận rời nhóm */}
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Rời nhóm</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Bạn có chắc chắn muốn rời nhóm <b>{selectedGroup?.name}</b> không?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Hủy
+          </Button>
+          <Button variant="danger" onClick={handleLeaveGroup}>
+            Rời nhóm
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

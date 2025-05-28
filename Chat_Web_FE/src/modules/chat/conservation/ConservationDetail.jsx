@@ -30,8 +30,13 @@ const ConversationDetail = ({
   setShowSearchForm,
 }) => {
   console.log("conversationInfor:", conversationInfor);
-  const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
-    useDashboardContext();
+  const {
+    currentUser,
+    setShowAddMemberGroupModal,
+    setConversationInfor,
+    setShowCreateGroupModal,
+    setCurrentChatUser,
+  } = useDashboardContext();
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [showGroupBulletin, setShowGroupBulletin] = useState(true);
   const [showMemberGroup, setShowMemberGroup] = useState(true);
@@ -333,7 +338,21 @@ const ConversationDetail = ({
             )}
 
             {!conversationInfor.is_group ? (
-              <div className="d-flex flex-column align-items-center">
+              <div
+                className="d-flex flex-column align-items-center"
+                onClick={() => {
+                  // Lấy user đang nhắn tin (không phải người dùng hiện tại)
+                  const chatUser = conversationInfor.members.find(
+                    (member) => member.id !== currentUser.id
+                  );
+
+                  // Truyền thông tin user vào context để CreateGroupModal có thể sử dụng
+                  setConversationInfor(conversationInfor);
+                  setCurrentChatUser(chatUser);
+                  setShowCreateGroupModal(true);
+                }}
+                style={{ cursor: "pointer" }}
+              >
                 <i className="bi bi-person-plus fs-6"></i>
                 <small className="text-center" style={{ fontSize: "13px" }}>
                   Tạo nhóm trò chuyện

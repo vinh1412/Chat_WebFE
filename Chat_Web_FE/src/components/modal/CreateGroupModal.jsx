@@ -11,7 +11,7 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { currentUser } = useDashboardContext();
+  const { currentUser, currentChatUser } = useDashboardContext();
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedTag, setSelectedTag] = useState("Tất cả");
 
@@ -19,6 +19,18 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
 
   const { createGroupConversation, isCreatingGroupConversation } =
     useConversation();
+
+  useEffect(() => {
+    if (isOpen && currentChatUser && currentChatUser.id) {
+      // Kiểm tra xem người dùng đã được chọn chưa
+      setSelectedMembers((prevSelected) => {
+        if (!prevSelected.includes(currentChatUser.id)) {
+          return [...prevSelected, currentChatUser.id];
+        }
+        return prevSelected;
+      });
+    }
+  }, [isOpen, currentChatUser]);
 
   useEffect(() => {
     console.log("Selected members (updated):", selectedMembers);
@@ -30,12 +42,14 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
   }, [isLoadingFriends, friendList]);
 
   // Lọc danh sách bạn bè dựa trên từ khóa tìm kiếm
-const filteredFriends = useMemo(() => {
-  if (!searchTerm) return friends;
-  return friends.filter((friend) =>
-    friend.displayName && friend.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-}, [friends, searchTerm]);
+  const filteredFriends = useMemo(() => {
+    if (!searchTerm) return friends;
+    return friends.filter(
+      (friend) =>
+        friend.displayName &&
+        friend.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [friends, searchTerm]);
 
   const toggleMember = (userId) => {
     setSelectedMembers((prevSelected) => {
@@ -121,6 +135,10 @@ const filteredFriends = useMemo(() => {
               className={`bg-white border-end-0 rounded-start-pill ${
                 isFocused ? "border-primary" : ""
               }`}
+              style={{
+                padding: "0.375rem 0.75rem",
+                height: "38px",
+              }}
             >
               <BsSearch />
             </InputGroup.Text>
