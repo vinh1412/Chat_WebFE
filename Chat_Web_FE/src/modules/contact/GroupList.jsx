@@ -14,6 +14,12 @@ import { toast } from "react-toastify";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import "../../assets/css/GroupList.css";
+import { useDispatch } from "react-redux";
+import {
+  setSelectedConversation,
+  setShowConversation,
+} from "../../redux/slice/commonSlice";
+import { setCurrentTab } from "../../redux/slice/chatSlice";
 import { Modal, Button } from "react-bootstrap";
 import { leaveGroup } from "../../services/ConversationService";
 
@@ -21,6 +27,7 @@ const GroupList = () => {
   const { currentUser } = useDashboardContext();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,8 +66,8 @@ const GroupList = () => {
               setGroups((prev) =>
                 prev.some((c) => c.id === updatedConversation.id)
                   ? prev.map((c) =>
-                    c.id === updatedConversation.id ? updatedConversation : c
-                  )
+                      c.id === updatedConversation.id ? updatedConversation : c
+                    )
                   : [...prev, updatedConversation]
               );
             }
@@ -79,6 +86,16 @@ const GroupList = () => {
       }
     };
   }, [currentUser?.id]);
+
+  // Thêm hàm xử lý khi click vào nhóm
+  const handleGroupClick = (group) => {
+    if (!group) return;
+    dispatch(setSelectedConversation(group));
+    dispatch(setShowConversation(true));
+    dispatch(setCurrentTab("Chat"));
+
+    console.log("Chuyển đến nhóm chat:", group.name);
+  };
 
   const handleShowModal = (group) => {
     setSelectedGroup(group);
@@ -159,9 +176,14 @@ const GroupList = () => {
               <Row
                 key={item.id}
                 className="align-items-center justify-content-between py-2 border-bottom"
+                style={{ cursor: "pointer" }}
               >
                 {/* Avatar nhóm hoặc thành viên */}
-                <Col xs="auto">
+                <Col
+                  xs="auto"
+                  onClick={() => handleGroupClick(item)}
+                  style={{ cursor: "pointer" }}
+                >
                   <div
                     className="overflow-hidden"
                     style={{ width: "48px", height: "48px" }}
@@ -197,7 +219,10 @@ const GroupList = () => {
                 </Col>
 
                 {/* Thông tin nhóm */}
-                <Col>
+                <Col
+                  onClick={() => handleGroupClick(item)}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="fw-bold">{item.name}</div>
                   <div className="text-muted small">
                     {item.members.length} thành viên
@@ -206,7 +231,10 @@ const GroupList = () => {
 
                 {/* Menu */}
                 <Col xs="auto">
-                  <BsThreeDots role="button" onClick={() => handleShowModal(item)} />
+                  <BsThreeDots
+                    role="button"
+                    onClick={() => handleShowModal(item)}
+                  />
                 </Col>
               </Row>
             ))

@@ -49,6 +49,7 @@ const Conservation = ({
     setShowSearchForm(true); // Kích hoạt hiển thị SearchForm
     if (!showDetail) onShowDetail(); // Nếu panel chi tiết chưa mở, mở nó
   };
+
   console.log("conversations", conversations);
   useEffect(() => {
     if (selectedConversation && conversations?.length) {
