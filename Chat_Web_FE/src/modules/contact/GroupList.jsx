@@ -85,14 +85,8 @@ const GroupList = () => {
   // Thêm hàm xử lý khi click vào nhóm
   const handleGroupClick = (group) => {
     if (!group) return;
-
-    // Set cuộc trò chuyện được chọn
     dispatch(setSelectedConversation(group));
-
-    // Hiển thị cuộc trò chuyện
     dispatch(setShowConversation(true));
-
-    // Chuyển sang tab Chat
     dispatch(setCurrentTab("Chat"));
 
     console.log("Chuyển đến nhóm chat:", group.name);
@@ -142,11 +136,14 @@ const GroupList = () => {
               <Row
                 key={item.id}
                 className="align-items-center justify-content-between py-2 border-bottom"
-                onClick={() => handleGroupClick(item)}
                 style={{ cursor: "pointer" }}
               >
                 {/* Avatar nhóm hoặc thành viên */}
-                <Col xs="auto">
+                <Col
+                  xs="auto"
+                  onClick={() => handleGroupClick(item)}
+                  style={{ cursor: "pointer" }}
+                >
                   <div
                     className="overflow-hidden"
                     style={{ width: "48px", height: "48px" }}
@@ -182,7 +179,10 @@ const GroupList = () => {
                 </Col>
 
                 {/* Thông tin nhóm */}
-                <Col>
+                <Col
+                  onClick={() => handleGroupClick(item)}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="fw-bold">{item.name}</div>
                   <div className="text-muted small">
                     {item.members.length} thành viên
