@@ -4,11 +4,14 @@ import { toast } from "react-toastify";
 import { updateGroupName } from "../../services/ConversationService";
 import { useDispatch } from "react-redux";
 import { setSelectedConversation } from "../../redux/slice/commonSlice";
+import useConversation from "../../hooks/useConversation";
 
 const ChangeGroupNameModal = ({ show, onHide, conversationId, onSuccess }) => {
   const dispatch = useDispatch();
   const [newGroupName, setNewGroupName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { conversation, updateGroupNameFromGroup } =
+    useConversation(conversationId);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,12 +22,20 @@ const ChangeGroupNameModal = ({ show, onHide, conversationId, onSuccess }) => {
 
     setIsLoading(true);
     try {
-      const response = await updateGroupName(conversationId, newGroupName);
-      toast.success("Cập nhật tên nhóm thành công!");
-      onSuccess(response.conversation);
-      dispatch(setSelectedConversation(response.conversation));
-      setNewGroupName("");
-      onHide();
+      const response = await updateGroupNameFromGroup.mutateAsync({
+        conversationId,
+        newName: newGroupName,
+      });
+
+      if (response.conversation) {
+        toast.success("Cập nhật tên nhóm thành công!");
+        dispatch(setSelectedConversation(response.conversation));
+        if (onSuccess) onSuccess(response.conversation);
+        onHide();
+        setNewGroupName("");
+      } else {
+        toast.error("Không thể cập nhật tên nhóm. Vui lòng thử lại.");
+      }
     } catch (error) {
       console.error("Error updating group name:", error.message);
       toast.error("Lỗi khi cập nhật tên nhóm: " + error.message);
