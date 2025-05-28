@@ -21,8 +21,14 @@ import SearchForm from "./SearchForm";
 import formatTime from "../../../utils/FormatTime";
 import { useSelector } from "react-redux";
 import ModalGroupQRCode from "./ModalGroupQRCode";
+import Swal from "sweetalert2";
+import useConversation from "../../../hooks/useConversation";
 
-const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm, }) => {
+const ConversationDetail = ({
+  conversationInfor,
+  showSearchForm,
+  setShowSearchForm,
+}) => {
   console.log("conversationInfor:", conversationInfor);
   const { currentUser, setShowAddMemberGroupModal, setConversationInfor } =
     useDashboardContext();
@@ -34,45 +40,26 @@ const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm
   const [showMediaSection, setShowMediaSection] = useState(true);
   const [showFileSection, setShowFileSection] = useState(true);
   const messages = useMessage(conversationInfor.id); // Sử dụng hook để lấy messages theo conversationId
+  const { conversation, leaveGroupFromGroup } = useConversation(
+    conversationInfor.id
+  );
 
-
-
-    // ... các state hiện tại
-    const [showQRCodeModal, setShowQRCodeModal] = useState(false);
-    // ... các useEffect và hàm khác
-    // Hàm mở modal QR
-    const openQRCodeModal = () => {
-      setShowQRCodeModal(true);
-    };
-    // Hàm đóng modal QR
-    const closeQRCodeModal = () => {
-      setShowQRCodeModal(false);
-    };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // ... các state hiện tại
+  const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+  // ... các useEffect và hàm khác
+  // Hàm mở modal QR
+  const openQRCodeModal = () => {
+    setShowQRCodeModal(true);
+  };
+  // Hàm đóng modal QR
+  const closeQRCodeModal = () => {
+    setShowQRCodeModal(false);
+  };
 
   const messageData = messages?.messages?.response;
 
-  const searchResults = useSelector((state) => state.common.searchResults) || [];
+  const searchResults =
+    useSelector((state) => state.common.searchResults) || [];
 
   //Lọc ảnh/ video từ messages
   const mediaMessages = Array.isArray(messageData)
@@ -142,19 +129,30 @@ const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm
   }
   // Handle out group
   const handleLeaveGroup = async (conversationId) => {
-    const isConfirmed = window.confirm(
-      "Bạn có chắc chắn muốn rời nhóm này không?"
-    );
+    // Hiển thị hộp thoại xác nhận
+    const isConfirmed = await Swal.fire({
+      title: "Xác nhận rời nhóm",
+      text: "Bạn có chắc chắn muốn rời nhóm này không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Rời nhóm",
+      cancelButtonText: "Hủy",
+    }).then((result) => {
+      return result.isConfirmed;
+    });
     if (isConfirmed) {
-      try {
-        const response = await leaveGroup(conversationId);
-        console.log("Response leaveGroup data:", response.data);
-        toast.success("Bạn đã rời nhóm thành công!");
-        dispatch(setShowConversation(false));
-      } catch (error) {
-        console.error("Error leaving group:", error.message);
-        alert("Lỗi khi rời nhóm. Vui lòng thử lại.");
-      }
+      leaveGroupFromGroup.mutate(conversationId, {
+        onSuccess: () => {
+          toast.success("Bạn đã rời nhóm thành công!");
+          dispatch(setShowConversation(false));
+          dispatch(setIsSuccessSent(true));
+          navigate("/chat");
+        },
+        onError: (error) => {
+          console.error("Error leaving group:", error);
+          toast.error(error.message || "Không thể rời nhóm!");
+        },
+      });
     }
   };
 
@@ -405,7 +403,7 @@ const ConversationDetail = ({ conversationInfor,showSearchForm,setShowSearchForm
                             className="btn btn-sm p-0 ms-2"
                             onClick={openQRCodeModal}
                           >
-                          <FaQrcode size={24} />
+                            <FaQrcode size={24} />
                           </button>
                           <ModalGroupQRCode
                             show={showQRCodeModal}

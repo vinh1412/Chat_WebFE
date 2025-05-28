@@ -32,20 +32,6 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
     }
   }, [conversation, setConversationInfor, onMembersChanged]);
 
-  // Hàm refetch lại members từ server
-  const refetchMembers = async () => {
-    try {
-      const updated = await getConversationByIdService(conversationInfor.id);
-      console.log("Updated conversation members:", updated.members);
-      setMembers(updated.members);
-      setConversationInfor(updated); // cập nhật lại context nếu cần
-      if (onMembersChanged) onMembersChanged(); // callback để ConservationDetail cũng cập nhật
-    } catch (error) {
-      console.error("Error fetching updated members:", error);
-      toast.error("Không thể cập nhật danh sách thành viên");
-    }
-  };
-
   // Xử lý sự kiện click bên ngoài menu dropdown để đóng menu
   useEffect(() => {
     const handleClickOutside = (event) => {

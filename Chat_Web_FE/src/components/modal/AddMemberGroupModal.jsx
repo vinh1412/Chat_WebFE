@@ -6,6 +6,7 @@ import useFriend from "../../hooks/useFriend";
 import { useDashboardContext } from "../../context/Dashboard_context";
 // import useConversation from "../../hooks/useConversation";
 import { addMemberToGroupService } from "../../services/ConversationService";
+import useConversation from "../../hooks/useConversation";
 
 const AddMemberGroupModal = ({
   isOpen,
@@ -20,13 +21,17 @@ const AddMemberGroupModal = ({
 
   const { currentUser } = useDashboardContext();
   const { friendList, isLoadingFriends } = useFriend();
+  const { conversation, addMemberToGroup } = useConversation(
+    conversationInfor?.id
+  );
+  // const {conversation, ad}
 
-  useEffect(() => {
-    console.log("conversationInfor:", conversationInfor);
-    console.log("Group ID:", conversationInfor?.id);
-    console.log("Members:", conversationInfor?.members);
-    console.log("selectedMembers:", selectedMembers);
-  }, [conversationInfor, selectedMembers]);
+  // useEffect(() => {
+  //   console.log("conversationInfor:", conversationInfor);
+  //   console.log("Group ID:", conversationInfor?.id);
+  //   console.log("Members:", conversationInfor?.members);
+  //   console.log("selectedMembers:", selectedMembers);
+  // }, [conversationInfor, selectedMembers]);
 
   const friends = useMemo(() => {
     if (isLoadingFriends) return [];
@@ -68,19 +73,25 @@ const AddMemberGroupModal = ({
   }
 
   // xử lý thêm thành viên vào nhóm
-  const handleAddMembers = async () => {
-    try {
-      const groupId = conversationInfor?.id;
-      for (const userId of selectedMembers) {
-        await addMemberToGroupService(groupId, userId);
+  const handleAddMembers = async (conversationId, userId) => {
+    addMemberToGroup.mutate(
+      { conversationId: conversationInfor.id, userId: selectedMembers },
+      {
+        onSuccess: () => {
+          toast.success("Thêm thành viên vào nhóm thành công", {
+            position: "top-right",
+            autoClose: 500,
+          });
+          setSelectedMembers([]);
+          if (onMembersChanged) onMembersChanged();
+          onClose();
+        },
+        onError: (error) => {
+          console.error("Error adding member to group:", error);
+          toast.error(error.message || "Không thể thêm thành viên vào nhóm");
+        },
       }
-      toast.success("Thêm thành viên thành công!");
-      if (onMembersChanged) await onMembersChanged(); // GỌI CALLBACK
-      onClose();
-    } catch (error) {
-      console.error("Lỗi khi thêm thành viên:", error);
-      toast.error(error.message || "Không thể thêm thành viên.");
-    }
+    );
   };
 
   return (

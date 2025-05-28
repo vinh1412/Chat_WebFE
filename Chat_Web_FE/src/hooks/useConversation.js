@@ -9,6 +9,7 @@ import {
   removeMember,
   updateGroupName,
   leaveGroup,
+  addMemberToGroupService,
 } from "../services/ConversationService";
 import { toast } from "react-toastify";
 import { Client } from "@stomp/stompjs";
@@ -34,7 +35,7 @@ const useConversation = (conversationId) => {
       },
       onConnect: () => {
         console.log("WebSocket connected for conversation:", conversationId);
-        // Subscribe to the conversation's topic
+        // Đăng ký lắng nghe sự kiện xóa thành viên / thêm thành viên / cập nhật tên nhóm / rời nhóm
         client.current.subscribe(
           `/chat/create/group/${conversationId}`,
           (message) => {
@@ -111,6 +112,32 @@ const useConversation = (conversationId) => {
     },
     onError: (error) => {
       console.log("Leave group error:", error.message);
+    },
+  });
+
+  const addMemberToGroup = useMutation({
+    mutationFn: ({ conversationId, userId }) =>
+      addMemberToGroupService(conversationId, userId),
+    onSuccess: () => {
+      // refetch thông tin cuộc hội thoại
+      queryClient.invalidateQueries(["conversation", conversationId]);
+      // refetch danh sách cuộc trò chuyện để cập nhật
+      queryClient.invalidateQueries(["conversations"]);
+      toast.success("Thêm thành viên vào nhóm thành công", {
+        position: "top-right",
+        autoClose: 500,
+      });
+    },
+    onError: (error) => {
+      console.error("Error adding member to group:", error);
+      toast.error(
+        "Lỗi khi thêm thành viên vào nhóm: " +
+          (error.message || "Đã xảy ra lỗi"),
+        {
+          position: "top-right",
+          autoClose: 500,
+        }
+      );
     },
   });
 
@@ -231,6 +258,7 @@ const useConversation = (conversationId) => {
     removeMemberFromGroup,
     updateGroupNameFromGroup,
     leaveGroupFromGroup,
+    addMemberToGroup,
     refetchConversation,
     conversations,
     isLoadingAllConversations,
