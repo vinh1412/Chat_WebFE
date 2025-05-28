@@ -8,11 +8,13 @@ import formatPhoneNumber from "../utils/FormatPhoneNumber";
 import { setAccessToken } from "./LocalStorageUtils";
 import { toast } from "react-toastify";
 import QRLogin from "../pages/QRLogin";
+import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
   const [phone, setPhone] = useState("0862058920");
   const [password, setPassword] = useState("12345678a");
   const [sessionId, setSessionId] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const { setCurrentUser } = useDashboardContext();
@@ -90,13 +92,22 @@ const LoginPage = () => {
             onChange={(e) => setPhone(e.target.value)}
             style={styles.input}
           />
-          <input
-            type="password"
-            placeholder="Mật khẩu"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-          />
+          <div style={styles.passwordWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Mật khẩu"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.inputPass}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={styles.eyeButton}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <button type="submit" style={styles.loginButton}>
             Đăng nhập
           </button>
@@ -188,6 +199,35 @@ const styles = {
     cursor: "pointer",
     textDecoration: "underline",
     fontSize: "0.9rem",
+  },
+  passwordWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "1rem",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    backgroundColor: "#F0F2F5",
+    width: "100%",
+  },
+  eyeButton: {
+    position: "absolute",
+    right: "0.75rem",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color: "#333",
+  },
+  inputPass: {
+    marginBottom: 0,
+    width: "90%",
+    padding: "0.75rem",
+    borderRadius: "8px",
+    fontSize: "1rem",
+    color: "#333",
+    backgroundColor: "#F0F2F5",
+    border: "none",
+    outline: "none",
   },
 };
 
