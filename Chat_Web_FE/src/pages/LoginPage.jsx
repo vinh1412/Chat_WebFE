@@ -2,16 +2,16 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import { useDashboardContext } from "../context/Dashboard_context";
-import { getUserBySessionId } from "../services/QACodeService.js"; 
-import { getCurrentUserService } from "../services/QACodeService.js"; 
+import { getUserBySessionId } from "../services/QACodeService.js";
+import { getCurrentUserService } from "../services/QACodeService.js";
 import formatPhoneNumber from "../utils/FormatPhoneNumber";
 import { setAccessToken } from "./LocalStorageUtils";
 import { toast } from "react-toastify";
 import QRLogin from "../pages/QRLogin";
 
 const LoginPage = () => {
-  const [phone, setPhone] = useState("0367494904");
-  const [password, setPassword] = useState("12345678");
+  const [phone, setPhone] = useState("0862058920");
+  const [password, setPassword] = useState("12345678a");
   const [sessionId, setSessionId] = useState(null);
 
   const navigate = useNavigate();
@@ -28,7 +28,9 @@ const LoginPage = () => {
           setCurrentUser(user);
           navigate("/");
         } catch (error) {
-          toast.error("Lỗi lấy thông tin người dùng", { position: "top-center" });
+          toast.error("Lỗi lấy thông tin người dùng", {
+            position: "top-center",
+          });
         }
       },
     });
@@ -68,7 +70,9 @@ const LoginPage = () => {
       navigate("/");
     } catch (error) {
       console.error("Lỗi đăng nhập nhanh:", error);
-      toast.error("Đã xảy ra lỗi khi đăng nhập nhanh.", { position: "top-center" });
+      toast.error("Đã xảy ra lỗi khi đăng nhập nhanh.", {
+        position: "top-center",
+      });
     }
   };
 
