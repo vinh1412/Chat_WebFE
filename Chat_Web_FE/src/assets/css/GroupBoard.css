@@ -236,3 +236,11 @@
 .note-button:hover {
   background: #e0e0e0;
 }
+
+.modal-dialog-centered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+}
