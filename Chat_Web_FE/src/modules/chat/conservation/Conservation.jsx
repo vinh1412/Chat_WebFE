@@ -210,17 +210,34 @@ const Conservation = ({
   }, [userReceiver, sentReqs, reciveReqs]);
 
   useEffect(() => {
-    if (messages) {
+    if (messages && messages.response && Array.isArray(messages.response)) {
       const filteredMessages = messages.response.filter(
         (msg) => !msg.deletedByUserIds?.includes(currentUser.id)
       );
       const sortedMessages = filteredMessages.sort(
         (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
       );
-      setLocalMessages(sortedMessages);
+      // setLocalMessages(sortedMessages);
+      // Chỉ cập nhật nếu có sự thay đổi thực sự
+      setLocalMessages((prevMessages) => {
+        // Đảm bảo prevMessages luôn là mảng
+        const safePrevMessages = Array.isArray(prevMessages)
+          ? prevMessages
+          : [];
+        if (
+          JSON.stringify(safePrevMessages) !== JSON.stringify(sortedMessages)
+        ) {
+          return sortedMessages;
+        }
+        return safePrevMessages;
+      });
 
       const pinned = filteredMessages.filter((msg) => msg.pinned);
-      setPinnedMessages(pinned);
+      setPinnedMessages(Array.isArray(pinned) ? pinned : []);
+    } else {
+      // Nếu messages không có hoặc không có response, set về mảng rỗng
+      setLocalMessages([]);
+      setPinnedMessages([]);
     }
   }, [messages, currentUser.id]);
 
@@ -363,106 +380,126 @@ const Conservation = ({
         // Hàm được gọi khi kết nối thành công
         console.log("Connected to WebSocket");
 
-        client.current.subscribe(
-          `/chat/message/single/${selectedConversation?.id}`, //Đăng ký vào một kênh (topic) cụ thể,
-          // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
-          (message) => {
-            const newMessage = JSON.parse(message.body);
-            console.log("New message received:", newMessage);
+        if (client.current && client.current.connected) {
+          try {
+            client.current.subscribe(
+              `/chat/message/single/${selectedConversation?.id}`, //Đăng ký vào một kênh (topic) cụ thể,
+              // để nhận tin nhắn từ server liên quan đến cuộc trò chuyện này
+              (message) => {
+                const newMessage = JSON.parse(message.body);
+                console.log("New message received:", newMessage);
 
-            //CASE 1: Kiểm tra nếu là tin nhắn đã thu hồi
-            if (newMessage.recalled === true) {
-              setLocalMessages((prevMessages) =>
-                prevMessages.map((msg) => {
-                  const msgId = String(msg?.id || msg?._id);
+                //CASE 1: Kiểm tra nếu là tin nhắn đã thu hồi
+                if (newMessage.recalled === true) {
+                  setLocalMessages((prevMessages) => {
+                    // Đảm bảo prevMessages là array
+                    const safePrevMessages = Array.isArray(prevMessages)
+                      ? prevMessages
+                      : [];
+                    return safePrevMessages.map((msg) => {
+                      const msgId = String(msg?.id || msg?._id);
+                      const recalledMsgId = String(
+                        newMessage.id || newMessage._id
+                      );
 
-                  const recalledMsgId = String(newMessage.id || newMessage._id);
+                      if (msgId === recalledMsgId) {
+                        return { ...msg, recalled: true };
+                      }
+                      return msg;
+                    });
+                  });
+                  //CASE 2: Nếu không phải là tin nhắn đã thu hồi, thêm mới hoặc cập nhật tin nhắn
+                } else {
+                  const messageId = newMessage.id || newMessage._id;
 
-                  if (msgId === recalledMsgId) {
-                    return { ...msg, recalled: true }; // Cập nhật thuộc tính recalled: true cho tin nhắn đó, giữ nguyên các thuộc tính khác
+                  // const existingMessageIndex = localMessages.findIndex(
+                  //   (msg) =>
+                  //     (msg?.id && String(msg?.id) === String(messageId)) ||
+                  //     (msg?._id && String(msg?._id) === String(messageId))
+                  // );
+                  setLocalMessages((prevMessages) => {
+                    // Đảm bảo prevMessages luôn là array
+                    const safePrevMessages = Array.isArray(prevMessages)
+                      ? prevMessages
+                      : [];
+
+                    const existingMessageIndex = safePrevMessages.findIndex(
+                      (msg) =>
+                        (msg?.id && String(msg?.id) === String(messageId)) ||
+                        (msg?._id && String(msg?._id) === String(messageId))
+                    );
+
+                    //Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
+                    //CASE 2.1: Nếu tin nhắn đã tồn tại, cập nhật lại nội dung
+                    if (existingMessageIndex !== -1) {
+                      const newMessages = [...safePrevMessages];
+                      newMessages[existingMessageIndex] = newMessage;
+                      return newMessages;
+                    }
+                    //CASE 2.2: Nếu tin nhắn chưa tồn tại, thêm mới
+                    else {
+                      return [...safePrevMessages, newMessage];
+                    }
+                  });
+                  // Kiểm tra xem tin nhắn có được ghim hay không
+                  if (newMessage.pinned) {
+                    setPinnedMessages((prev) => {
+                      const safePrev = Array.isArray(prev) ? prev : [];
+                      const updatedPinned = safePrev.filter(
+                        (msg) =>
+                          String(msg.id || msg._id) !==
+                          String(newMessage.id || newMessage._id)
+                      );
+                      return [...updatedPinned, newMessage];
+                    });
                   }
+                  // Nếu tin nhắn không được ghim, xóa nó khỏi danh sách pinnedMessages
+                  else {
+                    setPinnedMessages((prev) => {
+                      const safePrev = Array.isArray(prev) ? prev : [];
+                      return safePrev.filter(
+                        (msg) =>
+                          String(msg.id || msg._id) !==
+                          String(newMessage.id || newMessage._id)
+                      );
+                    });
+                  }
+                }
 
-                  return msg; // Trả về mảng mới để cập nhật state
-                })
-              );
+                // refetchMessages();
 
-              //CASE 2: Nếu không phải là tin nhắn đã thu hồi, thêm mới hoặc cập nhật tin nhắn
-            } else {
-              const messageId = newMessage.id || newMessage._id;
-
-              const existingMessageIndex = localMessages.findIndex(
-                (msg) =>
-                  (msg?.id && String(msg?.id) === String(messageId)) ||
-                  (msg?._id && String(msg?._id) === String(messageId))
-              );
-
-              //Kiểm tra xem tin nhắn đã tồn tại trong localMessages chưa
-              //CASE 2.1: Nếu tin nhắn đã tồn tại, cập nhật lại nội dung
-              if (existingMessageIndex !== -1) {
-                setLocalMessages((prevMessages) => {
-                  const newMessages = [...prevMessages];
-                  newMessages[existingMessageIndex] = newMessage;
-                  return newMessages;
-                });
+                // Tự động cuộn xuống cuối danh sách tin nhắn khi có tin nhắn mới
+                if (bottomRef.current) {
+                  bottomRef.current.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                }
               }
-              //CASE 2.2: Nếu tin nhắn chưa tồn tại, thêm mới
-              else {
-                setLocalMessages((prev) => [...prev, newMessage]);
-              }
+            );
 
-              // Kiểm tra xem tin nhắn có được ghim hay không
-              if (newMessage.pinned) {
-                setPinnedMessages((prev) => {
-                  const updatedPinned = prev.filter(
-                    (msg) =>
-                      String(msg.id || msg._id) !==
-                      String(newMessage.id || newMessage._id)
-                  );
-                  return [...updatedPinned, newMessage];
-                });
+            client.current.subscribe(
+              `/friend/accept/${currentUser?.id}`,
+              async (message) => {
+                if (message.body) {
+                  const response = await checkFriend(userReceiver?.id);
+                  setIsFriend(response);
+                }
               }
-              // Nếu tin nhắn không được ghim, xóa nó khỏi danh sách pinnedMessages
-              else {
-                setPinnedMessages((prev) =>
-                  prev.filter(
-                    (msg) =>
-                      String(msg.id || msg._id) !==
-                      String(newMessage.id || newMessage._id)
-                  )
-                );
+            );
+
+            client.current.subscribe(
+              `/friend/unfriend/${currentUser?.id}`,
+              async (message) => {
+                if (message.body) {
+                  const response = await checkFriend(userReceiver?.id);
+                  setIsFriend(response);
+                }
               }
-            }
-
-            refetchMessages();
-
-            // Tự động cuộn xuống cuối danh sách tin nhắn khi có tin nhắn mới
-            if (bottomRef.current) {
-              bottomRef.current.scrollIntoView({
-                behavior: "smooth",
-              });
-            }
+            );
+          } catch (error) {
+            console.error("Error subscribing:", error);
           }
-        );
-
-        client.current.subscribe(
-          `/friend/accept/${currentUser?.id}`,
-          async (message) => {
-            if (message.body) {
-              const response = await checkFriend(userReceiver?.id);
-              setIsFriend(response);
-            }
-          }
-        );
-
-        client.current.subscribe(
-          `/friend/unfriend/${currentUser?.id}`,
-          async (message) => {
-            if (message.body) {
-              const response = await checkFriend(userReceiver?.id);
-              setIsFriend(response);
-            }
-          }
-        );
+        }
       },
       onStompError: (frame) => {
         // Hàm được gọi khi có lỗi trong giao thức STOMP
@@ -478,14 +515,7 @@ const Conservation = ({
         client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
       }
     };
-  }, [
-    selectedConversation?.id,
-    localMessages,
-    currentUser.id,
-    refetchMessages,
-    client,
-    userReceiver?.id,
-  ]);
+  }, [selectedConversation?.id, currentUser.id]);
 
   //Handle sending GIF or Sticker
   const handleSendGifOrSticker = (url, type) => {
@@ -589,7 +619,7 @@ const Conservation = ({
       if (!client.current || !client.current.connected) {
         toast.error("WebSocket không kết nối. Vui lòng thử lại sau.", {
           position: "top-center",
-          autoClose: 3000,
+          autoClose: 1000,
         });
         return;
       }
@@ -600,7 +630,7 @@ const Conservation = ({
         body: JSON.stringify(request),
       });
 
-      refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
+      // refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
       setNewMessage("");
     } catch (error) {
       console.error("Conservation send message error:", error.message);
@@ -900,6 +930,17 @@ const Conservation = ({
   // Hàm xóa tin nhắn cho người dùng
   const handleDeleteForUser = async ({ messageId, userId }) => {
     try {
+      const safeLocalMessages = Array.isArray(localMessages)
+        ? localMessages
+        : [];
+      const messageExists = safeLocalMessages.find(
+        (msg) => String(msg.id || msg._id) === String(messageId)
+      );
+
+      if (!messageExists) {
+        toast.error("Không tìm thấy tin nhắn để xóa");
+        return false;
+      }
       // Nếu WebSocket đang kết nối, gửi yêu cầu xóa qua WebSocket
       if (client.current && client.current.connected) {
         client.current.publish({
@@ -911,6 +952,16 @@ const Conservation = ({
         });
 
         await deleteForUserMessage({ messageId, userId });
+
+        // Cập nhật localMessages ngay lập tức để tránh lỗi UI
+        setLocalMessages((prevMessages) => {
+          const safePrevMessages = Array.isArray(prevMessages)
+            ? prevMessages
+            : [];
+          return safePrevMessages.filter(
+            (msg) => String(msg.id || msg._id) !== String(messageId)
+          );
+        });
 
         return true;
       } else {
@@ -991,8 +1042,7 @@ const Conservation = ({
   }, [selectedConversation, currentUser.id]);
 
   // modal link gr
-  
-  
+
   const [showModal, setShowModal] = useState(false);
 
   const handleOpenModal = (e) => {
@@ -1282,7 +1332,7 @@ const Conservation = ({
         )}
         {isLoadingAllMessages ? (
           <p className="text-muted text-center">Đang tải tin nhắn...</p>
-        ) : localMessages.length === 0 ? (
+        ) : !localMessages || localMessages.length === 0 ? (
           selectedConversation?.dissolved ? (
             <div className="text-center my-5">
               <div className="alert alert-warning d-inline-block p-4 shadow-sm">
@@ -1525,7 +1575,8 @@ const Conservation = ({
                         </a>
                       </div>
                     )
-                  ) : msg?.messageType === "TEXT" && msg.content.startsWith("http") ? (
+                  ) : msg?.messageType === "TEXT" &&
+                    msg.content.startsWith("http") ? (
                     <div>
                       <small className="text-muted d-block">
                         <button
@@ -1533,12 +1584,14 @@ const Conservation = ({
                           onClick={handleOpenModal}
                         >
                           {msg.content}
-              
-
                         </button>
-                          {showModal && (
-                            <GroupInfoModal onClose={handleCloseModal} onJoin={handleJoin} groupLink={extractLinkGroup(msg.content)}/>
-                          )}
+                        {showModal && (
+                          <GroupInfoModal
+                            onClose={handleCloseModal}
+                            onJoin={handleJoin}
+                            groupLink={extractLinkGroup(msg.content)}
+                          />
+                        )}
                       </small>
                     </div>
                   ) : (
@@ -1552,7 +1605,7 @@ const Conservation = ({
                       </small>
                     </div>
                   )}
-                   {/* {msg?.messageType === "TEXT" && msg.content.startsWith("http") && (
+                  {/* {msg?.messageType === "TEXT" && msg.content.startsWith("http") && (
                     <div>
                       <small className="text-muted d-block">
                         <button
