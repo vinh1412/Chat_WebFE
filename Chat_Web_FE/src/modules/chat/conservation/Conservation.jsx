@@ -466,7 +466,7 @@ const Conservation = ({
                   }
                 }
 
-                // refetchMessages();
+                refetchMessages();
 
                 // Tự động cuộn xuống cuối danh sách tin nhắn khi có tin nhắn mới
                 if (bottomRef.current) {
@@ -515,7 +515,7 @@ const Conservation = ({
         client.current.deactivate(); // Ngắt kết nối WebSocket nếu client đang ở trạng thái kết nối.
       }
     };
-  }, [selectedConversation?.id, currentUser.id]);
+  }, [selectedConversation?.id, currentUser.id, userReceiver?.id, client]);
 
   //Handle sending GIF or Sticker
   const handleSendGifOrSticker = (url, type) => {
@@ -630,7 +630,7 @@ const Conservation = ({
         body: JSON.stringify(request),
       });
 
-      // refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
+      refetchMessages(); // Cập nhật lại danh sách tin nhắn từ server
       setNewMessage("");
     } catch (error) {
       console.error("Conservation send message error:", error.message);
