@@ -173,6 +173,22 @@ const DashboardOptionList = () => {
       }
     });
   };
+  useEffect(() => {
+    if (openMenuId !== null) {
+      const handleClickOutside = (e) => {
+        // Nếu click không phải vào dấu ba chấm hoặc menu dropdown thì đóng menu
+        if (
+          !e.target.closest(".conversation-menu-dropdown") &&
+          !e.target.closest(".bi-three-dots-vertical")
+        ) {
+          setOpenMenuId(null);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [openMenuId]);
 
   return (
     <Container
@@ -230,107 +246,160 @@ const DashboardOptionList = () => {
           {currentTab === "Chat" && (
             <Container
               fluid
-              className="w-100 border border-top-0 overflow-auto p-0 "
+              className="w-100 border border-top-0 p-0"
               style={{
-                minHeight: "calc(100vh - 69px)",
-                height: "100%",
-                overflowY: "auto",
+                height: "calc(100vh - 69px)",
+                maxHeight: "calc(100vh - 69px)",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              {sortedConversations?.map((item) => (
-                <div
-                  key={item.id}
-                  className={`d-flex align-items-center justify-content-between position-relative ${
-                    selectedConversation?.id === item.id
-                      ? "active-conversation"
-                      : ""
-                  }`}
-                  style={{
-                    minHeight: 56,
-                    backgroundColor:
+              <div
+                className="conversation-list-scroll"
+                style={{
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  flex: "1 1 auto",
+                  height: "100%",
+                }}
+              >
+                {sortedConversations?.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`d-flex align-items-center justify-content-between position-relative ${
                       selectedConversation?.id === item.id
-                        ? "#e9f5ff"
-                        : "transparent",
-                  }}
-                >
-                  <div className="d-flex align-items-center">
-                    {/* Hiển thị icon ghim nếu đã ghim */}
-                    {pinnedIds.includes(item.id) && (
-                      <BsPinAngleFill
-                        color="#f7b731"
-                        style={{ marginRight: 8 }}
-                      />
-                    )}
-                    <ItemConservation
-                      item={item}
-                      isActive={selectedConversation?.id === item.id}
-                    />
-                  </div>
-                  <span
-                    className="bi bi-three-dots-vertical"
+                        ? "active-conversation"
+                        : ""
+                    }`}
                     style={{
-                      cursor: "pointer",
-                      padding: 8,
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
+                      minHeight: 56,
+                      height: 72, // Fixed height for consistency
+                      backgroundColor:
+                        selectedConversation?.id === item.id
+                          ? "#e9f5ff"
+                          : "transparent",
+                      transition: "background-color 0.2s ease",
+                      width: "100%",
+                      overflow: "hidden",
                     }}
-                    onClick={() => handleMenuToggle(item.id)}
-                  />
-                  {openMenuId === item.id && (
+                  >
                     <div
-                      className="shadow rounded bg-white"
-                      style={{
-                        position: "absolute",
-                        top: 40,
-                        right: 0,
-                        zIndex: 100,
-                        minWidth: 200,
-                      }}
-                      onMouseLeave={handleCloseMenu}
+                      className="d-flex align-items-center"
+                      style={{ width: "calc(100% - 40px)", overflow: "hidden" }}
                     >
+                      {/* Hiển thị icon ghim nếu đã ghim */}
+                      {pinnedIds.includes(item.id) && (
+                        <BsPinAngleFill
+                          color="#f7b731"
+                          style={{ marginRight: 8, flexShrink: 0 }}
+                        />
+                      )}
+                      <ItemConservation
+                        item={item}
+                        isActive={selectedConversation?.id === item.id}
+                      />
+                    </div>
+                    <span
+                      className="bi bi-three-dots-vertical"
+                      style={{
+                        cursor: "pointer",
+                        padding: 8,
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        flexShrink: 0,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMenuToggle(item.id);
+                      }}
+                    />
+                    {openMenuId === item.id && (
                       <div
-                        className="px-3 py-2"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handlePinConversation(item.id)}
+                        className="shadow rounded bg-white conversation-menu-dropdown"
+                        style={{
+                          position: "fixed", // Đổi từ absolute sang fixed để nổi lên trên mọi thứ
+                          top: `${
+                            72 *
+                              sortedConversations.findIndex(
+                                (c) => c.id === item.id
+                              ) +
+                            90
+                          }px`, // 69 là chiều cao header, 72 là chiều cao mỗi item
+                          left: "25%",
+                          zIndex: 99999,
+                          minWidth: 200,
+                          background: "#fff",
+                          boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+                          pointerEvents: "auto",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {pinnedIds.includes(item.id)
-                          ? "Bỏ ghim hội thoại"
-                          : "Ghim hội thoại"}
-                      </div>
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
-                        Đánh dấu chưa đọc
-                      </div>
-                      {!item.is_group && (
                         <div
                           className="px-3 py-2"
                           style={{ cursor: "pointer" }}
-                          onClick={() => handleShowJoinGroupModal(item.id)}
+                          onClick={() => {
+                            handlePinConversation(item.id);
+                            handleCloseMenu();
+                          }}
                         >
-                          Thêm vào nhóm
+                          {pinnedIds.includes(item.id)
+                            ? "Bỏ ghim hội thoại"
+                            : "Ghim hội thoại"}
                         </div>
-                      )}
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
-                        Tắt thông báo
+                        <div
+                          className="px-3 py-2"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Đánh dấu chưa đọc
+                        </div>
+                        {!item.is_group && (
+                          <div
+                            className="px-3 py-2"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              handleShowJoinGroupModal(item.id);
+                              handleCloseMenu();
+                            }}
+                          >
+                            Thêm vào nhóm
+                          </div>
+                        )}
+                        <div
+                          className="px-3 py-2"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Tắt thông báo
+                        </div>
+                        <div
+                          className="px-3 py-2"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Ẩn trò chuyện
+                        </div>
+                        <hr className="my-1" />
+                        <div
+                          className="px-3 py-2 text-danger"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => {
+                            handleDeleteConversation(item);
+                            handleCloseMenu();
+                          }}
+                        >
+                          Xóa hội thoại
+                        </div>
+                        <div
+                          className="px-3 py-2"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Báo xấu
+                        </div>
                       </div>
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
-                        Ẩn trò chuyện
-                      </div>
-                      <hr className="my-1" />
-                      <div
-                        className="px-3 py-2 text-danger"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleDeleteConversation(item)}
-                      >
-                        Xóa hội thoại
-                      </div>
-                      <div className="px-3 py-2" style={{ cursor: "pointer" }}>
-                        Báo xấu
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))}
+              </div>
             </Container>
           )}
 
@@ -346,7 +415,8 @@ const DashboardOptionList = () => {
         onHide={handleCloseJoinGroupModal}
         centered
         size="xl" // Sử dụng size "xl" (khoảng 1140px mặc định)
-        dialogClassName="custom-modal-width" // Áp dụng CSS tùy chỉnh
+        // dialogClassName="custom-modal-width" // Áp dụng CSS tùy chỉnh
+        className="modal-dialog-centered"
       >
         <Modal.Header closeButton>
           <Modal.Title>Mời tham gia nhóm</Modal.Title>

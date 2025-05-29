@@ -28,7 +28,10 @@ const ChangeGroupNameModal = ({ show, onHide, conversationId, onSuccess }) => {
       });
 
       if (response.conversation) {
-        toast.success("Cập nhật tên nhóm thành công!");
+        toast.success("Cập nhật tên nhóm thành công!", {
+          position: "top-right",
+          autoClose: 500,
+        });
         dispatch(setSelectedConversation(response.conversation));
         if (onSuccess) onSuccess(response.conversation);
         onHide();
