@@ -56,7 +56,10 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
       { conversationId, memberId: userId },
       {
         onSuccess: async () => {
-          toast.success("Đã xóa thành viên khỏi nhóm");
+          toast.success("Đã xóa thành viên khỏi nhóm", {
+            position: "top-right",
+            autoClose: 500,
+          });
         },
         onError: (error) => {
           console.error("Error removing member:", error);

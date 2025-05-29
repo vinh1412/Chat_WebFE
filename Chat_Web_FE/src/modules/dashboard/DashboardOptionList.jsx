@@ -348,12 +348,6 @@ const DashboardOptionList = () => {
                             ? "Bỏ ghim hội thoại"
                             : "Ghim hội thoại"}
                         </div>
-                        <div
-                          className="px-3 py-2"
-                          style={{ cursor: "pointer" }}
-                        >
-                          Đánh dấu chưa đọc
-                        </div>
                         {!item.is_group && (
                           <div
                             className="px-3 py-2"
@@ -366,18 +360,6 @@ const DashboardOptionList = () => {
                             Thêm vào nhóm
                           </div>
                         )}
-                        <div
-                          className="px-3 py-2"
-                          style={{ cursor: "pointer" }}
-                        >
-                          Tắt thông báo
-                        </div>
-                        <div
-                          className="px-3 py-2"
-                          style={{ cursor: "pointer" }}
-                        >
-                          Ẩn trò chuyện
-                        </div>
                         <hr className="my-1" />
                         <div
                           className="px-3 py-2 text-danger"
@@ -388,12 +370,6 @@ const DashboardOptionList = () => {
                           }}
                         >
                           Xóa hội thoại
-                        </div>
-                        <div
-                          className="px-3 py-2"
-                          style={{ cursor: "pointer" }}
-                        >
-                          Báo xấu
                         </div>
                       </div>
                     )}

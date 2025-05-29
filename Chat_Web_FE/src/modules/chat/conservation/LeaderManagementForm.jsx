@@ -32,20 +32,21 @@ const updateMemberRoleService = async (conversationId, memberId, role) => {
   try {
     // Validate IDs before making the request
     if (!isValidObjectId(conversationId)) {
-      throw new Error("Invalid conversationId: Must be a 24-character hexadecimal string");
+      throw new Error(
+        "Invalid conversationId: Must be a 24-character hexadecimal string"
+      );
     }
     if (!isValidObjectId(memberId)) {
-      throw new Error("Invalid memberId: Must be a 24-character hexadecimal string");
+      throw new Error(
+        "Invalid memberId: Must be a 24-character hexadecimal string"
+      );
     }
 
-    const response = await axiosInstance.put(
-      "/conversations/update-role",
-      {
-        conversationId,
-        memberId,
-        role,
-      },
-    );
+    const response = await axiosInstance.put("/conversations/update-role", {
+      conversationId,
+      memberId,
+      role,
+    });
     return response.data;
   } catch (error) {
     const message =
@@ -60,14 +61,27 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
   const [showAddDeputyForm, setShowAddDeputyForm] = useState(false);
   const [showTransferLeaderForm, setShowTransferLeaderForm] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [confirmTransfer, setConfirmTransfer] = useState({ show: false, memberId: null });
+  const [confirmTransfer, setConfirmTransfer] = useState({
+    show: false,
+    memberId: null,
+  });
 
-  const { userRole, isLoadingUserRole, members, isLoadingMembers, membersError, refetch } = useMember(conversationId);
+  const {
+    userRole,
+    isLoadingUserRole,
+    members,
+    isLoadingMembers,
+    membersError,
+    refetch,
+  } = useMember(conversationId);
   const isAdmin = userRole?.role === "ADMIN";
 
   // Debug members data
   useEffect(() => {
-    if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
+    if (
+      typeof process !== "undefined" &&
+      process.env.NODE_ENV !== "production"
+    ) {
       console.log("Conversation ID:", conversationId);
       if (members) {
         console.log("Danh sách members:", members);
@@ -79,10 +93,16 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
   }, [conversationId, members, membersError]);
 
   // Validate conversationId
-  if (!conversationId || typeof conversationId !== "string" || !isValidObjectId(conversationId)) {
+  if (
+    !conversationId ||
+    typeof conversationId !== "string" ||
+    !isValidObjectId(conversationId)
+  ) {
     return (
       <div className="text-center mt-5">
-        <p className="text-danger">Lỗi: conversationId không hợp lệ ({conversationId}).</p>
+        <p className="text-danger">
+          Lỗi: conversationId không hợp lệ ({conversationId}).
+        </p>
       </div>
     );
   }
@@ -100,7 +120,9 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
   if (membersError) {
     return (
       <div className="text-center mt-5">
-        <p className="text-danger">Lỗi khi lấy danh sách thành viên: {membersError.message}</p>
+        <p className="text-danger">
+          Lỗi khi lấy danh sách thành viên: {membersError.message}
+        </p>
       </div>
     );
   }
@@ -136,11 +158,13 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
 
       if (response.success) {
         if (process.env.NODE_ENV !== "production") {
-          console.log(`Successfully updated role to ${role} for memberId: ${memberId}`);
+          console.log(
+            `Successfully updated role to ${role} for memberId: ${memberId}`
+          );
         }
         toast.success(`Đã cập nhật vai trò thành công: ${role}`, {
-          position: "top-center",
-          autoClose: 2000,
+          position: "top-right",
+          autoClose: 500,
         });
         onSuccess?.();
         refetch?.();
@@ -169,53 +193,55 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
   };
 
   const handleTransferLeader = async (memberId) => {
-  if (!memberId) {
-    toast.error("Vui lòng chọn một thành viên", {
-      position: "top-center",
-      autoClose: 2000,
-    });
-    return;
-  }
+    if (!memberId) {
+      toast.error("Vui lòng chọn một thành viên", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
 
-  if (memberId === userRole.userId) {
-    toast.error("Không thể chuyển quyền trưởng nhóm cho chính bạn", {
-      position: "top-center",
-      autoClose: 2000,
-    });
-    return;
-  }
+    if (memberId === userRole.userId) {
+      toast.error("Không thể chuyển quyền trưởng nhóm cho chính bạn", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
 
-  try {
-    // Gán ADMIN cho người mới
-    await updateLeaderRole(memberId, "ADMIN");
-
-    // Hạ quyền người hiện tại xuống MEMBER
-    await updateLeaderRole(userRole.userId, "MEMBER");
-
-    // Thành công => đóng modal
-    setConfirmTransfer({ show: false, memberId: null });
-  } catch (error) {
-    toast.error("Chuyển quyền thất bại: " + error.message, {
-      position: "top-center",
-      autoClose: 3000,
-    });
-
-    // Nếu lỗi xảy ra sau khi đã set ADMIN cho người mới, rollback lại
     try {
-      await updateLeaderRole(memberId, "MEMBER");
-    } catch (rollbackError) {
-      toast.error("Rollback failed: " + rollbackError.message, {
+      // Gán ADMIN cho người mới
+      await updateLeaderRole(memberId, "ADMIN");
+
+      // Hạ quyền người hiện tại xuống MEMBER
+      await updateLeaderRole(userRole.userId, "MEMBER");
+
+      // Thành công => đóng modal
+      setConfirmTransfer({ show: false, memberId: null });
+    } catch (error) {
+      toast.error("Chuyển quyền thất bại: " + error.message, {
         position: "top-center",
         autoClose: 3000,
       });
-    }
-  }
-};
 
+      // Nếu lỗi xảy ra sau khi đã set ADMIN cho người mới, rollback lại
+      try {
+        await updateLeaderRole(memberId, "MEMBER");
+      } catch (rollbackError) {
+        toast.error("Rollback failed: " + rollbackError.message, {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      }
+    }
+  };
 
   const confirmTransferLeader = (memberId) => {
     if (process.env.NODE_ENV !== "production") {
-      console.log("Mở xác nhận chuyển quyền trưởng nhóm cho memberId:", memberId);
+      console.log(
+        "Mở xác nhận chuyển quyền trưởng nhóm cho memberId:",
+        memberId
+      );
     }
     setConfirmTransfer({ show: true, memberId });
   };
@@ -232,7 +258,8 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
     }
 
     // Fallback to userId if display_name is missing
-    const displayName = member?.display_name || member?.userId || "Không có tên";
+    const displayName =
+      member?.display_name || member?.userId || "Không có tên";
 
     return (
       <Modal show={show} onHide={onClose} centered>
@@ -274,10 +301,16 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
         </div>
       </div>
 
-      <div style={{ opacity: isAdmin ? 1 : 0.7, pointerEvents: isAdmin ? "auto" : "none" }}>
+      <div
+        style={{
+          opacity: isAdmin ? 1 : 0.7,
+          pointerEvents: isAdmin ? "auto" : "none",
+        }}
+      >
         {!isAdmin && (
           <div className="bg-secondary text-center mb-2 text-white rounded-2 p-2">
-            <i className="bi bi-file-earmark-lock2"></i> Tính năng này chỉ dành cho quản trị viên nhóm.
+            <i className="bi bi-file-earmark-lock2"></i> Tính năng này chỉ dành
+            cho quản trị viên nhóm.
           </div>
         )}
 
@@ -285,7 +318,10 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
         <div className="mb-3">
           <h6>Trưởng nhóm</h6>
           {members.some((m) => m.role === "ADMIN") ? (
-            <MemberInfo member={members.find((m) => m.role === "ADMIN")} roleLabel="Trưởng nhóm" />
+            <MemberInfo
+              member={members.find((m) => m.role === "ADMIN")}
+              roleLabel="Trưởng nhóm"
+            />
           ) : (
             <p className="text-muted">Chưa có trưởng nhóm</p>
           )}
@@ -304,7 +340,8 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
         )}
 
         {/* Members */}
-        {members.filter((m) => m.role !== "ADMIN" && m.role !== "DEPUTY").length > 0 && (
+        {members.filter((m) => m.role !== "ADMIN" && m.role !== "DEPUTY")
+          .length > 0 && (
           <div className="mb-3">
             <h6>Thành viên</h6>
             {members
@@ -319,7 +356,11 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
           variant="light"
           className="w-100 mb-2 text-start"
           onClick={() => setShowAddDeputyForm(true)}
-          style={{ backgroundColor: "#f1f3f5", border: "none", fontSize: "14px" }}
+          style={{
+            backgroundColor: "#f1f3f5",
+            border: "none",
+            fontSize: "14px",
+          }}
         >
           Thêm phó nhóm
         </Button>
@@ -328,7 +369,11 @@ const LeaderManagementForm = ({ onBack, conversationId }) => {
           className="w-100 mb-2 text-start"
           onClick={() => setShowTransferLeaderForm(true)}
           disabled={!isAdmin}
-          style={{ backgroundColor: "#f1f3f5", border: "none", fontSize: "14px" }}
+          style={{
+            backgroundColor: "#f1f3f5",
+            border: "none",
+            fontSize: "14px",
+          }}
         >
           Chuyển quyền trưởng nhóm
         </Button>

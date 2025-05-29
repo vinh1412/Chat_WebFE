@@ -48,65 +48,75 @@ const ItemConservation = ({ item, isActive }) => {
       }}
       onClick={handleClick}
     >
-      <Col xs="auto" className="d-flex align-items-center p-2">
+      <Col className="d-flex align-items-center p-2">
         <div
-          className="overflow-hidden"
-          style={{ width: "48px", height: "48px" }}
+          className="d-flex align-items-center"
+          style={{ gap: "12px", overflow: "hidden" }}
         >
-          {item.is_group ? (
-            <div className="d-flex flex-wrap">
-              {item.members.slice(0, 4).map((member, index) => (
-                <img
-                  key={index}
-                  src={member.avatar}
-                  alt=""
-                  className="rounded-circle"
-                  style={{ width: "24px", height: "24px" }}
-                />
-              ))}
+          {/* Avatar */}
+          <div style={{ width: "48px", height: "48px", position: "relative" }}>
+            {item.is_group ? (
+              <div
+                className="d-flex flex-wrap"
+                style={{ width: "48px", height: "48px" }}
+              >
+                {item.members.slice(0, 4).map((member, index) => (
+                  <img
+                    key={index}
+                    src={member.avatar}
+                    alt=""
+                    className="rounded-circle"
+                    style={{ width: "24px", height: "24px" }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <img
+                src={displayAvatar}
+                alt=""
+                className="rounded-circle img-fluid object-fit-cover"
+                style={{ width: "48px", height: "48px" }}
+              />
+            )}
+          </div>
+
+          {/* Name and Last Message */}
+          <div className="d-flex flex-column justify-content-center">
+            <div
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: isActive ? "600" : "500",
+                color: isActive ? "#1877f2" : "inherit",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "150px",
+              }}
+            >
+              {!item.is_group
+                ? item.members.find((member) => member.id !== currentUser.id)
+                    ?.display_name
+                : item.name}
             </div>
-          ) : (
-            <img
-              src={displayAvatar}
-              alt=""
-              className="rounded-circle img-fluid object-fit-cover"
-            />
-          )}
+            <div
+              className="text-muted"
+              style={{
+                fontSize: "0.9rem",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "180px",
+              }}
+            >
+              {item.last_message?.senderId === currentUser.id
+                ? `Bạn: ${item.last_message.content}`
+                : item.last_message?.content}
+            </div>
+          </div>
         </div>
       </Col>
 
-      <Col className="d-flex flex-column justify-content-center p-2">
-        <div
-          style={{
-            fontSize: "1.1rem",
-            fontWeight: isActive ? "600" : "500",
-            color: isActive ? "#1877f2" : "inherit",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "125px",
-          }}
-        >
-          {!item.is_group
-            ? item.members.find((member) => member.id !== currentUser.id)
-                ?.display_name
-            : item.name}
-        </div>
-        <div
-          className="text-muted"
-          style={{
-            fontSize: "0.9rem",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "130px",
-          }}
-        >
-          {item.last_message?.senderId === currentUser.id
-            ? `Bạn: ${item.last_message.content}`
-            : item.last_message?.content}
-        </div>
-      </Col>
+      {/* Thời gian */}
       <Col
         xs="auto"
         className="d-flex flex-column justify-content-center p-2"
