@@ -72,7 +72,10 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
     // Gọi API tạo nhóm với dữ liệu đã chọn
     createGroupConversation(groupData, {
       onSuccess: (data) => {
-        toast.success("Tạo nhóm thành công!");
+        toast.success("Tạo nhóm thành công!", {
+          position: "top-right",
+          autoClose: 500,
+        });
         onClose(); // Close modal on success
       },
       onError: (error) => {

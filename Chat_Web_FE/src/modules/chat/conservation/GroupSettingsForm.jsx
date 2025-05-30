@@ -46,7 +46,10 @@ const GroupSettingsForm = ({ onBack, conversationId }) => {
     if (!isAdmin) return;
     dissolveConversation(conversationId, {
       onSuccess: async (data) => {
-        toast.success("Nhóm đã được giải tán thành công");
+        toast.success("Nhóm đã được giải tán thành công", {
+          position: "top-right",
+          autoClose: 500,
+        });
         setShowDissolveModal(false);
         onBack();
       },

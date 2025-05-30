@@ -48,6 +48,7 @@ const useConversation = (conversationId) => {
             );
             // Refetch the conversation to get the latest data
             queryClient.invalidateQueries(["conversation", conversationId]);
+            queryClient.invalidateQueries(["conversations"]);
           }
         );
         client.current.activate(); // đảm bảo kích hoạt client
@@ -236,7 +237,7 @@ const useConversation = (conversationId) => {
         queryClient.invalidateQueries(["conversations"]);
         toast.success("Đã xóa cuộc trò chuyện khỏi danh sách", {
           position: "top-center",
-          autoClose: 2000,
+          autoClose: 500,
         });
       }
     },

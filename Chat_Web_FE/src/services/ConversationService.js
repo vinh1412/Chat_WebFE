@@ -167,9 +167,8 @@ export const removeMember = async (conversationId, userId) => {
       "Error removing member from group conversation:",
       error.response?.data || error.message
     );
-    throw new Error(
-      error.response?.data?.message || "Lỗi khi xóa thành viên khỏi nhóm"
-    );
+    throw new Error();
+    // error.response?.data?.message || "Lỗi khi xóa thành viên khỏi nhóm"
   }
 };
 

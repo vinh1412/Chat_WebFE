@@ -31,6 +31,7 @@ import VideoCallModal from "../../../components/modal/VideoCallModal";
 import IncomingCallModal from "../../../components/modal/IncomingCallModal";
 import { useQueryClient } from "@tanstack/react-query";
 import GroupInfoModal from "../../../components/modal/GroupInfoLinkModal";
+import Swal from "sweetalert2";
 
 const Conservation = ({
   onShowDetail,
@@ -1715,9 +1716,11 @@ const Conservation = ({
             <button
               className="btn btn-sm btn-outline-danger ms-2"
               onClick={() => {
-                const confirmed = window.confirm(
-                  "Bạn có chắc muốn xóa cuộc trò chuyện này khỏi danh sách?"
-                );
+                // Xác nhận xóa cuộc trò chuyện
+                const confirmed = Swal.fire({
+                  title: "Xác nhận xóa",
+                  icon: "warning",
+                });
                 if (confirmed) {
                   deleteConversationForUser(selectedConversation.id);
                   dispatch(setSelectedConversation(null));
