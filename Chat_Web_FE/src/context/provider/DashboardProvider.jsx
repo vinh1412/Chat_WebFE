@@ -57,15 +57,15 @@ const DashboardProvider = ({ children }) => {
               queryClient.invalidateQueries(["conversations"]);
 
               // Thông báo cho người dùng về việc được thêm vào nhóm
-              if (newGroupConversation.name) {
-                toast.success(
-                  `Bạn đã được thêm vào nhóm "${newGroupConversation.name}"!`,
-                  {
-                    position: "top-right",
-                    autoClose: 1000,
-                  }
-                );
-              }
+              // if (newGroupConversation.name) {
+              //   toast.success(
+              //     `Bạn đã được thêm vào nhóm "${newGroupConversation.name}"!`,
+              //     {
+              //       position: "top-right",
+              //       autoClose: 1000,
+              //     }
+              //   );
+              // }
             } catch (error) {
               console.error("Error processing group creation message:", error);
             }

@@ -63,7 +63,10 @@ const MemberListView = ({ conversationInfor, onBack, onMembersChanged }) => {
         },
         onError: (error) => {
           console.error("Error removing member:", error);
-          toast.error(error.message || "Bạn không có quyền xóa thành viên");
+          toast.error(error.message || "Bạn không có quyền xóa thành viên", {
+            position: "top-right",
+            autoClose: 500,
+          });
         },
       }
     );
