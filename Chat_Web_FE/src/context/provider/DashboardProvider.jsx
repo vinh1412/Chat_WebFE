@@ -29,7 +29,7 @@ const DashboardProvider = ({ children }) => {
 
   // Kết nối WebSocket
   useEffect(() => {
-    if (!stompClient.current || !currentUser?.id) return;
+    if (!currentUser?.id) return;
 
     // Kết nối đến WebSocket server
     const socket = new SockJS(URL_WEB_SOCKET);
@@ -59,7 +59,11 @@ const DashboardProvider = ({ children }) => {
               // Thông báo cho người dùng về việc được thêm vào nhóm
               if (newGroupConversation.name) {
                 toast.success(
-                  `Bạn đã được thêm vào nhóm "${newGroupConversation.name}"!`
+                  `Bạn đã được thêm vào nhóm "${newGroupConversation.name}"!`,
+                  {
+                    position: "top-right",
+                    autoClose: 1000,
+                  }
                 );
               }
             } catch (error) {
@@ -82,7 +86,10 @@ const DashboardProvider = ({ children }) => {
               queryClient.invalidateQueries(["conversations"]);
 
               // Thông báo cho người dùng về việc nhóm đã bị giải tán
-              toast.info(`Nhóm với tên "${conversationName}" đã bị giải tán.`);
+              toast.info(`Nhóm với tên "${conversationName}" đã bị giải tán.`, {
+                position: "top-right",
+                autoClose: 1000,
+              });
             } catch (error) {
               console.error(
                 "Error processing group dissolution message:",
@@ -115,7 +122,11 @@ const DashboardProvider = ({ children }) => {
               const conversationName =
                 deletedConversation.name || "Cuộc trò chuyện";
               toast.info(
-                `"${conversationName}" đã bị xóa khỏi danh sách cuộc trò chuyện của bạn.`
+                `"${conversationName}" đã bị xóa khỏi danh sách cuộc trò chuyện của bạn.`,
+                {
+                  position: "top-right",
+                  autoClose: 1000,
+                }
               );
             } catch (error) {
               console.error(
