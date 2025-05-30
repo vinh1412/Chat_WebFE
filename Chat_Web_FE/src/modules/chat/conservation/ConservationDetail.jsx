@@ -24,7 +24,6 @@ import ModalGroupQRCode from "./ModalGroupQRCode";
 import Swal from "sweetalert2";
 import useConversation from "../../../hooks/useConversation";
 
-
 const ConversationDetail = ({
   conversationInfor,
   showSearchForm,
@@ -170,7 +169,6 @@ const ConversationDetail = ({
           toast.success("Bạn đã rời nhóm thành công!");
           dispatch(setShowConversation(false));
           dispatch(setIsSuccessSent(true));
-          navigate("/chat");
         },
         onError: (error) => {
           console.error("Error leaving group:", error);
@@ -179,7 +177,6 @@ const ConversationDetail = ({
       });
     }
   };
-
 
   // Copy link group
   const copyToClipboard = (text) => {
@@ -427,8 +424,14 @@ const ConversationDetail = ({
                       <div className="d-flex justify-content-between w-100">
                         <div className="d-flex flex-column">
                           <span>Link tham gia nhóm</span>
-                          <button style={{backgroundColor: "#F8F9FA", color: "blue", border: '0'}}>
-                            {groupLink  || "Chưa có link nhóm"} 
+                          <button
+                            style={{
+                              backgroundColor: "#F8F9FA",
+                              color: "blue",
+                              border: "0",
+                            }}
+                          >
+                            {groupLink || "Chưa có link nhóm"}
                             {/* {conversation.id} */}
                           </button>
                         </div>
@@ -436,7 +439,12 @@ const ConversationDetail = ({
                           <button
                             className="btn btn-sm p-0 me-2"
                             // onClick={() => copyToClipboard(conversation.id)}
-                            onClick={() => copyToClipboard('https://tranminhtien.io.vn/qrcode/'+conversation.id)}
+                            onClick={() =>
+                              copyToClipboard(
+                                "https://tranminhtien.io.vn/qrcode/" +
+                                  conversation.id
+                              )
+                            }
                             //https://tranminhtien.io.vn/qrcode/
                           >
                             <i className="bi bi-clipboard fs-5"></i>
