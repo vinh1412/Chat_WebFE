@@ -30,7 +30,7 @@ const SearchForm = ({ conversationId }) => {
         dispatch(setSearchResults(results));
       } catch (error) {
         console.error("Error searching messages:", error);
-        toast.error("Lỗi khi tìm kiếm: " + error.message);
+        // toast.error("Lỗi khi tìm kiếm: " + error.message);
       }
     }, 300); // 300ms debounce
 
@@ -50,7 +50,10 @@ const SearchForm = ({ conversationId }) => {
       <Form className="mb-4">
         <Row className="align-items-end g-2">
           <Col xs={12} md={10}>
-            <Form.Group controlId="searchKeyword" style={{ position: "relative" }}>
+            <Form.Group
+              controlId="searchKeyword"
+              style={{ position: "relative" }}
+            >
               <Form.Label className="fw-medium">Từ khóa tìm kiếm</Form.Label>
               <Form.Control
                 type="text"
