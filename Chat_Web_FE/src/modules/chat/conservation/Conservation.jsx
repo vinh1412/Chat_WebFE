@@ -45,7 +45,8 @@ const Conservation = ({
   const dispatch = useDispatch();
   const bottomRef = React.useRef(null);
 
-  const { conversations, deleteConversationForUser } = useConversation();
+  const { conversations, deleteConversationForUser, conversation } =
+    useConversation();
 
   const handleShowSearchForm = () => {
     setShowSearchForm(true); // Kích hoạt hiển thị SearchForm
@@ -70,11 +71,16 @@ const Conservation = ({
         return;
       }
 
-      // Nếu có sự thay đổi về trạng thái (dissolved) của cuộc trò chuyện, cập nhật lại state
+      // Kiểm tra các thay đổi quan trọng: trạng thái dissolved, tên nhóm, avatar hoặc danh sách thành viên
       if (
         updatedConversation &&
-        updatedConversation.dissolved !== selectedConversation.dissolved
+        (updatedConversation.dissolved !== selectedConversation.dissolved ||
+          updatedConversation.name !== selectedConversation.name ||
+          updatedConversation.avatar !== selectedConversation.avatar ||
+          JSON.stringify(updatedConversation.members) !==
+            JSON.stringify(selectedConversation.members))
       ) {
+        // console.log("Conversation updated, refreshing UI");
         dispatch(setSelectedConversation(updatedConversation));
       }
     }
@@ -1717,15 +1723,19 @@ const Conservation = ({
               className="btn btn-sm btn-outline-danger ms-2"
               onClick={() => {
                 // Xác nhận xóa cuộc trò chuyện
-                const confirmed = Swal.fire({
-                  title: "Xác nhận xóa",
+                Swal.fire({
+                  title: "Bạn có chắc chắn muốn xác nhận xóa",
                   icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonText: "Xóa",
+                  cancelButtonText: "Hủy",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    deleteConversationForUser(selectedConversation.id);
+                    dispatch(setSelectedConversation(null));
+                    dispatch(setShowConversation(false));
+                  }
                 });
-                if (confirmed) {
-                  deleteConversationForUser(selectedConversation.id);
-                  dispatch(setSelectedConversation(null));
-                  dispatch(setShowConversation(false));
-                }
               }}
             >
               <i className="bi bi-trash3 me-1"></i>

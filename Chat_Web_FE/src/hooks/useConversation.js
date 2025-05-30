@@ -229,16 +229,16 @@ const useConversation = (conversationId) => {
         // Conversation was completely deleted
         queryClient.invalidateQueries(["conversations"]);
         toast.success("Cuộc trò chuyện đã được xóa hoàn toàn", {
-          position: "top-center",
-          autoClose: 2000,
+          position: "top-right",
+          autoClose: 500,
         });
       } else {
         // Conversation was removed from user's list
-        queryClient.invalidateQueries(["conversations"]);
-        toast.success("Đã xóa cuộc trò chuyện khỏi danh sách", {
-          position: "top-center",
-          autoClose: 500,
-        });
+        // queryClient.invalidateQueries(["conversations"]);
+        // toast.success("Đã xóa cuộc trò chuyện khỏi danh sách", {
+        //   position: "top-center",
+        //   autoClose: 500,
+        // });
       }
     },
     onError: (error) => {
