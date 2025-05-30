@@ -900,7 +900,26 @@ const Conservation = ({
           return false;
         }
 
-        console.log("Message to recall:", messageToRecall);
+        // Kiểm tra thời gian gửi tin nhắn, chỉ cho phép thu hồi trong vòng 5 phút
+        const messageTime = new Date(
+          messageToRecall.timestamp || messageToRecall.created_at
+        );
+        const currentTime = new Date();
+        const timeDifference = currentTime - messageTime;
+        const fiveMinutesInMs = 5 * 60 * 1000;
+
+        if (timeDifference > fiveMinutesInMs) {
+          toast.error(
+            "Chỉ có thể thu hồi tin nhắn trong vòng 5 phút sau khi gửi",
+            {
+              position: "top-right",
+              autoClose: 500,
+            }
+          );
+          return false;
+        }
+
+        // console.log("Message to recall:", messageToRecall);
 
         const request = {
           messageId: messageId,
