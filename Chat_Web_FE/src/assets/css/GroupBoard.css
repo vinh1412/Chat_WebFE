@@ -1,0 +1,246 @@
+.group-board-container {
+  max-width: 500px;
+  margin: 20px auto;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  background-color: #fafafa;
+}
+
+.board-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+}
+
+.icon-button.blue {
+  color: #2b74ff;
+}
+
+.tab-list {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  overflow-x: auto;
+}
+
+.tab-item {
+  min-width: 80px;
+  text-align: center;
+  padding: 10px 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #888;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tab-item:hover {
+  color: #2b74ff;
+}
+
+.tab-item.active {
+  color: #2b74ff;
+  border-bottom: 2px solid #2b74ff;
+  background-color: #fff;
+}
+
+.tab-icon {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.tab-label {
+  font-size: 14px;
+}
+
+.tab-body {
+  padding: 20px;
+  color: #444;
+  min-height: 150px;
+}
+
+.tab-content {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.poll-button {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 20px;
+  background-color: #2b74ff;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.poll-button:hover {
+  background-color: #1a5ded;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  width: 400px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.modal-header h5 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.modal-body {
+  margin: 15px 0;
+}
+
+.modal-body label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.modal-body textarea,
+.modal-body input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.char-count {
+  text-align: right;
+  font-size: 12px;
+  color: #888;
+}
+
+.add-option {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 5px;
+}
+.add-option:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.settings-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #888;
+}
+
+.cancel-button,
+.create-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background: #f0f0f0;
+  border: none;
+  margin-right: 10px;
+}
+
+.create-button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+}
+.note-button {
+  background: #f0f0f0;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.note-button:hover {
+  background: #e0e0e0;
+}
+
+.modal-dialog-centered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+}

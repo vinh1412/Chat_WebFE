@@ -11,6 +11,7 @@ import defaultCover from "../../assets/images/hinh-nen-buon-danbo.jpg";
 import { useDashboardContext } from "../../context/Dashboard_context";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import Swal from "sweetalert2";
 const sidebarLinks = [
   { title: "Profile" },
   {
@@ -51,9 +52,18 @@ const DashboardSideBar = () => {
           console.warn("Không thể xóa recaptchaVerifier:", error);
         }
       }
-
-      handleLogout(); // Xóa token, gọi API logout nếu cần
-      navigate("/login"); // Điều hướng về trang đăng nhập
+      Swal.fire({
+        title: "Bạn có chắc chắn muốn đăng xuất?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Đăng xuất",
+        cancelButtonText: "Hủy",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          handleLogout(); // Xóa token, gọi API logout nếu cần
+          navigate("/login"); // Điều hướng về trang đăng nhập
+        }
+      });
     }
   };
 

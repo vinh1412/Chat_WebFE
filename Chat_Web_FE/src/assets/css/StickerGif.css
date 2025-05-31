@@ -1,0 +1,25 @@
+.message-bubble .sticker-container {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+.message-bubble .sticker-container img {
+    background-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Override the message bubble background when containing a sticker */
+.message-bubble:has(.sticker-container) {
+    background-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.sticker-message {
+    background-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}

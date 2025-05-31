@@ -16,6 +16,8 @@ import DashboardProvider from "./context/provider/DashboardProvider.jsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage.jsx"));
 import ProtectedRoute from "./components/routing/ProtectedRoute";
+// import GroupQRCodePage from "./pages/GroupQRCodePage.jsx";
+
 
 const queryClient = new QueryClient();
 const LayoutDashboard = React.lazy(() =>
@@ -31,8 +33,10 @@ const RegisterStepOTP = React.lazy(() =>
 const RegisterStepInfo = React.lazy(() =>
   import("./pages/Register/RegisterStepInfo.jsx")
 );
+// const GroupQRCodePage = React.lazy(() =>
+//   import("./pages/GroupQRCodePage.jsx")
+// );
 
-// router
 const router = createBrowserRouter([
   {
     element: (
@@ -44,7 +48,12 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <DashboardPage />,
-      },
+      }
+      // ,
+      // {
+      //   path: "/group-qr-code/:conversationId",
+      //   element: <GroupQRCodePage />,
+      // },
     ],
   },
   {
@@ -67,6 +76,7 @@ const router = createBrowserRouter([
     path: "/forgot-password",
     element: <ForgotPasswordPage />,
   },
+
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
